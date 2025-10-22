@@ -1,0 +1,31 @@
+import { Routes, Route } from 'react-router-dom';
+import { AppProvider } from '@/contexts/AppContext';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { HomePage } from '@/pages/HomePage';
+import { NotFoundPage } from '@/pages/NotFoundPage';
+import { DIDExplorerPage } from '@/pages/DIDExplorerPage';
+import { TokenExplorerPage } from '@/pages/TokenExplorerPage';
+import { TransactionExplorerPage } from '@/pages/TransactionExplorerPage';
+
+function App() {
+  return (
+    <AppProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/did-explorer" element={<DIDExplorerPage />} />
+            <Route path="/token-explorer" element={<TokenExplorerPage />} />
+            <Route path="/transaction-explorer" element={<TransactionExplorerPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </AppProvider>
+  );
+}
+
+export default App;
