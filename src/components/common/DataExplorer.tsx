@@ -8,12 +8,16 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { TabSwitcher, TabType } from './TabSwitcher';
 import { TransactionsGraph } from '@/components/charts/TransactionsGraph';
 import { RecentActivityTable } from './RecentActivityTable';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useDIDs } from '@/hooks/useDIDs';
+import { useTokens } from '@/hooks/useTokens';
 
 interface DataExplorerProps {
   className?: string;
 }
 
 const formatAddress = (address: string, length: number = 6): string => {
+  if (address == null) return "";
   if (address.length <= length * 2) return address;
   return `${address.slice(0, length)}...${address.slice(-length)}`;
 };
@@ -515,15 +519,77 @@ const mockQuorums = [
   }
 ];
 
+//  const TransactionsListView = () => {
+//   const [transactions, setTransactions] = useState<Transaction[]>([]);
+//   const [loading, setLoading] = useState(true);
+
+ 
+
+//   if (loading) {
+//     return (
+//       <div>
+//         <Skeleton className="h-8 w-full mb-2" />
+//         <Skeleton className="h-8 w-full mb-2" />
+//         <Skeleton className="h-8 w-full mb-2" />
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="space-y-2">
+//       {transactions.map((txn) => (
+//         <Card key={txn.block_hash} className="p-4">
+//           <div className="flex justify-between">
+//             <span>Sender: {txn.sender_did}</span>
+//             <span>Receiver: {txn.receiver_did}</span>
+//           </div>
+//           <div className="flex justify-between mt-2">
+//             <span>Type: <Badge>{txn.txn_type}</Badge></span>
+//             <span>Amount: {txn.amount}</span>
+//           </div>
+//           <div className="mt-2 text-sm text-gray-500">Timestamp: {txn.timestamp}</div>
+//         </Card>
+//       ))}
+//     </div>
+//   );
+// };
+
 const TransactionsListView: React.FC<{
   currentPage: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   onTransactionClick: (transactionId: string) => void;
 }> = ({ currentPage, itemsPerPage, onPageChange, onTransactionClick }) => {
+  
+  const [transactions, setTransactions] = useState<any>([]);
+  const [loading, setLoading] = useState(true);
+  const paramsTxn = {"page" : currentPage, "limit" : itemsPerPage };
+  const { data, isLoading, error } = useTransactions(paramsTxn);
+
+  
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedTransactions = mockTransactions.slice(startIndex, endIndex);
+  const endIndex = startIndex + itemsPerPage; 
+  let paginatedTransactions = [];
+
+
+  if (data){
+   paginatedTransactions = (data!.data).slice(startIndex, endIndex);
+  }
+
+       useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setTransactions(data);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [data]);
+
   const totalPages = Math.ceil(mockTransactions.length / itemsPerPage);
 
   return (
@@ -538,14 +604,13 @@ const TransactionsListView: React.FC<{
               <div className="w-24 flex-shrink-0">Type</div>
               <div className="w-56 flex-shrink-0">From</div>
               <div className="w-56 flex-shrink-0">To</div>
-              <div className="w-28 flex-shrink-0">Status</div>
               <div className="w-36 flex-shrink-0 text-right">Value</div>
             </div>
           </div>
 
           {/* Table Body */}
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedTransactions.map((tx, index) => (
+            {paginatedTransactions.map((tx : any , index : any) => (
               <motion.div
                 key={tx.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -635,7 +700,7 @@ const TransactionsListView: React.FC<{
 
           {/* Table Body */}
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedTransactions.map((tx, index) => (
+            {paginatedTransactions.map((tx : any, index : any ) => (
               <motion.div
                 key={tx.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -732,8 +797,16 @@ const HoldersListView: React.FC<{
 }> = ({ currentPage, itemsPerPage, onPageChange, onHolderClick }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedHolders = mockHolders.slice(startIndex, endIndex);
   const totalPages = Math.ceil(mockHolders.length / itemsPerPage);
+  const [dids, setDids] = useState<any>([]);
+  const {data, isLoading, error} = useDIDs();
+
+
+    let paginatedHolders : any = [];
+    if(data) {
+    paginatedHolders = data.holders_response.slice(startIndex, endIndex);
+    }
+  
 
   return (
     <div className="w-full">
@@ -743,61 +816,47 @@ const HoldersListView: React.FC<{
           {/* Table Header */}
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[800px] gap-6">
-              <div className="w-16 flex-shrink-0">Rank</div>
+              {/* <div className="w-16 flex-shrink-0">Rank</div> */}
               <div className="w-64 flex-shrink-0">Address</div>
               <div className="w-32 flex-shrink-0">Token Count</div>
-              <div className="w-24 flex-shrink-0">Percentage</div>
-              <div className="w-32 flex-shrink-0">Transactions</div>
+   
             </div>
           </div>
 
           {/* Table Body */}
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedHolders.map((holder, index) => (
+            {paginatedHolders.map((holder :any , index : any) => (
               <motion.div
-                key={holder.address}
+                key={holder.owner_did}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onHolderClick(holder.address)}
+                onClick={() => onHolderClick(holder.owner_did)}
                 className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[800px] gap-6"
               >
-                <div className="w-16 flex-shrink-0 flex items-center">
+                {/* <div className="w-16 flex-shrink-0 flex items-center">
                   <span className="text-sm font-semibold text-secondary-900 dark:text-white">
                     #{holder.rank}
                   </span>
-                </div>
+                </div> */}
                 <div className="w-64 flex-shrink-0">
                   <div className="flex items-center space-x-2">
-                    <Tooltip content={holder.address} position="top">
+                    <Tooltip content={holder.owner_did} position="top">
                       <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                        {formatAddress(holder.address, 8)}
+                        {formatAddress(holder.owner_did, 8)}
                       </div>
                     </Tooltip>
-                    <CopyButton text={holder.address} size="sm" />
+                    <CopyButton text={holder.owner_did} size="sm" />
+                  </div>
+                </div>
+                <div className="w-32 flex-shrink-0 flex items-center">
+                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
+                    {holder.token_count}
                   </div>
                 </div>
                 <div className="w-32 flex-shrink-0 flex items-center">
                   <div className="text-sm font-semibold text-secondary-900 dark:text-white">
                     {holder.tokenCount}
-                  </div>
-                </div>
-                <div className="w-24 flex-shrink-0 flex items-center">
-                  <div className="w-full">
-                    <div className="text-sm text-secondary-600 dark:text-secondary-400 mb-1">
-                      {holder.percentage}
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                      <div 
-                        className="bg-primary-600 dark:bg-primary-400 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: holder.percentage }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-32 flex-shrink-0 flex items-center">
-                  <div className="text-sm text-secondary-600 dark:text-secondary-400">
-                    {holder.transactions.toLocaleString()}
                   </div>
                 </div>
               </motion.div>
@@ -810,63 +869,38 @@ const HoldersListView: React.FC<{
           {/* Table Header */}
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="grid grid-cols-11 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
-              <div className="col-span-1">Rank</div>
+              {/* <div className="col-span-1">Rank</div> */}
               <div className="col-span-4">Address</div>
               <div className="col-span-2">Token Count</div>
-              <div className="col-span-2">Percentage</div>
-              <div className="col-span-2">Transactions</div>
+              {/* <div className="col-span-2">Percentage</div> */}
+              {/* <div className="col-span-2">Transactions</div> */}
             </div>
           </div>
 
           {/* Table Body */}
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedHolders.map((holder, index) => (
+            {paginatedHolders.map((holder : any, index : any) => (
               <motion.div
-                key={holder.address}
+                key={holder.owner_did}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onHolderClick(holder.address)}
+                onClick={() => onHolderClick(holder.owner_did)}
                 className="grid grid-cols-11 gap-4 px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
               >
-                <div className="col-span-1">
-                  <div className="flex items-center">
-                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">
-                      #{holder.rank}
-                    </span>
-                  </div>
-                </div>
                 <div className="col-span-4">
                   <div className="flex items-center space-x-2">
-                    <Tooltip content={holder.address} position="top">
+                    <Tooltip content={holder.owner_did} position="top">
                       <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer">
-                        {formatAddress(holder.address, 8)}
+                        {formatAddress(holder.owner_did, 8)}
                       </div>
                     </Tooltip>
-                    <CopyButton text={holder.address} size="sm" />
+                    <CopyButton text={holder.owner_did} size="sm" />
                   </div>
                 </div>
                 <div className="col-span-2">
                   <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {holder.tokenCount}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="w-full">
-                    <div className="text-sm text-secondary-600 dark:text-secondary-400 mb-1">
-                      {holder.percentage}
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                      <div 
-                        className="bg-primary-600 dark:bg-primary-400 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: holder.percentage }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-sm text-secondary-600 dark:text-secondary-400">
-                    {holder.transactions.toLocaleString()}
+                    {holder.token_count}
                   </div>
                 </div>
               </motion.div>
@@ -896,8 +930,17 @@ const TokensListView: React.FC<{
 }> = ({ currentPage, itemsPerPage, onPageChange, onTokenClick }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedTokens = mockTokens.slice(startIndex, endIndex);
   const totalPages = Math.ceil(mockTokens.length / itemsPerPage);
+  const {data, isLoading, error} = useTokens();
+  let paginatedTokens : any = [];
+
+  useEffect(() => {
+  }, [data]);
+
+  if(data){
+     paginatedTokens = data.slice(startIndex, endIndex);
+
+  }
 
   return (
     <div className="w-full">
@@ -916,18 +959,18 @@ const TokensListView: React.FC<{
 
           {/* Table Body */}
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedTokens.map((token, index) => (
+            {paginatedTokens.map((token:any, index:any) => (
               <motion.div
-                key={token.id}
+                key={token.rbt_id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onTokenClick(token.id)}
+                onClick={() => onTokenClick(token.rbt_id)}
                 className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[800px] gap-6"
               >
                 <div className="w-64 flex-shrink-0">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${token.type === 'RBT'
+                    {/* <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${token.type === 'RBT'
                       ? 'bg-primary-100 dark:bg-primary-900'
                       : token.type === 'FT'
                         ? 'bg-tertiary-100 dark:bg-tertiary-900'
@@ -945,19 +988,19 @@ const TokensListView: React.FC<{
                         }`}>
                         {token.type.charAt(0)}
                       </span>
-                    </div>
+                    </div> */}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                        {token.name}
+                        {token.rbt_id}
                       </div>
                       <div className="text-xs text-secondary-500 dark:text-secondary-400 truncate">
-                        {token.id}
+                        {token.owner_did}
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="w-24 flex-shrink-0 flex items-center">
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${token.type === 'RBT'
+                  {/* <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${token.type === 'RBT'
                     ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
                     : token.type === 'FT'
                       ? 'bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200'
@@ -966,17 +1009,12 @@ const TokensListView: React.FC<{
                         : 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
                     }`}>
                     {token.type}
-                  </span>
+                  </span> */}
                 </div>
                 <div className="w-24 flex-shrink-0 flex items-center">
                   <span className="text-sm font-medium text-secondary-900 dark:text-white">
-                    {token.symbol}
+                    {token.token_value}
                   </span>
-                </div>
-                <div className="w-32 flex-shrink-0 flex items-center">
-                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {token.valueInRBT} RBT
-                  </div>
                 </div>
               </motion.div>
             ))}
@@ -989,15 +1027,15 @@ const TokensListView: React.FC<{
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="grid grid-cols-10 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
               <div className="col-span-4">Token</div>
-              <div className="col-span-2">Type</div>
-              <div className="col-span-2">Symbol</div>
-              <div className="col-span-2">Value in RBT</div>
+              <div className="col-span-2">Value in Rbt</div>
+              <div className="col-span-2">Owner</div>
+              
             </div>
           </div>
 
           {/* Table Body */}
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedTokens.map((token, index) => (
+            {paginatedTokens.map((token:any, index:any) => (
               <motion.div
                 key={token.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -1008,57 +1046,25 @@ const TokensListView: React.FC<{
               >
                 <div className="col-span-4">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${token.type === 'RBT'
-                      ? 'bg-primary-100 dark:bg-primary-900'
-                      : token.type === 'FT'
-                        ? 'bg-tertiary-100 dark:bg-tertiary-900'
-                        : token.type === 'NFT'
-                          ? 'bg-primary-100 dark:bg-primary-900'
-                          : 'bg-primary-100 dark:bg-primary-900'
-                      }`}>
-                      <span className={`text-xs font-semibold ${token.type === 'RBT'
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : token.type === 'FT'
-                          ? 'text-tertiary-600 dark:text-tertiary-400'
-                          : token.type === 'NFT'
-                            ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-primary-600 dark:text-primary-400'
-                        }`}>
-                        {token.type.charAt(0)}
-                      </span>
-                    </div>
                     <div>
                       <div className="text-sm font-medium text-secondary-900 dark:text-white">
-                        {token.name}
-                      </div>
-                      <div className="text-xs text-secondary-500 dark:text-secondary-400">
-                        {token.id}
+                        {token.rbt_id}
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-span-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${token.type === 'RBT'
-                    ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
-                    : token.type === 'FT'
-                      ? 'bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200'
-                      : token.type === 'NFT'
-                        ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
-                        : 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
-                    }`}>
-                    {token.type}
-                  </span>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-sm font-medium text-secondary-900 dark:text-white">
-                    {token.symbol}
-                  </span>
                 </div>
                 <div className="col-span-2">
                   <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {token.valueInRBT} RBT
+                    {token.token_value} RBT
                   </div>
                 </div>
+                <div className="col-span-2">
+                  <span className="text-sm font-medium text-secondary-900 dark:text-white">
+                    {token.owner_did}
+                  </span>
+                </div>
+
+
               </motion.div>
             ))}
           </div>

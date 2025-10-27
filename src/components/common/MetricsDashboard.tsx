@@ -120,24 +120,22 @@ interface MetricsDashboardProps {
 
 export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = '' }) => {
   const { data: metrics, isLoading, error } = useMetrics();
-
   const mockMetrics: NetworkMetrics = {
     totalTransactions: 1234567,
-    totalValueSettled: 45200000,
+    // totalValueSettled: 45200000,
     totalDIDs: 89432,
-    activeValidators: 1247,
-    totalPledge: 45200000,
-    averageBlockTime: 2.3,
-    networkHealth: 99.8,
+    // activeValidators: 1247,
+    // totalPledge: 45200000,
+    // averageBlockTime: 2.3,
+    // networkHealth: 99.8,
     totalRBT: 1250000,
     totalFT: 45600,
     totalNFT: 23400,
     totalSmartContracts: 890,
-    totalAssets: 1250000 + 45600 + 23400 + 890,
+    // totalAssets: 1250000 + 45600 + 23400 + 890,
     marketCap: 2850000000, // $2.85B market cap
     rbtPrice: 2.28, // $2.28 per RBT
-    rbtPriceChange2h: 3.45, // +3.45% change in 2h
-    averageTransactionSize: 1250.75, // $1,250.75 average transaction size
+    // rbtPriceChange2h: 3.45, // +3.45% change in 2h
   };
 
   const getMetricsData = (data: any): NetworkMetrics => {
@@ -201,21 +199,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
       icon: DollarSign,
       color: 'text-green-600',
       tooltip: 'Market capitalization represents the total value of all Rubix tokens in circulation, calculated by multiplying the current price by the total supply.',
-    },
-    {
-      title: 'RBT Price',
-      value: formatCurrency(currentMetrics.rbtPrice || 2.28),
-      change: currentMetrics.rbtPriceChange2h ? formatPriceChange(currentMetrics.rbtPriceChange2h) : null,
-      icon: Coins,
-      color: 'text-primary-600',
-      tooltip: 'Current price of Rubix Base Token (RBT) in USD, with 2-hour price change percentage.',
-    },
-    {
-      title: 'ATS',
-      value: formatCurrency(currentMetrics.averageTransactionSize || 1250.75),
-      icon: BarChart3,
-      color: 'text-blue-600',
-      tooltip: 'Average Transaction Size (ATS) represents the mean value of all transactions on the Rubix network, indicating typical transaction volumes.',
     },
     {
       title: 'Total RBT',
@@ -283,8 +266,8 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
             <MetricCard
               title={metric.title}
               value={metric.value}
-              change={metric.change?.text}
-              changeType={metric.change?.isPositive ? 'positive' : 'negative'}
+              // change={metric.change?.text}
+              // changeType={metric.change?.isPositive ? 'positive' : 'negative'}
               icon={metric.icon}
               color={metric.color}
               loading={isLoading}

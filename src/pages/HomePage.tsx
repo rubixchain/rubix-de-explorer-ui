@@ -4,7 +4,6 @@ import { MetricsDashboard } from '@/components/common/MetricsDashboard';
 import { DataExplorer } from '@/components/common/DataExplorer';
 
 export const HomePage: React.FC = () => {
-
   return (
     <div className="relative min-h-screen">
       <div className="relative z-10 space-y-6 sm:space-y-8">
@@ -25,7 +24,7 @@ export const HomePage: React.FC = () => {
 
 
       </motion.div>
-
+      
       <MetricsDashboard />
 
       <motion.div

@@ -81,21 +81,21 @@ export interface TokenMetadata {
 
 export interface NetworkMetrics {
   totalTransactions: number;
-  totalValueSettled: number;
+  // totalValueSettled: number;
   totalDIDs: number;
-  activeValidators: number;
-  totalPledge: number;
-  averageBlockTime: number;
-  networkHealth: number;
+  // activeValidators: number;
+  // totalPledge: number;
+  // averageBlockTime: number;
+  // networkHealth: number;
   totalRBT?: number;
   totalFT?: number;
   totalNFT?: number;
   totalSmartContracts?: number;
-  totalAssets?: number;
+  // totalAssets?: number;
   marketCap?: number;
   rbtPrice?: number;
-  rbtPriceChange2h?: number;
-  averageTransactionSize?: number;
+  // rbtPriceChange2h?: number;
+  // averageTransactionSize?: number;
 }
 
 export interface SearchQuery {

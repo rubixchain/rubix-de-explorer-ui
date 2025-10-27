@@ -3,12 +3,11 @@ import { ApiResponse, Pagination, DID, Token, Transaction, Block, Validator, Net
 
 const generateMockMetrics = (): NetworkMetrics => ({
   totalTransactions: 1234567,
-  totalValueSettled: 45200000,
   totalDIDs: 89432,
-  activeValidators: 1247,
-  totalPledge: 45200000,
-  averageBlockTime: 2.3,
-  networkHealth: 99.8,
+//  activeValidators: 1247,
+//   totalPledge: 45200000,
+//   averageBlockTime: 2.3,
+//   networkHealth: 99.8,
 });
 
 const generateMockTransactions = (count: number = 20): Transaction[] => {
@@ -165,34 +164,98 @@ class ApiClient {
     return this.request<any>(`${API_ENDPOINTS.SEARCH}?${params}`);
   }
 
-  async getTransactions(params?: {
-    page?: number;
-    limit?: number;
-    type?: string;
-    status?: string;
-  }) {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
-      
-      const limit = params?.limit || 20;
-      return {
-        data: generateMockTransactions(limit),
-        success: true,
-        message: 'Mock transactions loaded successfully'
-      };
+async getTransactions(params?: {
+  page?: number;
+  limit?: number;
+  // type?: string;
+  // status?: string;
+}) {
+  // const BASE_URL = "https://relay-texts-interior-blink.trycloudflare.com/api";
+
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.append("page", params.page.toString());
+  if (params?.limit) searchParams.append("limit", params.limit.toString());
+  // if (params?.type) searchParams.append("type", params.type);
+  // if (params?.status) searchParams.append("status", params.status);
+
+  try {
+    const response = await fetch(`${this.baseUrl}/txnblocks?${searchParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.append('page', params.page.toString());
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.type) searchParams.append('type', params.type);
-    if (params?.status) searchParams.append('status', params.status);
-    
-    return this.request<Transaction[]>(`${API_ENDPOINTS.TRANSACTIONS}?${searchParams}`);
+
+    const txnResp = await response.json();
+
+    const frontendTransactions = (txnResp.transactions_response || []).map((txn:any) => {
+      // --- Inline timeAgo formatter ---
+      const dateString = txn.txn_time;
+      let timeAgo = "N/A";
+      if (dateString && !dateString.startsWith("0001-01-01")) {
+        const now = new Date();
+        const txnDate = new Date(dateString);
+        const diffMs = now.getTime() - txnDate.getTime();
+
+        if (!isNaN(diffMs) && diffMs >= 0) {
+          const diffMinutes = Math.floor(diffMs / 60000);
+          if (diffMinutes < 1) timeAgo = "just now";
+          else if (diffMinutes < 60) timeAgo = `${diffMinutes} min${diffMinutes > 1 ? "s" : ""} ago`;
+          else {
+            const diffHours = Math.floor(diffMinutes / 60);
+            if (diffHours < 24) timeAgo = `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+            else {
+              const diffDays = Math.floor(diffHours / 24);
+              if (diffDays < 7) timeAgo = `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+              else {
+                timeAgo = txnDate.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        id: txn.txn_hash,
+        type: txn.txn_type
+          ? txn.txn_type.charAt(0).toUpperCase() + txn.txn_type.slice(1)
+          : "Unknown",
+        from: txn.sender_did || "N/A",
+        to: txn.receiver_did || "N/A",
+        value: `${Number(txn.amount || 0).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} RBT`,
+        timestamp: timeAgo,
+        status: txn.status || "confirmed",
+      };
+    });
+
+    return { success: true, data: frontendTransactions };
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    return { success: false, message: "Failed to fetch transactions", data: [] };
   }
+}
+
+
 
   async getTransaction(id: string) {
-    return this.request<Transaction>(`${API_ENDPOINTS.TRANSACTIONS}/${id}`);
+  // const API_BASE = "https://relay-texts-interior-blink.trycloudflare.com/api/";
+
+  try {
+    const response = await fetch(`${this.baseUrl}/txnhash?hash=${id}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const txnInfo = await response.json();
+    return txnInfo;
+  } catch (error) {
+    throw error;
+  }
   }
 
   async getTokens(params?: {
@@ -204,26 +267,56 @@ class ApiClient {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.type) searchParams.append('type', params.type);
-    if (params?.owner) searchParams.append('owner', params.owner);
+    // if (params?.type) searchParams.append('type', params.type);
+    // if (params?.owner) searchParams.append('owner', params.owner);
     
-    return this.request<Token[]>(`${API_ENDPOINTS.TOKENS}?${searchParams}`);
-  }
+  // const API_BASE = "https://relay-texts-interior-blink.trycloudflare.com/api";
+
+  if (params?.page) searchParams.append("page", params.page.toString());
+  if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+  try {
+
+    const response = await fetch(`${this.baseUrl}/getrbtlist?${searchParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const txnInfo = await response.json();
+    return txnInfo;
+  } catch (error) {
+    console.error("API request failed:", error);
+    throw error;
+  }  }
 
   async getToken(id: string) {
     return this.request<Token>(`${API_ENDPOINTS.TOKENS}/${id}`);
   }
 
-  async getDIDs(params?: {
-    page?: number;
-    limit?: number;
-  }) {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.append('page', params.page.toString());
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    
-    return this.request<DID[]>(`${API_ENDPOINTS.DIDS}?${searchParams}`);
+async getDIDs(params?: {
+  page?: number;
+  limit?: number;
+}) {
+  // const API_BASE = "https://relay-texts-interior-blink.trycloudflare.com/api/";
+  const searchParams = new URLSearchParams();
+
+  if (params?.page) searchParams.append("page", params.page.toString());
+  if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+  try {
+    const response = await fetch(`${this.baseUrl}/didwithmostrbts?${searchParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const didInfo = await response.json();
+    return didInfo;
+  } catch (error) {
+    console.error("API request failed:", error);
+    throw error;
   }
+}
+
 
   async getDID(id: string) {
     return this.request<DID>(`${API_ENDPOINTS.DIDS}/${id}`);
@@ -265,19 +358,58 @@ class ApiClient {
     return this.request<Block>(`${API_ENDPOINTS.BLOCKS}/${height}`);
   }
 
-  async getMetrics() {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
-      
+  async getMetrics(): Promise<{ data: NetworkMetrics; success: boolean; message: string }> {
+    // let API_BASE = "https://relay-texts-interior-blink.trycloudflare.com/api/"
+    // if (USE_MOCK_DATA) {
+    //   await new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 200));
+    //   return {
+    //     data: generateMockMetrics(),
+    //     success: true,
+    //     message: "Mock metrics loaded successfully",
+    //   };
+    // }
+
+    try {
+      const [
+        rbtRes,
+        ftRes,
+        didRes,
+        txnsRes,
+        scRes,
+        nftRes
+      ] = await Promise.all([
+        fetch(`${this.baseUrl}/allrbtcount`).then((res) => res.json()),
+        fetch(`${this.baseUrl}/allftcount`).then((res) => res.json()),
+        fetch(`${this.baseUrl}/alldidcount`).then((res) => res.json()),
+        fetch(`${this.baseUrl}/alltransactionscount`).then((res) => res.json()),
+        fetch(`${this.baseUrl}/allsmartcontractscount`).then((res) => res.json()),
+        fetch(`${this.baseUrl}/allnftcount`).then((res) => res.json()),
+      ]);
+      // Combine results
+      const data: NetworkMetrics = {
+        totalRBT: rbtRes.all_rbt_count || 0,
+        totalFT: ftRes.all_ft_count || 0,
+        totalDIDs: didRes.all_did_count || 0,
+        totalTransactions: txnsRes.all_txn_count || 0,
+        totalSmartContracts: scRes.all_sc_count || 0,
+        totalNFT: nftRes.all_nft_count || 0,
+      };
+
       return {
-        data: generateMockMetrics(),
+        data,
         success: true,
-        message: 'Mock metrics loaded successfully'
+        message: "Metrics loaded successfully",
+      };
+    } catch (error) {
+      console.error("Error fetching metrics:", error);
+      return {
+        data: generateMockMetrics(), // fallback to mock if error occurs
+        success: false,
+        message: "Failed to fetch metrics",
       };
     }
-    
-    return this.request<NetworkMetrics>(API_ENDPOINTS.METRICS);
   }
+
 }
 
 export const apiClient = new ApiClient();

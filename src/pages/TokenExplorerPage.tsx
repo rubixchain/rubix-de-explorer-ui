@@ -4,10 +4,28 @@ import { Card } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { ArrowLeft, Coins, DollarSign, TrendingUp, Activity } from 'lucide-react';
+import { ArrowLeft, Coins, DollarSign, TrendingUp, Activity, PartyPopper } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Mock data for token information
+
+interface TokenInfo {
+  tokenId: string;
+  type: 'RBT' | 'FT' | 'SC' | 'NFT' | 'UNKNOWN';
+  // RBT-specific
+  id?: string;
+  owner_did?: string;
+  block_height?: string;
+  token_value?: number;
+  name?: string;
+  symbol?: string;
+  supply?: string;
+  txn_id?: string;
+  creator_did?: string;
+  // …any common fields
+}
+
+
 const MOCK_TOKEN_INFO = {
   name: 'Rubix Token',
   symbol: 'RBT',
@@ -57,23 +75,89 @@ export const TokenExplorerPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  useEffect(() => {
+
+const normalizeToken = (raw: any, tokenId: string): TokenInfo => {
+  const base = { tokenId, type: 'UNKNOWN' as const };
+  const payload = raw.rbt_info ?? raw.ft_info ?? raw.sc_info ?? raw.nft_info;
+
+  if (!payload) return base;
+
+  const type = raw.type.toUpperCase() as 'RBT' | 'FT' | 'SC' | 'NFT';
+
+  if (type === 'RBT') {
+    return {
+      ...base,
+      type,
+      id: payload.rbt_id,
+      owner_did: payload.owner_did,
+      block_height: payload.block_height,
+      token_value: payload.token_value,
+    };
+  }
+
+  if (type === 'FT') {
+    return {
+      ...base,
+      type,
+      name: payload.ft_name,
+      block_height: payload.block_height,
+      creator_did: payload.creator_did,
+      token_value: payload.token_value,
+      owner_did: payload.owner_did,
+      txn_id: payload.txn_id,
+    };
+  }
+
+  if (type === 'SC') {
+    return {
+      ...base,
+      type,
+      name: payload.contract_id,
+      creator_did: payload.deployer_did,
+      txn_id: payload.txn_id,
+    };
+  }
+
+  if (type === 'NFT') {
+    return {
+      ...base,
+      type,
+      id: payload.nft_id,
+      token_value: payload.token_value,
+      owner_did: payload.owner_did,
+      txn_id: payload.txn_id,
+    };
+  }
+
+  return base;
+};
+
+useEffect(() => {
     const fetchTokenData = async () => {
       setLoading(true);
-      setTimeout(() => {
-        setTokenData({
-          id: tokenId,
-          ...MOCK_TOKEN_INFO
-        });
-        setTransactions(MOCK_TOKEN_TRANSACTIONS);
+      try {
+        const response = await fetch(
+          `https://relay-texts-interior-blink.trycloudflare.com/api/search?id=${tokenId}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch token data');
+
+        const raw = await response.json();
+        // ---- NORMALISE ----
+        const tokenInfo = normalizeToken(raw, tokenId);
+        setTokenData(tokenInfo);
+
+        // Transactions (fallback to mock)
+        setTransactions(raw.transactions ?? MOCK_TOKEN_TRANSACTIONS);
+      } catch (error) {
+        console.error(error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
-    if (tokenId) {
-      fetchTokenData();
-    }
+    if (tokenId) fetchTokenData();
   }, [tokenId]);
+
 
   if (loading) {
     return (
@@ -136,14 +220,14 @@ export const TokenExplorerPage: React.FC = () => {
         <div className="flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
           <span>Details for Token:</span>
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400">{tokenData.id}</span>
-            <CopyButton text={tokenData.id} size="sm" />
+            <span className="font-mono text-primary-600 dark:text-primary-400">{tokenData.tokenId}</span>
+            <CopyButton text={tokenData.rbt_id} size="sm" />
           </div>
         </div>
       </div>
 
       {/* Token Info */}
-      <Card className="p-4 sm:p-6">
+      {/* <Card className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
           <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${
             tokenData.type === 'RBT' ? 'bg-primary-100 dark:bg-primary-900' :
@@ -157,7 +241,7 @@ export const TokenExplorerPage: React.FC = () => {
               tokenData.type === 'NFT' ? 'text-primary-600 dark:text-primary-400' :
               'text-primary-600 dark:text-primary-400'
             }`}>
-              {tokenData.type.charAt(0)}
+             
             </span>
           </div>
           <div className="min-w-0 flex-1">
@@ -172,35 +256,159 @@ export const TokenExplorerPage: React.FC = () => {
             </span>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
 
       {/* Token Details */}
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold text-heading dark:text-white mb-4">Token Details</h3>
+   <Card className="p-6">
+        <h3 className="text-xl font-semibold text-heading dark:text-white mb-4">
+          Token Details
+        </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500 dark:text-gray-400">Owner:</p>
-            <div className="flex items-center space-x-2">
-              <p className="font-mono text-gray-900 dark:text-white">{tokenData.owner}</p>
-              <CopyButton text={tokenData.owner} size="sm" />
+          {tokenData.type === 'RBT' && (
+            
+            <>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">RBT ID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.id}</p>
+                  <CopyButton text={tokenData.id!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.owner_did}</p>
+                  <CopyButton text={tokenData.owner_did!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Block Height:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.block_height}</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.token_value}</p>
+              </div>
+            </>
+          )}
+
+          {/* ----- FT ----- */}
+          {tokenData.type === 'FT' && (
+            <>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Name:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.name}</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Creator DID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.creator_did}</p>
+                  <CopyButton text={tokenData.creator_did!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.owner_did}</p>
+                  <CopyButton text={tokenData.owner_did!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Block Height:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.block_height}</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.token_value}</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Transaction ID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.txn_id}</p>
+                  <CopyButton text={tokenData.txn_id!} size="sm" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ----- SC (Smart Contract) ----- */}
+          {tokenData.type === 'SC' && (
+            <>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Contract ID / Name:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.name}</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Deployer DID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.creator_did}</p>
+                  <CopyButton text={tokenData.creator_did!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Transaction ID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.txn_id}</p>
+                  <CopyButton text={tokenData.txn_id!} size="sm" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ----- NFT ----- */}
+          {tokenData.type === 'NFT' && (
+            <>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">NFT ID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.id}</p>
+                  <CopyButton text={tokenData.id!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.owner_did}</p>
+                  <CopyButton text={tokenData.owner_did!} size="sm" />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
+                <p className="font-mono text-gray-900 dark:text-white">{tokenData.token_value}</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Transaction ID:</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-mono text-gray-900 dark:text-white">{tokenData.txn_id}</p>
+                  <CopyButton text={tokenData.txn_id!} size="sm" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ----- UNKNOWN ----- */}
+          {tokenData.type === 'UNKNOWN' && (
+            <div className="col-span-2">
+              <p className="text-gray-500 dark:text-gray-400">
+                No detailed information available for this token type.
+              </p>
             </div>
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400">Deployer:</p>
-            <div className="flex items-center space-x-2">
-              <p className="font-mono text-gray-900 dark:text-white">{tokenData.deployer}</p>
-              <CopyButton text={tokenData.deployer} size="sm" />
-            </div>
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400">Block Height:</p>
-            <p className="font-medium text-gray-900 dark:text-white">{tokenData.blockHeight.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400">Deploy Date:</p>
-            <p className="font-medium text-gray-900 dark:text-white">{tokenData.deployDate}</p>
-          </div>
+          )}
         </div>
       </Card>
 

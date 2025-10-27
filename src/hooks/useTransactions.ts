@@ -4,12 +4,13 @@ import { Transaction } from '@/types';
 
 interface UseTransactionsParams {
   page?: number;
-  limit?: number;
-  type?: string;
-  status?: string;
+  limit?: number;  
+  // type?: string;
+  // status?: string;
 }
 
 export const useTransactions = (params?: UseTransactionsParams) => {
+  console.log("testing-111", params)
   return useQuery({
     queryKey: ['transactions', params],
     queryFn: () => api.getTransactions(params),
