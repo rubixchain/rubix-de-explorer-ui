@@ -15,6 +15,7 @@ export const TransactionExplorerPage: React.FC = () => {
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'transfers' | 'validators'>('details');
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const fetchTransactionData = async () => {
@@ -22,8 +23,7 @@ export const TransactionExplorerPage: React.FC = () => {
         if (!txId) {
           throw new Error('No transaction ID provided');
         }
-
-        const response = await fetch(`https://relay-texts-interior-blink.trycloudflare.com/api/txnhash?hash=${txId}`);
+        const response = await fetch(`${API_BASE_URL}/api/txnhash?hash=${txId}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch transaction data: ${response.statusText}`);
         }
@@ -305,7 +305,7 @@ export const TransactionExplorerPage: React.FC = () => {
           )}
           {activeTab === 'transfers' && (
             <div>
-              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              {/* <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Multiple Token Transfers in Single Transaction
                 </h4>
@@ -313,7 +313,7 @@ export const TransactionExplorerPage: React.FC = () => {
                   This transaction involves {tokenTransfers.length} different token transfers across the Rubix ecosystem.
                   Click on any token to view its details.
                 </p>
-              </div>
+              </div> */}
               {tokenTransfers.length === 0 && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">No token transfers found for this transaction.</p>
               )}
@@ -325,9 +325,9 @@ export const TransactionExplorerPage: React.FC = () => {
                     <div className="w-24 flex-shrink-0">Type</div>
                     <div className="w-48 flex-shrink-0">From</div>
                     <div className="w-48 flex-shrink-0">To</div>
-                    <div className="w-32 flex-shrink-0">Amount</div>
+                    {/* <div className="w-32 flex-shrink-0">Amount</div> */}
                     <div className="w-24 flex-shrink-0">Status</div>
-                    <div className="w-32 flex-shrink-0">Time</div>
+                    {/* <div className="w-32 flex-shrink-0">Time</div> */}
                   </div>
                 </div>
                 <div className="divide-y divide-outline-200 dark:divide-outline-700">
@@ -411,14 +411,14 @@ export const TransactionExplorerPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="w-32 flex-shrink-0 flex items-center">
-                        <div className="flex items-center space-x-1">
+                        {/* <div className="flex items-center space-x-1">
                           <div className="font-semibold text-gray-900 dark:text-white text-sm">{transfer.amount}</div>
-                          {transfer.amountUSD && (
+                          {transfer.amount && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                              {transfer.amountUSD}
+                              {transfer.amount}
                             </span>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                       <div className="w-24 flex-shrink-0 flex items-center">
                         <span
@@ -431,9 +431,9 @@ export const TransactionExplorerPage: React.FC = () => {
                           {transfer.status}
                         </span>
                       </div>
-                      <div className="w-32 flex-shrink-0 flex items-center">
+                      {/* <div className="w-32 flex-shrink-0 flex items-center">
                         <div className="text-sm text-gray-500 dark:text-gray-400">{transfer.timestamp}</div>
-                      </div>
+                      </div> */}
                     </motion.div>
                   ))}
                 </div>
@@ -488,20 +488,20 @@ export const TransactionExplorerPage: React.FC = () => {
                             <p className="font-mono text-gray-900 dark:text-white break-all">{transfer.to}</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{transfer.timestamp}</div>
+                        {/* <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{transfer.timestamp}</div> */}
                       </div>
                       <div className="flex items-center justify-between sm:justify-end space-x-2 sm:ml-4">
                         <div className="text-right">
                           <div className="flex items-center justify-end space-x-2 mb-1">
-                            <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-lg">
+                            {/* <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-lg">
                               {transfer.amount}
-                            </div>
+                            </div> */}
                             <div className="text-xs text-gray-500 dark:text-gray-400">{transfer.tokenType}</div>
-                            {transfer.amountUSD && (
+                            {/* {transfer.amount && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                                {transfer.amountUSD}
+                                {transfer.amount}
                               </span>
-                            )}
+                            )} */}
                           </div>
                         </div>
                         <div className="text-gray-400 dark:text-gray-500 text-xs">→</div>

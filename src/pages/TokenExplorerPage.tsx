@@ -118,6 +118,7 @@ export const TokenExplorerPage: React.FC = () => {
   const [transactions, setTransactions] = useState<any[]>(
     MOCK_TOKEN_TRANSACTIONS
   );
+  const [error, setError] = useState<Boolean>(false);
   const [activeTab, setActiveTab] = useState<"transactions">("transactions");
   const [tokenChainData, setTokenChainData] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -178,44 +179,48 @@ export const TokenExplorerPage: React.FC = () => {
 
     return base;
   };
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   useEffect(() => {
     const fetchTokenData = async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://relay-texts-interior-blink.trycloudflare.com/api/search?id=${tokenId}`
+          `${API_BASE_URL}/api/search?id=${tokenId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch token data");
+
+        if (!response.ok) {
+          setError(true);
+        }
 
         const raw = await response.json();
         // ---- NORMALISE ----
         const tokenInfo = normalizeToken(raw, tokenId);
-        // setTokenData(MOCK_TOKEN_INFO);
-
+        setTokenData(raw);
         const tokenChainResp = await fetch(
-          `https://relay-texts-interior-blink.trycloudflare.com/api/get-token-chain?tokenID=${tokenId}`
+          `${API_BASE_URL}/api/token-chain?token_id=${tokenId}`
         );
         if (!tokenChainResp.ok) throw new Error("Failed to fetch token chain");
 
         const tokenChainJson = await tokenChainResp.json();
-        setTokenChainData(
-          Array.isArray(tokenChainJson) ? tokenChainJson : [tokenChainJson]
-        );
-        // Transactions (fallback to mock)
+   
+        setTokenChainData(tokenChainJson.TokenChainData);
+
         setTransactions(raw.transactions ?? MOCK_TOKEN_TRANSACTIONS);
-        //  setTransactions(MOCK_TOKEN_TRANSACTIONS);
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
+    ("");
 
-    setTimeout(() => setTokenChainData(mockTokenChain), 300);
+    // setTimeout(() => setTokenChainData(mockTokenChain), 300);
 
     if (tokenId) fetchTokenData();
   }, [tokenId]);
+
 
   if (loading) {
     return (
@@ -228,6 +233,27 @@ export const TokenExplorerPage: React.FC = () => {
               <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Token Not Found
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            The requested token could not be found.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Back to Home
+          </button>
         </div>
       </div>
     );
@@ -281,9 +307,9 @@ export const TokenExplorerPage: React.FC = () => {
           <span>Details for Token:</span>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400">
-              {tokenData.tokenId}
+              {tokenData.id}
             </span>
-            <CopyButton text={tokenData.rbt_id} size="sm" />
+            <CopyButton text={tokenData.id} size="sm" />
           </div>
         </div>
       </div>
@@ -343,9 +369,9 @@ export const TokenExplorerPage: React.FC = () => {
                 <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.owner_did}
+                    {tokenData.data.owner_did}
                   </p>
-                  <CopyButton text={tokenData.owner_did!} size="sm" />
+                  <CopyButton text={tokenData.data.owner_did!} size="sm" />
                 </div>
               </div>
 
@@ -354,14 +380,14 @@ export const TokenExplorerPage: React.FC = () => {
                   Block Height:
                 </p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.block_height}
+                  {tokenData.data.block_height}
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.token_value}
+                  {tokenData.data.token_value}
                 </p>
               </div>
             </>
@@ -373,17 +399,22 @@ export const TokenExplorerPage: React.FC = () => {
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Name:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.name}
+                  {tokenData.data.ft_name}
                 </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Type:</p>
+                <p className="font-mono text-gray-900 dark:text-white">FT</p>
               </div>
 
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Creator DID:</p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.creator_did}
+                    {tokenData.data.creator_did}
                   </p>
-                  <CopyButton text={tokenData.creator_did!} size="sm" />
+                  <CopyButton text={tokenData.data.creator_did!} size="sm" />
                 </div>
               </div>
 
@@ -391,25 +422,16 @@ export const TokenExplorerPage: React.FC = () => {
                 <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.owner_did}
+                    {tokenData.data.owner_did}
                   </p>
-                  <CopyButton text={tokenData.owner_did!} size="sm" />
+                  <CopyButton text={tokenData.data.owner_did!} size="sm" />
                 </div>
-              </div>
-
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Block Height:
-                </p>
-                <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.block_height}
-                </p>
               </div>
 
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.token_value}
+                  {tokenData.data.token_value}
                 </p>
               </div>
 
@@ -419,9 +441,9 @@ export const TokenExplorerPage: React.FC = () => {
                 </p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.txn_id}
+                    {tokenData.data.block_id}
                   </p>
-                  <CopyButton text={tokenData.txn_id!} size="sm" />
+                  <CopyButton text={tokenData.data.block_id!} size="sm" />
                 </div>
               </div>
             </>
@@ -435,7 +457,7 @@ export const TokenExplorerPage: React.FC = () => {
                   Contract ID / Name:
                 </p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.name}
+                  {tokenData.data.name}
                 </p>
               </div>
 
@@ -445,9 +467,9 @@ export const TokenExplorerPage: React.FC = () => {
                 </p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.creator_did}
+                    {tokenData.data.creator_did}
                   </p>
-                  <CopyButton text={tokenData.creator_did!} size="sm" />
+                  <CopyButton text={tokenData.data.creator_did!} size="sm" />
                 </div>
               </div>
 
@@ -457,9 +479,9 @@ export const TokenExplorerPage: React.FC = () => {
                 </p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.txn_id}
+                    {tokenData.data.txn_id}
                   </p>
-                  <CopyButton text={tokenData.txn_id!} size="sm" />
+                  <CopyButton text={tokenData.data.txn_id!} size="sm" />
                 </div>
               </div>
             </>
@@ -482,16 +504,16 @@ export const TokenExplorerPage: React.FC = () => {
                 <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.owner_did}
+                    {tokenData.data.owner_did}
                   </p>
-                  <CopyButton text={tokenData.owner_did!} size="sm" />
+                  <CopyButton text={tokenData.data.owner_did!} size="sm" />
                 </div>
               </div>
 
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.token_value}
+                  {tokenData.data.token_value}
                 </p>
               </div>
 
@@ -501,9 +523,9 @@ export const TokenExplorerPage: React.FC = () => {
                 </p>
                 <div className="flex items-center space-x-2">
                   <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.txn_id}
+                    {tokenData.data.txn_id}
                   </p>
-                  <CopyButton text={tokenData.txn_id!} size="sm" />
+                  <CopyButton text={tokenData.data.txn_id!} size="sm" />
                 </div>
               </div>
             </>
@@ -520,12 +542,11 @@ export const TokenExplorerPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Recent Transactions */}
       {tokenChainData && tokenChainData.length > 0 && (
         <Card className="p-6">
           <h3 className="text-xl font-semibold text-heading dark:text-white mb-6 flex items-center space-x-2">
             <Activity className="w-5 h-5" />
-            <span>Recent Transactions</span>
+            <span>Token Chain History</span>
           </h3>
 
           <motion.div
@@ -539,73 +560,166 @@ export const TokenExplorerPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-3"
+
+                className="space-y-4"
               >
                 {tokenChainData
-                  .slice(0, 10) // show latest 10 blocks
-                  .map((block: any, index: number) => (
-                    <motion.div
-                      key={block.block_hash || index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      onClick={() =>
-                        navigate(`/transaction-explorer?tx=${block.block_hash}`)
-                      } // ✅ Added click navigation
-                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                        <div>
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            Block Hash
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-mono text-gray-900 dark:text-white truncate max-w-xs sm:max-w-md">
-                              {block.block_hash}
-                            </span>
-                            <CopyButton text={block.block_hash} size="sm" />
-                          </div>
-                        </div>
+                  .slice(
+                    (currentPage - 1) * itemsPerPage,
+                    currentPage * itemsPerPage
+                  )
+                  .map((block: any, index: number) => {
+                    // Determine if this is a genesis block or transaction block
+                    const isGenesisBlock =
+                      block.TCGenesisBlockKey &&
+                      Object.keys(block.TCGenesisBlockKey).length > 0;
+                    const hasTransInfo = block.TCTransInfoKey;
+                    const hasEpoch = block.TCEpoch;
 
-                        <div className="mt-3 sm:mt-0">
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            Owner DID
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-mono text-gray-900 dark:text-white truncate max-w-xs sm:max-w-md">
-                              {block.owner_did}
-                            </span>
-                            <CopyButton text={block.owner_did} size="sm" />
-                          </div>
-                        </div>
-
-                        <div className="mt-3 sm:mt-0">
-                          {/* <p className="text-gray-500 dark:text-gray-400 text-sm">Block Type</p> */}
-                          <span className="inline-flex px-3 py-1.5 text-xs font-medium rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                            {block.block_type}
-                          </span>
-                          {block.epoch && (
-                            <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-                              Epoch:{" "}
-                              <span className="text-gray-900 dark:text-white font-mono">
-                                {block.epoch}
-                              </span>
+                    return (
+                      <motion.div
+                        key={block.TCBlockHashKey || index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => {
+                          const transType = block.TCTransTypeKey;
+                          if (transType === "02" || transType === 2) {
+                            navigate(
+                              `/transaction-explorer?tx=${block.TCTransInfoKey.TITIDKey}`
+                            );
+                          } else if (transType === "08" || transType === 8 || transType === 13 || transType === "13" ) {
+                            navigate(
+                              `/burnt-transaction-explorer?tx=${block.TCBlockHashKey}`
+                            );
+                          } else if (transType === "09" || transType === 9 || transType === "10" || transType === 10) {
+                            navigate(
+                              `/sc-transaction-explorer?tx=${block.TCBlockHashKey}`
+                            );
+                          }
+                        }}
+                        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 transition-colors cursor-pointer"
+                      >
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                          {/* Block Hash */}
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
+                              Block Hash
                             </p>
-                          )}
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
+                                {block.TCBlockHashKey}
+                              </span>
+                              <CopyButton
+                                text={block.TCBlockHashKey}
+                                size="sm"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Owner DID */}
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
+                              Owner DID
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
+                                {block.TCTokenOwnerKey}
+                              </span>
+                              <CopyButton
+                                text={block.TCTokenOwnerKey}
+                                size="sm"
+                              />
+                            </div>
+                          </div>
+
+                                <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
+                              Block Type
+                             </p>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
+                                {block.TCTransTypeKey}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Token Value & Type/Epoch */}
+                          {/* <div className="flex items-center justify-between lg:justify-start lg:space-x-6"> */}
+                          {/* {block.TCTokenValueKey !== undefined && (
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">
+                                Token Value
+                              </p>
+                              <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">
+                                {block.TCTokenValueKey}
+                              </span>
+                            </div>
+                          )} */}
+
+                          {/* {hasEpoch && (
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">
+                                Epoch
+                              </p>
+                              <span className="font-mono text-sm text-gray-900 dark:text-white">
+                                {block.TCEpoch}
+                              </span>
+                            </div>
+                          )} */}
+
+                          {/* {block.TCTransTypeKey && (
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">
+                                Type
+                              </p>
+                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                block.TCTransTypeKey === "05" 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : block.TCTransTypeKey === "01" || block.TCTransTypeKey === 1
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  : block.TCTransTypeKey === "02" || block.TCTransTypeKey === 2
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                  : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                              }`}>
+                                {block.TCTransTypeKey === "05" ? "Genesis" :
+                                 block.TCTransTypeKey === "01" || block.TCTransTypeKey === 1 ? "Transfer" :
+                                 block.TCTransTypeKey === "02" || block.TCTransTypeKey === 2 ? "Burn" :
+                                 block.TCTransTypeKey === "03" || block.TCTransTypeKey === 3 ? "Smart Contract" :
+                                 "Transaction"}
+                              </span>
+                            </div>
+                          )} */}
+
+                          {/* {isGenesisBlock && !block.TCTransTypeKey && (
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">
+                                Type
+                              </p>
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                Genesis Block
+                              </span>
+                            </div>
+                          )} */}
+                          {/* </div> */}
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+
+                        {/* Transaction Info Comment */}
+                      </motion.div>
+                    );
+                  })}
               </motion.div>
 
-              <Pagination
-                currentPage={currentPage}
-                totalPages={Math.ceil(transactions.length / itemsPerPage)}
-                onPageChange={setCurrentPage}
-                totalItems={transactions.length}
-                itemsPerPage={itemsPerPage}
-                className="mt-6"
-              />
+              {tokenChainData.length > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(tokenChainData.length / itemsPerPage)}
+                  onPageChange={setCurrentPage}
+                  totalItems={tokenChainData.length}
+                  itemsPerPage={itemsPerPage}
+                  className="mt-6"
+                />
+              )}
             </div>
           </motion.div>
         </Card>

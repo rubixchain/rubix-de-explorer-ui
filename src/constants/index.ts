@@ -1,5 +1,5 @@
 export const API_ENDPOINTS = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'mock://api.rubix.explorer',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL ,
   SEARCH: '/search',
   TRANSACTIONS: '/transactions',
   TOKENS: '/tokens',

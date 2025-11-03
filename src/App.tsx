@@ -7,6 +7,8 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { DIDExplorerPage } from '@/pages/DIDExplorerPage';
 import { TokenExplorerPage } from '@/pages/TokenExplorerPage';
 import { TransactionExplorerPage } from '@/pages/TransactionExplorerPage';
+import { SCTransactionExplorerPage } from './pages/SCTransactionsExplorerPage';
+import { BurntTransactionExplorerPage } from './pages/BurntExplorePage';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
             <Route path="/did-explorer" element={<DIDExplorerPage />} />
             <Route path="/token-explorer" element={<TokenExplorerPage />} />
             <Route path="/transaction-explorer" element={<TransactionExplorerPage />} />
+            <Route path="/sc-transaction-explorer" element={<SCTransactionExplorerPage />} />
+            <Route path="/burnt-transaction-explorer" element={<BurntTransactionExplorerPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>

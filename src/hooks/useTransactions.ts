@@ -10,7 +10,6 @@ interface UseTransactionsParams {
 }
 
 export const useTransactions = (params?: UseTransactionsParams) => {
-  console.log("testing-111", params)
   return useQuery({
     queryKey: ['transactions', params],
     queryFn: () => api.getTransactions(params),
@@ -26,3 +25,30 @@ export const useTransaction = (id: string) => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
+
+export const useSCTxns = (params?: UseTransactionsParams) => {
+  return useQuery({
+    queryKey: ['sctxns', params],
+    queryFn: () => api.getSCTransactions(params),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+export const useBurntTxn = (params?: UseTransactionsParams) => {
+  
+  return useQuery({
+    queryKey: ['burnttxns', params],
+    queryFn: async () => {
+      const result = await api.getBurntTransactions(params);
+      return result;
+    },
+    staleTime: 2 * 60 * 1000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+};
+
+
+
+
+

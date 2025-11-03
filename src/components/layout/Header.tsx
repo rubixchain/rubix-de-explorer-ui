@@ -101,7 +101,6 @@ export const Header: React.FC = () => {
       
       // Perform the search using the search hook
       search(query);
-      
       // Navigate based on selected filter or auto-detect if "all" is selected
       if (selectedFilter === 'did') {
         navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
@@ -111,12 +110,10 @@ export const Header: React.FC = () => {
         navigate(`/transaction-explorer?tx=${encodeURIComponent(query)}`);
       } else {
         // Auto-detect when "all" is selected
-        if (query.startsWith('did:rubix:')) {
+        if (query.startsWith('bafy')) {
           navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
-        } else if (query.match(/^(RBT|FT|NFT|SC)-/)) {
+        } else if (query.startsWith('Qm')) {
           navigate(`/token-explorer?token=${encodeURIComponent(query)}`);
-        } else if (query.startsWith('0x') && query.length >= 40) {
-          navigate(`/transaction-explorer?tx=${encodeURIComponent(query)}`);
         } else if (/^\d+$/.test(query)) {
           // Block number search - route to transaction explorer with block parameter
           navigate(`/transaction-explorer?block=${encodeURIComponent(query)}`);
