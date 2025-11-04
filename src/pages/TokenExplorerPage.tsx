@@ -221,6 +221,40 @@ export const TokenExplorerPage: React.FC = () => {
     if (tokenId) fetchTokenData();
   }, [tokenId]);
 
+  function getTransactionTypeLabel(type: string): string {
+  switch (type) {
+    case "01":
+      return "Token Minted";
+    case "02":
+      return "Token Transferred";
+    case "03":
+      return "Token Migrated";
+    case "04":
+      return "Token Pledged";
+    case "05":
+      return "Token Generated";
+    case "06":
+      return "Token Unpledged";
+    case "07":
+      return "Token Committed";
+    case "08":
+      return "Token Burnt";
+    case "09":
+      return "Token Deployed";
+    case "10":
+      return "Token Executed";
+    case "11":
+      return "Token Contract Committed";
+    case "12":
+      return "Token Pinned as Service";
+    case "13":
+      return "Token Burnt for FT";
+    default:
+      return "Unknown Type";
+  }
+}
+
+
 
   if (loading) {
     return (
@@ -411,7 +445,8 @@ export const TokenExplorerPage: React.FC = () => {
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Creator DID:</p>
                 <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
+                  <p className="font-mono text-gray-900 dark:text cursor-pointer"
+                     onClick={() => navigate(`/did-explorer?did=${tokenData.data.creator_did}`)}>
                     {tokenData.data.creator_did}
                   </p>
                   <CopyButton text={tokenData.data.creator_did!} size="sm" />
@@ -421,7 +456,9 @@ export const TokenExplorerPage: React.FC = () => {
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
                 <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
+                  <p className="font-mono text-gray-900 dark:text-white cursor-pointer" 
+                                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}
+>
                     {tokenData.data.owner_did}
                   </p>
                   <CopyButton text={tokenData.data.owner_did!} size="sm" />
@@ -639,7 +676,7 @@ export const TokenExplorerPage: React.FC = () => {
                              </p>
                             <div className="flex items-center space-x-2">
                               <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                {block.TCTransTypeKey}
+                                {getTransactionTypeLabel(block.TCTransTypeKey)}
                               </span>
                             </div>
                           </div>

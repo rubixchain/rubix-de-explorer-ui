@@ -1,73 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Card } from '@/components/ui/Card';
-import { CopyButton } from '@/components/ui/CopyButton';
-import { Tooltip } from '@/components/ui/Tooltip';
-import { ArrowLeft, CheckCircle, Clock, XCircle, Hash, User, DollarSign } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/Card";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { Tooltip } from "@/components/ui/Tooltip";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Hash,
+  User,
+  DollarSign,
+} from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export const SCTransactionExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const txId = searchParams.get('tx') || '';
+  const txId = searchParams.get("tx") || "";
   const [loading, setLoading] = useState(true);
   const [txData, setTxData] = useState<any>(null);
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-//   const [activeTab, setActiveTab] = useState<'details' | 'transfers' | 'validators'>('details');
-  const [activeTab, setActiveTab] = useState<'details' >('details');
+  //   const [activeTab, setActiveTab] = useState<'details' | 'transfers' | 'validators'>('details');
+  const [activeTab, setActiveTab] = useState<"details">("details");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 
   useEffect(() => {
     const fetchTransactionData = async () => {
       try {
         if (!txId) {
-          throw new Error('No transaction ID provided');
+          throw new Error("No transaction ID provided");
         }
 
         const response = await fetch(`${API_BASE_URL}/sctxn-info?hash=${txId}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch transaction data: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch transaction data: ${response.statusText}`
+          );
         }
         const data = await response.json();
         const mapTxnType = (type: string): string => {
           switch (type) {
-            case '02':
-              return 'Transfer';
+            case "02":
+              return "Transfer";
             default:
-              return 'Unknown';
+              return "Unknown";
           }
         };
 
         // Handle tokens as an object, using only keys
-        const tokenIds = data.tokens && typeof data.tokens === 'object' ? Object.keys(data.tokens) : [];
+        const tokenIds =
+          data.tokens && typeof data.tokens === "object"
+            ? Object.keys(data.tokens)
+            : [];
         if (!Array.isArray(tokenIds)) {
-          console.warn('Tokens field does not contain valid keys:', data.tokens);
+          console.warn(
+            "Tokens field does not contain valid keys:",
+            data.tokens
+          );
         }
-        
-        const formattedTxData = {
-          id: data.block_id || 'N/A',
-          contract_id : data.contract_id || 'N/A' ,
-          status: 'confirmed',
-          confirmations: 120, 
-          type: mapTxnType(data.txn_type || ''),
-          timestamp: data.epoch || 'N/A', // Convert epoch to UTC string
-          blockId: data.block_hash || 'N/A',
-          executor_did: data.executor_did || 'N/A',
-          owner_did: data.owner_did || 'N/A',
-          block_height : data.block_height
-        //   validators: data.validator_pledge_map
-        //     ? Object.keys(data.validator_pledge_map).map((address) => ({ address }))
-        //     : [],
-        };
 
+        const formattedTxData = {
+          id: data.block_id || "N/A",
+          contract_id: data.contract_id || "N/A",
+          status: "confirmed",
+          confirmations: 120,
+          type: mapTxnType(data.txn_type || ""),
+          timestamp: data.epoch || "N/A", // Convert epoch to UTC string
+          blockId: data.block_hash || "N/A",
+          executor_did: data.executor_did || "N/A",
+          owner_did: data.owner_did || "N/A",
+          block_height: data.block_height,
+          //   validators: data.validator_pledge_map
+          //     ? Object.keys(data.validator_pledge_map).map((address) => ({ address }))
+          //     : [],
+        };
 
         setTxData(formattedTxData);
         setError(null);
       } catch (error: any) {
-        console.error('Error fetching transaction data:', error);
-        setError(error.message || 'An error occurred while fetching transaction data');
+        console.error("Error fetching transaction data:", error);
+        setError(
+          error.message || "An error occurred while fetching transaction data"
+        );
       } finally {
         setLoading(false);
       }
@@ -97,13 +113,13 @@ export const SCTransactionExplorerPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error ? 'Error Loading Transaction' : 'Transaction Not Found'}
+            {error ? "Error Loading Transaction" : "Transaction Not Found"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error || 'The requested transaction could not be found.'}
+            {error || "The requested transaction could not be found."}
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Back to Home
@@ -115,11 +131,11 @@ export const SCTransactionExplorerPage: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case "confirmed":
         return <CheckCircle className="w-5 h-5 text-tertiary-500" />;
-      case 'pending':
+      case "pending":
         return <Clock className="w-5 h-5 text-primary-500" />;
-      case 'failed':
+      case "failed":
         return <XCircle className="w-5 h-5 text-red-500" />;
       default:
         return null;
@@ -128,14 +144,14 @@ export const SCTransactionExplorerPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
-        return 'text-tertiary-600 dark:text-tertiary-400';
-      case 'pending':
-        return 'text-primary-600 dark:text-primary-400';
-      case 'failed':
-        return 'text-red-600 dark:text-red-400';
+      case "confirmed":
+        return "text-tertiary-600 dark:text-tertiary-400";
+      case "pending":
+        return "text-primary-600 dark:text-primary-400";
+      case "failed":
+        return "text-red-600 dark:text-red-400";
       default:
-        return 'text-gray-600 dark:text-gray-400';
+        return "text-gray-600 dark:text-gray-400";
     }
   };
 
@@ -149,7 +165,7 @@ export const SCTransactionExplorerPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -158,20 +174,28 @@ export const SCTransactionExplorerPage: React.FC = () => {
         </button>
       </div>
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">Smart Contract Explorer</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
+          Smart Contract Explorer
+        </h1>
         {/* Mobile Layout: Separate rows */}
         <div className="block sm:hidden">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Details for Smart contract:</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            Details for Smart contract:
+          </div>
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400 break-all">{txData.id}</span>
+            <span className="font-mono text-primary-600 dark:text-primary-400 break-all">
+              {txData.id}
+            </span>
             <CopyButton text={txData.id} size="sm" />
           </div>
         </div>
         {/* Desktop Layout: Same row */}
         <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
-          <span>Details for  Smart contract:</span>
+          <span>Details for Smart contract:</span>
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400">{txData.id}</span>
+            <span className="font-mono text-primary-600 dark:text-primary-400">
+              {txData.id}
+            </span>
             <CopyButton text={txData.id} size="sm" />
           </div>
         </div>
@@ -181,45 +205,60 @@ export const SCTransactionExplorerPage: React.FC = () => {
         {/* Tab Navigation */}
         <div className="flex flex-row space-x-4 sm:space-x-8 border-b border-gray-200 dark:border-gray-700 mb-4 sm:mb-6">
           <button
-            onClick={() => setActiveTab('details')}
+            onClick={() => setActiveTab("details")}
             className={`relative flex items-center space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 ${
-              activeTab === 'details'
-                ? 'text-primary-600 dark:text-primary-400'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              activeTab === "details"
+                ? "text-primary-600 dark:text-primary-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
             <Hash className="w-4 h-4" />
             <span className="text-xs sm:text-sm">Transaction Details</span>
-            {activeTab === 'details' && (
+            {activeTab === "details" && (
               <motion.div
                 layoutId="activeTab"
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400"
                 initial={false}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
             )}
           </button>
         </div>
         {/* Tab Content */}
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          {activeTab === 'details' && (
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {activeTab === "details" && (
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Transaction Hash:</p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Transaction Hash:
+                  </p>
                   <div className="flex items-center space-x-2">
-                    <p className="font-mono text-gray-900 dark:text-white break-all">{txData.id}</p>
+                    <p className="font-mono text-gray-900 dark:text-white break-all">
+                      {txData.id}
+                    </p>
                     <CopyButton text={txData.id} size="sm" />
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Type:</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{txData.type}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {txData.type}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Contract ID</p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Contract ID
+                  </p>
                   <div className="flex items-center space-x-2">
-                    <p className="font-medium text-gray-900 dark:text-white">{txData.contract_id}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {txData.contract_id}
+                    </p>
                     {/* {txData.contract_id !== 'N/A' && (
                       // <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                       //   {txData.contract_id}
@@ -229,25 +268,47 @@ export const SCTransactionExplorerPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Timestamp:</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{txData.timestamp}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {txData.timestamp}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Executor :</p>
                   <div className="flex items-center space-x-2">
-                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all">{txData.executor_did}</p>
+                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all cursor-pointer"
+                    onClick={() =>
+                        navigate(
+                          `/did-explorer?did=${txData.executor_did}`
+                        )
+                      }>
+                      {txData.executor_did}
+                    </p>
                     <CopyButton text={txData.executor_did} size="sm" />
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Deployer :</p>
                   <div className="flex items-center space-x-2">
-                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all">{txData.owner_did}</p>
+                    <p
+                      className="font-mono text-primary-600 dark:text-primary-400 break-all cursor-pointer"
+                      onClick={() =>
+                        navigate(
+                          `/did-explorer?did=${txData.owner_did}`
+                        )
+                      }
+                    >
+                      {txData.owner_did}
+                    </p>
                     <CopyButton text={txData.owner_did} size="sm" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Block Height:</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{txData.block_height}</p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Block Height:
+                  </p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {txData.block_height}
+                  </p>
                 </div>
               </div>
             </div>

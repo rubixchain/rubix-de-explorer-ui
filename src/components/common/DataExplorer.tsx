@@ -141,7 +141,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
               <div className="w-56 flex-shrink-0">Transaction</div>
               <div className="w-56 flex-shrink-0">From</div>
               <div className="w-56 flex-shrink-0">To</div>
-              <div className="w-36 flex-shrink-0 text-right">Value</div>
+              <div className="w-36 flex-shrink-0 text-right">Amount</div>
             </div>
           </div>
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
@@ -231,7 +231,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
               <div className="col-span-3">From</div>
               <div className="col-span-2">To</div>
               <div className="col-span-1">Status</div>
-              <div className="col-span-1 text-right">Value</div>
+              <div className="col-span-1 text-right">Amount</div>
             </div>
           </div>
           <div className="divide-y divide-outline-200 dark:divide-outline-700">
@@ -528,7 +528,7 @@ const TokensListView: React.FC<{
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="grid grid-cols-10 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
               <div className="col-span-4">Token</div>
-              <div className="col-span-2">Value in Rbt</div>
+              <div className="col-span-2">Amount in Rbt</div>
               <div className="col-span-2">Owner</div>
             </div>
           </div>

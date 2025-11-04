@@ -182,12 +182,12 @@ export const BurntTransactionExplorerPage: React.FC = () => {
       </div>
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
-          Burnt Block: Explorer
+          Burnt Block Explorer
         </h1>
         {/* Mobile Layout: Separate rows */}
         <div className="block sm:hidden">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Details for Burnt Block::
+            Details for Burnt Block:
           </div>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400 break-all">
@@ -201,9 +201,9 @@ export const BurntTransactionExplorerPage: React.FC = () => {
           <span>Details for Burnt Block:</span>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400">
-              {txData.id}
+              {txData.block_hash}
             </span>
-            <CopyButton text={txData.id} size="sm" />
+            <CopyButton text={txData.block_hash} size="sm" />
           </div>
         </div>
       </div>
@@ -267,7 +267,8 @@ export const BurntTransactionExplorerPage: React.FC = () => {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Owner:</p>
                   <div className="flex items-center space-x-2">
-                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all">
+                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all cursor-pointer"   onClick={() =>    
+                       navigate(`/did-explorer?did=${txData.owner_did}`)}>
                       {txData.owner_did}
                     </p>
                     <CopyButton text={txData.owner_did} size="sm" />
@@ -276,7 +277,10 @@ export const BurntTransactionExplorerPage: React.FC = () => {
                     <p className="text-gray-500 dark:text-gray-400">
                       Burnt Token
                     </p>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="font-medium text-gray-900 dark:text-white cursor-pointer" 
+                     onClick={() =>    
+                       navigate(`/token-explorer?token=${Object.keys(txData.tokens).toLocaleString()}`)}
+                    >
                       {txData.tokens
                         ? Object.keys(txData.tokens).toLocaleString()
                         : "N/A"}
