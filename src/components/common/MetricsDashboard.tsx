@@ -193,14 +193,14 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
   };
 
   const metricsData = [
-    {
-      title: 'Market Cap',
-      value: formatLargeCurrency(currentMetrics.marketCap || 2850000000),
-      icon: DollarSign,
-      color: 'text-green-600',
-      tooltip: 'Market capitalization represents the total value of all Rubix tokens in circulation, calculated by multiplying the current price by the total supply.',
-    },
-    
+    // {
+    //   title: 'Market Cap',
+    //   value: formatLargeCurrency(currentMetrics.marketCap || 2850000000),
+    //   icon: DollarSign,
+    //   color: 'text-green-600',
+    //   tooltip: 'Market capitalization represents the total value of all Rubix tokens in circulation, calculated by multiplying the current price by the total supply.',
+    // },
+
     {
       title: 'Total RBT',
       value: formatNumber(currentMetrics.totalRBT || 1250000),

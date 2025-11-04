@@ -123,6 +123,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 
   useEffect(() => {
     if (data?.data) {
+      console.log(data)
       setTransactions(data.data);
     }
   }, [data]);
@@ -138,7 +139,6 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[1100px] gap-6">
               <div className="w-56 flex-shrink-0">Transaction</div>
-              <div className="w-24 flex-shrink-0">Type</div>
               <div className="w-56 flex-shrink-0">From</div>
               <div className="w-56 flex-shrink-0">To</div>
               <div className="w-36 flex-shrink-0 text-right">Value</div>
@@ -176,11 +176,11 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="w-24 flex-shrink-0 flex items-center">
+                {/* <div className="w-24 flex-shrink-0 flex items-center">
                   <span className="text-sm text-secondary-900 dark:text-white">
-                    {tx.type}
+                    {tx.epoch}
                   </span>
-                </div>
+                </div> */}
                 <div className="w-56 flex-shrink-0">
                   <div className="flex items-center space-x-2">
                     <Tooltip content={tx.from} position="top">
@@ -227,7 +227,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
               <div className="col-span-3">Transaction</div>
-              <div className="col-span-2">Type</div>
+              {/* <div className="col-span-2">Type</div> */}
               <div className="col-span-3">From</div>
               <div className="col-span-2">To</div>
               <div className="col-span-1">Status</div>
@@ -266,11 +266,11 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="col-span-2">
+                {/* <div className="col-span-2">
                   <span className="text-sm text-secondary-900 dark:text-white">
-                    {tx.type}
+                    {tx.epoch}
                   </span>
-                </div>
+                </div> */}
                 <div className="col-span-3">
                   <div className="flex items-center space-x-2">
                     <Tooltip content={tx.from} position="top">
@@ -1275,8 +1275,8 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
                   >
                     {[
                       { value: "list", label: "List" },
-                      { value: "graph", label: "Graph" },
-                      { value: "quorums", label: "Quorums" },
+                      // { value: "graph", label: "Graph" },
+                      // { value: "quorums", label: "Quorums" },
                     ].map((option) => (
                       <button
                         key={option.value}
