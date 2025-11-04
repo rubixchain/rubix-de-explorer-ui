@@ -26,7 +26,7 @@ export const SCTransactionExplorerPage: React.FC = () => {
           throw new Error('No transaction ID provided');
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/sctxn-info?hash=${txId}`);
+        const response = await fetch(`${API_BASE_URL}/sctxn-info?hash=${txId}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch transaction data: ${response.statusText}`);
         }
