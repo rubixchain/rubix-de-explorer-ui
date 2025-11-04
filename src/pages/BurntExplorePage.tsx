@@ -182,12 +182,12 @@ export const BurntTransactionExplorerPage: React.FC = () => {
       </div>
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
-          Transaction Explorer
+          Burnt Block: Explorer
         </h1>
         {/* Mobile Layout: Separate rows */}
         <div className="block sm:hidden">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Details for Transaction:
+            Details for Burnt Block::
           </div>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400 break-all">
@@ -198,7 +198,7 @@ export const BurntTransactionExplorerPage: React.FC = () => {
         </div>
         {/* Desktop Layout: Same row */}
         <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
-          <span>Details for Transaction:</span>
+          <span>Details for Burnt Block:</span>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400">
               {txData.id}
@@ -220,7 +220,7 @@ export const BurntTransactionExplorerPage: React.FC = () => {
             }`}
           >
             <Hash className="w-4 h-4" />
-            <span className="text-xs sm:text-sm">Transaction Details</span>
+            <span className="text-xs sm:text-sm">Burnt Block Details</span>
             {activeTab === "details" && (
               <motion.div
                 layoutId="activeTab"

@@ -158,10 +158,10 @@ export const SCTransactionExplorerPage: React.FC = () => {
         </button>
       </div>
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">Transaction Explorer</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">Smart Contract Explorer</h1>
         {/* Mobile Layout: Separate rows */}
         <div className="block sm:hidden">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Details for Transaction:</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Details for Smart contract:</div>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400 break-all">{txData.id}</span>
             <CopyButton text={txData.id} size="sm" />
@@ -169,7 +169,7 @@ export const SCTransactionExplorerPage: React.FC = () => {
         </div>
         {/* Desktop Layout: Same row */}
         <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
-          <span>Details for Transaction:</span>
+          <span>Details for  Smart contract:</span>
           <div className="flex items-center space-x-2">
             <span className="font-mono text-primary-600 dark:text-primary-400">{txData.id}</span>
             <CopyButton text={txData.id} size="sm" />

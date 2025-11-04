@@ -221,7 +221,7 @@ export const TransactionExplorerPage: React.FC = () => {
             }`}
           >
             <DollarSign className="w-4 h-4" />
-            <span className="text-xs sm:text-sm">Token Transfers</span>
+            <span className="text-xs sm:text-sm">Tokens</span>
             {activeTab === 'transfers' && (
               <motion.div
                 layoutId="activeTab"
@@ -268,7 +268,7 @@ export const TransactionExplorerPage: React.FC = () => {
                   <p className="font-medium text-gray-900 dark:text-white">{txData.type}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Value:</p>
+                  <p className="text-gray-500 dark:text-gray-400">Amount:</p>
                   <div className="flex items-center space-x-2">
                     <p className="font-medium text-gray-900 dark:text-white">{txData.value}</p>
                     {txData.valueUSD !== 'N/A' && (
@@ -297,7 +297,7 @@ export const TransactionExplorerPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Block Id:</p>
+                  <p className="text-gray-500 dark:text-gray-400">Block Hash:</p>
                   <p className="font-medium text-gray-900 dark:text-white">{txData.blockId}</p>
                 </div>
               </div>

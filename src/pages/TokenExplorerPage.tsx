@@ -385,9 +385,9 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
+                <p className="text-gray-500 dark:text-gray-400"> Amount </p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.data.token_value}
+                  {tokenData.data.token_value} RBT
                 </p>
               </div>
             </>
@@ -397,7 +397,7 @@ export const TokenExplorerPage: React.FC = () => {
           {tokenData.type === "FT" && (
             <>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Name:</p>
+                <p className="text-gray-500 dark:text-gray-400">FT Name:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
                   {tokenData.data.ft_name}
                 </p>
@@ -429,7 +429,7 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
+                <p className="text-gray-500 dark:text-gray-400">FT Value:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
                   {tokenData.data.token_value}
                 </p>
@@ -454,7 +454,7 @@ export const TokenExplorerPage: React.FC = () => {
             <>
               <div>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Contract ID / Name:
+                  Contract ID:
                 </p>
                 <p className="font-mono text-gray-900 dark:text-white">
                   {tokenData.data.name}
@@ -511,7 +511,7 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
+                <p className="text-gray-500 dark:text-gray-400">NFT Value:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
                   {tokenData.data.token_value}
                 </p>
