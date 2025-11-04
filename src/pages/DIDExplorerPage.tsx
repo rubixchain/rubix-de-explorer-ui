@@ -231,7 +231,8 @@ export const DIDExplorerPage: React.FC = () => {
     .map((ft: any) => (
       <div
         key={ft.ft_id}
-        onClick={() => navigate(`/ft-explorer?ft=${ft.ft_id}`)}
+        onClick={() => 
+        navigate(`/token-explorer?token=${ft.ft_id}`)}
         className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100"
       >
         <div>
