@@ -23,7 +23,7 @@ export const TransactionExplorerPage: React.FC = () => {
         if (!txId) {
           throw new Error('No transaction ID provided');
         }
-        const response = await fetch(`${API_BASE_URL}/api/txnhash?hash=${txId}`);
+        const response = await fetch(`${API_BASE_URL}/txnhash?hash=${txId}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch transaction data: ${response.statusText}`);
         }

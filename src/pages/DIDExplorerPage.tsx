@@ -186,6 +186,7 @@ export const DIDExplorerPage: React.FC = () => {
               didData.rbts.map((token: any) => (
                 <div
                   key={token.rbt_id}
+                  onClick={() => navigate(`/token-explorer?token=${token.rbt_id}`)}
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100"
                 >
                   <div>

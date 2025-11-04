@@ -187,7 +187,7 @@ export const TokenExplorerPage: React.FC = () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/search?id=${tokenId}`
+          `${API_BASE_URL}/search?id=${tokenId}`
         );
 
         if (!response.ok) {
@@ -199,7 +199,7 @@ export const TokenExplorerPage: React.FC = () => {
         const tokenInfo = normalizeToken(raw, tokenId);
         setTokenData(raw);
         const tokenChainResp = await fetch(
-          `${API_BASE_URL}/api/token-chain?token_id=${tokenId}`
+          `${API_BASE_URL}/token-chain?token_id=${tokenId}`
         );
         if (!tokenChainResp.ok) throw new Error("Failed to fetch token chain");
 
