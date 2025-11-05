@@ -293,7 +293,7 @@ export const BurntTransactionExplorerPage: React.FC = () => {
 
           {txData.child_tokens && txData.child_tokens.length > 0 && (
             <div className="sm:col-span-2">
-              <p className="text-gray-500 dark:text-gray-400">Child Tokens:</p>
+              <p className="text-gray-500 dark:text-gray-400">Minted Tokens:</p>
               <div className="flex flex-wrap gap-2 mt-1">
                 {txData.child_tokens.map((tokenId: string, idx: number) => (
                   <div
