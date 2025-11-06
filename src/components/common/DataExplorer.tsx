@@ -67,6 +67,38 @@ const mockTokens = [
   },
 ];
 
+const timeAgo = (epoch: number): string => {
+  epoch = Number(epoch);
+  // Detect seconds vs milliseconds by digit length
+  if (epoch.toString().length === 10) {
+    epoch *= 1000; // convert seconds → milliseconds
+  }
+
+  const now = Date.now();
+  let diff = Math.floor((now - epoch) / 1000); // seconds
+
+  // Prevent negative (future timestamps)
+  if (diff < 0) diff = 0;
+
+  const units = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "week", seconds: 604800 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 },
+  ];
+
+  for (const unit of units) {
+    const value = Math.floor(diff / unit.seconds);
+    if (value >= 1) {
+      return `${value} ${unit.label}${value > 1 ? "s" : ""} ago`;
+    }
+  }
+
+  return "just now";
+};
+
 
 //  const TransactionsListView = () => {
 //   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -209,7 +241,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                         : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
                     }`}
                   >
-                    {tx.status}
+                      {timeAgo(tx.epoch)}
                   </span>
                 </div>
                 <div className="w-36 flex-shrink-0 text-right flex items-center justify-end">
@@ -230,7 +262,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
               {/* <div className="col-span-2">Type</div> */}
               <div className="col-span-3">From</div>
               <div className="col-span-2">To</div>
-              <div className="col-span-1">Status</div>
+              <div className="col-span-1">Time</div>
               <div className="col-span-1 text-right">Amount</div>
             </div>
           </div>
@@ -299,7 +331,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                         : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
                     }`}
                   >
-                    {tx.status}
+                    {timeAgo(tx.epoch)}
                   </span>
                 </div>
                 <div className="col-span-1 text-right">
@@ -824,40 +856,7 @@ const BurntBlockList: React.FC<BurntBlockListProps> = ({
   return date.toUTCString();
 };
 
-const timeAgo = (epoch: number): string => {
-  epoch = Number(epoch);
-  console.log("epoch", epoch)
-  // Detect seconds vs milliseconds by digit length
-  if (epoch.toString().length === 10) {
-    epoch *= 1000; // convert seconds → milliseconds
-  }
 
-  const now = Date.now();
-  console.log("tets", now)
-  let diff = Math.floor((now - epoch) / 1000); // seconds
-  console.log("te", diff)
-
-  // Prevent negative (future timestamps)
-  if (diff < 0) diff = 0;
-
-  const units = [
-    { label: "year", seconds: 31536000 },
-    { label: "month", seconds: 2592000 },
-    { label: "week", seconds: 604800 },
-    { label: "day", seconds: 86400 },
-    { label: "hour", seconds: 3600 },
-    { label: "minute", seconds: 60 },
-  ];
-
-  for (const unit of units) {
-    const value = Math.floor(diff / unit.seconds);
-    if (value >= 1) {
-      return `${value} ${unit.label}${value > 1 ? "s" : ""} ago`;
-    }
-  }
-
-  return "just now";
-};
 
 
 

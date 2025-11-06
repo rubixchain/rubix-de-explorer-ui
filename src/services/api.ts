@@ -199,26 +199,22 @@ class ApiClient {
     // if (params?.status) searchParams.append("status", params.status);
 
     try {
+      console.log("test")
       const response = await fetch(
         `${API_BASE_URL}/txnblocks?${searchParams.toString()}`
       );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const txnResp = await response.json();
+      console.log("test", txnResp)
 
       const frontendTransactions = (txnResp.transactions_response || []).map(
         (txn: any) => {
           // --- Inline timeAgo formatter ---
-          const dateString = txn.txn_time;
-          let timeAgo = "N/A";
-          if (dateString && !dateString.startsWith("0001-01-01")) {
-            const now = new Date();
-            const txnDate = new Date(dateString);
-            const diffMs = now.getTime() - txnDate.getTime();
-          }
-
+      
           return {
             id: txn.txn_hash,
             type: txn.txn_type
@@ -230,7 +226,7 @@ class ApiClient {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} RBT`,
-            timestamp: txn.epoch,
+            epoch: txn.txn_time,
             status: txn.status || "confirmed",
           };
         }

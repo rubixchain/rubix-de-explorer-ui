@@ -32,7 +32,6 @@ export const DIDExplorerPage: React.FC = () => {
       );
       const data = await res.json();
       setDidData(data);
-      console.log("tt", data);
     } catch (err) {
       console.error("Error fetching DID data:", err);
     } finally {
@@ -48,7 +47,6 @@ export const DIDExplorerPage: React.FC = () => {
         `${API_BASE_URL}/ftholdings?did=${did}&page=${page}&limit=${limit}`
       );
       const data = await res.json();
-      console.log("tst", data.ft_info);
       setFTData(data.ft_info);
     } catch (err) {
       console.error("Error fetching FT data:", err);
