@@ -68,7 +68,7 @@ export const BurntTransactionExplorerPage: React.FC = () => {
           status: "confirmed",
           // confirmations: 120,
           type: data.txn_type || "",
-          timestamp: data.epoch || "N/A", // Convert epoch to UTC string
+          timestamp: new Date(data.epoch * 1000).toUTCString(), // Convert epoch to UTC string
           // blockId: data.block_hash || 'N/A',
           // executor_did: data.executor_did || 'N/A',
           owner_did: data.owner_did || "N/A",

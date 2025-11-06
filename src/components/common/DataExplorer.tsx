@@ -825,9 +825,20 @@ const BurntBlockList: React.FC<BurntBlockListProps> = ({
 };
 
 const timeAgo = (epoch: number): string => {
-  if (epoch < 1e12) epoch *= 1000; // convert seconds → ms
+  epoch = Number(epoch);
+  console.log("epoch", epoch)
+  // Detect seconds vs milliseconds by digit length
+  if (epoch.toString().length === 10) {
+    epoch *= 1000; // convert seconds → milliseconds
+  }
+
   const now = Date.now();
-  const diff = Math.floor((now - epoch) / 1000); // in seconds
+  console.log("tets", now)
+  let diff = Math.floor((now - epoch) / 1000); // seconds
+  console.log("te", diff)
+
+  // Prevent negative (future timestamps)
+  if (diff < 0) diff = 0;
 
   const units = [
     { label: "year", seconds: 31536000 },
@@ -844,8 +855,10 @@ const timeAgo = (epoch: number): string => {
       return `${value} ${unit.label}${value > 1 ? "s" : ""} ago`;
     }
   }
+
   return "just now";
 };
+
 
 
   // Compute total pages from backend totalCount
