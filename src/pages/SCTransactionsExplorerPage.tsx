@@ -245,12 +245,12 @@ export const SCTransactionExplorerPage: React.FC = () => {
                     <CopyButton text={txData.id} size="sm" />
                   </div>
                 </div>
-                <div>
+                {/* <div>
                   <p className="text-gray-500 dark:text-gray-400">Type:</p>
                   <p className="font-medium text-gray-900 dark:text-white">
                     {txData.type}
                   </p>
-                </div>
+                </div> */}
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">
                     Contract ID
