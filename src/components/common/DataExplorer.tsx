@@ -416,7 +416,7 @@ const HoldersListView: React.FC<{
                   <div className="flex items-center space-x-2">
                     <Tooltip content={holder.owner_did} position="top">
                       <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                        {formatAddress(holder.owner_did, 8)}
+                        {holder.owner_did}
                       </div>
                     </Tooltip>
                     <CopyButton text={holder.owner_did} size="sm" />
