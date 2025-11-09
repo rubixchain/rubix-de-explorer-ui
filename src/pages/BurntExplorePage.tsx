@@ -27,6 +27,13 @@ export const BurntTransactionExplorerPage: React.FC = () => {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+  // Helper function to format long addresses
+  const formatAddress = (address: string, length: number = 8): string => {
+    if (!address || address === "N/A") return address;
+    if (address.length <= length * 2) return address;
+    return `${address.slice(0, length)}...${address.slice(-length)}`;
+  };
+
   useEffect(() => {
     const fetchTransactionData = async () => {
       try {
@@ -184,26 +191,17 @@ export const BurntTransactionExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
           Burnt Block Explorer
         </h1>
-        {/* Mobile Layout: Separate rows */}
-        <div className="block sm:hidden">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Details for Burnt Block:
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400 break-all">
-              {txData.id}
-            </span>
-            <CopyButton text={txData.id} size="sm" />
-          </div>
-        </div>
-        {/* Desktop Layout: Same row */}
-        <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
-          <span>Details for Burnt Block:</span>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400">
-              {txData.block_hash}
-            </span>
-            <CopyButton text={txData.block_hash} size="sm" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          <span className="mb-2 sm:mb-0">Details for Burnt Block:</span>
+          <div className="flex items-center gap-2">
+            <Tooltip content={txData.block_hash} position="top">
+              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
+                {formatAddress(txData.block_hash, 12)}
+              </span>
+            </Tooltip>
+            <div className="flex-shrink-0">
+              <CopyButton text={txData.block_hash} size="sm" />
+            </div>
           </div>
         </div>
       </div>
@@ -242,14 +240,18 @@ export const BurntTransactionExplorerPage: React.FC = () => {
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">
                     Transaction Hash:
                   </p>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-mono text-gray-900 dark:text-white break-all">
-                      {txData.block_hash}
-                    </p>
-                    <CopyButton text={txData.block_hash} size="sm" />
+                  <div className="flex items-center gap-2">
+                    <Tooltip content={txData.block_hash} position="top">
+                      <p className="font-mono text-gray-900 dark:text-white truncate">
+                        {formatAddress(txData.block_hash, 8)}
+                      </p>
+                    </Tooltip>
+                    <div className="flex-shrink-0">
+                      <CopyButton text={txData.block_hash} size="sm" />
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -265,26 +267,37 @@ export const BurntTransactionExplorerPage: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Owner:</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all cursor-pointer"   onClick={() =>    
-                       navigate(`/did-explorer?did=${txData.owner_did}`)}>
-                      {txData.owner_did}
-                    </p>
-                    <CopyButton text={txData.owner_did} size="sm" />
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">Owner:</p>
+                  <div className="flex items-center gap-2">
+                    <Tooltip content={txData.owner_did} position="top">
+                      <p className="font-mono text-primary-600 dark:text-primary-400 truncate cursor-pointer hover:text-primary-700"
+                         onClick={() => navigate(`/did-explorer?did=${txData.owner_did}`)}>
+                        {formatAddress(txData.owner_did, 8)}
+                      </p>
+                    </Tooltip>
+                    <div className="flex-shrink-0">
+                      <CopyButton text={txData.owner_did} size="sm" />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-500 dark:text-gray-400">
+                  <div className="mt-3">
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">
                       Burnt Token
                     </p>
-                    <p className="font-medium text-gray-900 dark:text-white cursor-pointer" 
-                     onClick={() =>    
-                       navigate(`/token-explorer?token=${Object.keys(txData.tokens).toLocaleString()}`)}
-                    >
-                      {txData.tokens
-                        ? Object.keys(txData.tokens).toLocaleString()
-                        : "N/A"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <Tooltip content={txData.tokens ? Object.keys(txData.tokens).toLocaleString() : "N/A"} position="top">
+                        <p className="font-medium text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                           onClick={() => navigate(`/token-explorer?token=${Object.keys(txData.tokens).toLocaleString()}`)}>
+                          {txData.tokens
+                            ? formatAddress(Object.keys(txData.tokens).toLocaleString(), 8)
+                            : "N/A"}
+                        </p>
+                      </Tooltip>
+                      {txData.tokens && (
+                        <div className="flex-shrink-0">
+                          <CopyButton text={Object.keys(txData.tokens).toLocaleString()} size="sm" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -292,34 +305,43 @@ export const BurntTransactionExplorerPage: React.FC = () => {
           )}
 
           {txData.child_tokens && txData.child_tokens.length > 0 && (
-            <div className="sm:col-span-2">
-              <p className="text-gray-500 dark:text-gray-400">Minted Tokens:</p>
-              <div className="flex flex-wrap gap-2 mt-1">
+            <div className="sm:col-span-2 mt-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-3">Minted Tokens:</p>
+              <div className="flex flex-wrap gap-2">
                 {txData.child_tokens.map((tokenId: string, idx: number) => (
                   <div
                     key={idx}
-                    onClick={() => navigate(`/token-explorer?token=${tokenId}`)}
-                    className="group flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-1.5 rounded-lg
-                   hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 
+                    className="group flex items-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-lg
+                   hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400
                    border border-transparent hover:border-primary-300 dark:hover:border-primary-700
-                   transition-all duration-200 cursor-pointer shadow-sm"
+                   transition-all duration-200 shadow-sm max-w-full"
                   >
-                    <p className="font-mono">{tokenId}</p>
-                    <CopyButton text={tokenId} size="sm" />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary-500 transition-colors"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    <Tooltip content={tokenId} position="top">
+                      <p
+                        className="font-mono text-sm truncate max-w-[150px] sm:max-w-[200px] cursor-pointer"
+                        onClick={() => navigate(`/token-explorer?token=${tokenId}`)}
+                      >
+                        {formatAddress(tokenId, 8)}
+                      </p>
+                    </Tooltip>
+                    <div className="flex-shrink-0 flex items-center gap-1">
+                      <CopyButton text={tokenId} size="sm" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary-500 transition-colors cursor-pointer"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        onClick={() => navigate(`/token-explorer?token=${tokenId}`)}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </div>
                   </div>
                 ))}
               </div>

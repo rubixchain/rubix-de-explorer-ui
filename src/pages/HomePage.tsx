@@ -6,24 +6,26 @@ import { DataExplorer } from '@/components/common/DataExplorer';
 export const HomePage: React.FC = () => {
   return (
     <div className="relative min-h-screen">
-      <div className="relative z-10 space-y-6 sm:space-y-8">
+      <div className="relative z-10 space-y-8 md:space-y-10 lg:space-y-12">
+        {/* Hero Section */}
         <motion.div
-          className="text-center space-y-6 sm:space-y-8 py-8 sm:py-12 lg:py-16"
+          className="text-center py-8 md:py-12 lg:py-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-        <div className="space-y-3 sm:space-y-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-heading drop-shadow-lg">
-            Rubix Explorer
-          </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-secondary-600 max-w-4xl mx-auto px-4 drop-shadow-md">
-            Comprehensive blockchain explorer for the Rubix ecosystem. Explore transactions, tokens, DIDs, and network metrics with real-time insights.
-          </p>
-        </div>
+          <div className="space-y-4 md:space-y-5 lg:space-y-6 px-4 sm:px-6 lg:px-8">
+            {/* Title - Mobile: 3xl, iPad: 5xl, Desktop: 6xl */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-heading drop-shadow-lg leading-tight">
+              Rubix Explorer
+            </h1>
 
-
-      </motion.div>
+            {/* Description - Mobile: base, iPad: lg, Desktop: xl */}
+            <p className="text-base md:text-lg lg:text-xl text-secondary-600 max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto leading-relaxed">
+              Comprehensive blockchain explorer for the Rubix ecosystem. Explore transactions, tokens, DIDs, and network metrics with real-time insights.
+            </p>
+          </div>
+        </motion.div>
       
       <MetricsDashboard />
 

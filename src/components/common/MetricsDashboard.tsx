@@ -36,7 +36,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="p-6"
+        className="p-4 md:p-5 lg:p-6"
       >
         {loading ? (
           <div className="space-y-3">
@@ -49,13 +49,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
         ) : (
           <>
             {/* Label with info icon */}
-            <div className="flex items-center space-x-2 mb-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex items-center space-x-2 mb-2 md:mb-3">
+              <span className="text-sm md:text-sm font-medium text-gray-700 dark:text-gray-300">
                 {title}
               </span>
               {tooltip && (
                 <div className="relative">
-                  <div 
+                  <div
                     ref={iconRef}
                     className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center cursor-help hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     onMouseEnter={() => {
@@ -65,7 +65,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
                   >
                     <Info className="w-2.5 h-2.5 text-gray-500 dark:text-gray-400" />
                   </div>
-                  
+
                   {/* Tooltip */}
                   {showTooltip && (
                     <motion.div
@@ -89,12 +89,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* Large value */}
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">
+
+            {/* Large value - Responsive sizing */}
+            <div className="text-2xl md:text-3xl lg:text-3xl font-bold text-gray-900 dark:text-white">
               {value}
             </div>
-            
+
             {/* Price change indicator */}
             {change && (
               <div className={`flex items-center space-x-1 mt-2 ${
@@ -250,9 +250,9 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
   }
 
   return (
-    <div className={`${className}`}>
+    <div className={`${className} px-4 sm:px-6 lg:px-8`}>
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}

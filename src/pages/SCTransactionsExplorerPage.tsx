@@ -26,6 +26,13 @@ export const SCTransactionExplorerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details">("details");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+  // Helper function to format long addresses
+  const formatAddress = (address: string, length: number = 8): string => {
+    if (!address || address === "N/A") return address;
+    if (address.length <= length * 2) return address;
+    return `${address.slice(0, length)}...${address.slice(-length)}`;
+  };
+
   useEffect(() => {
     const fetchTransactionData = async () => {
       try {
@@ -177,26 +184,17 @@ export const SCTransactionExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
           Smart Contract Explorer
         </h1>
-        {/* Mobile Layout: Separate rows */}
-        <div className="block sm:hidden">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Details for Smart contract:
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400 break-all">
-              {txData.id}
-            </span>
-            <CopyButton text={txData.id} size="sm" />
-          </div>
-        </div>
-        {/* Desktop Layout: Same row */}
-        <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
-          <span>Details for Smart contract:</span>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400">
-              {txData.id}
-            </span>
-            <CopyButton text={txData.id} size="sm" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          <span className="mb-2 sm:mb-0">Details for Smart contract:</span>
+          <div className="flex items-center gap-2">
+            <Tooltip content={txData.id} position="top">
+              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
+                {formatAddress(txData.id, 12)}
+              </span>
+            </Tooltip>
+            <div className="flex-shrink-0">
+              <CopyButton text={txData.id} size="sm" />
+            </div>
           </div>
         </div>
       </div>
@@ -235,14 +233,20 @@ export const SCTransactionExplorerPage: React.FC = () => {
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">
                     Transaction Hash:
                   </p>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-mono text-gray-900 dark:text-white break-all">
-                      {txData.id}
-                    </p>
-                    <CopyButton text={txData.id} size="sm" />
+                  <div className="flex items-center gap-2">
+                    <Tooltip content={txData.id} position="top">
+                      <p className="font-mono text-gray-900 dark:text-white truncate">
+                        {formatAddress(txData.id, 8)}
+                      </p>
+                    </Tooltip>
+                    {txData.id !== 'N/A' && (
+                      <div className="flex-shrink-0">
+                        <CopyButton text={txData.id} size="sm" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -252,18 +256,20 @@ export const SCTransactionExplorerPage: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">
                     Contract ID
                   </p>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {txData.contract_id}
-                    </p>
-                    {/* {txData.contract_id !== 'N/A' && (
-                      // <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                      //   {txData.contract_id}
-                      // </span>
-                    )} */}
+                  <div className="flex items-center gap-2">
+                    <Tooltip content={txData.contract_id} position="top">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                        {formatAddress(txData.contract_id, 8)}
+                      </p>
+                    </Tooltip>
+                    {txData.contract_id !== 'N/A' && (
+                      <div className="flex-shrink-0">
+                        <CopyButton text={txData.contract_id} size="sm" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -273,33 +279,35 @@ export const SCTransactionExplorerPage: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Executor :</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-mono text-primary-600 dark:text-primary-400 break-all cursor-pointer"
-                    onClick={() =>
-                        navigate(
-                          `/did-explorer?did=${txData.executor_did}`
-                        )
-                      }>
-                      {txData.executor_did}
-                    </p>
-                    <CopyButton text={txData.executor_did} size="sm" />
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">Executor :</p>
+                  <div className="flex items-center gap-2">
+                    <Tooltip content={txData.executor_did} position="top">
+                      <p className={`font-mono text-primary-600 dark:text-primary-400 truncate ${txData.executor_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
+                         onClick={() => txData.executor_did !== 'N/A' && navigate(`/did-explorer?did=${txData.executor_did}`)}>
+                        {formatAddress(txData.executor_did, 8)}
+                      </p>
+                    </Tooltip>
+                    {txData.executor_did !== 'N/A' && (
+                      <div className="flex-shrink-0">
+                        <CopyButton text={txData.executor_did} size="sm" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Deployer :</p>
-                  <div className="flex items-center space-x-2">
-                    <p
-                      className="font-mono text-primary-600 dark:text-primary-400 break-all cursor-pointer"
-                      onClick={() =>
-                        navigate(
-                          `/did-explorer?did=${txData.owner_did}`
-                        )
-                      }
-                    >
-                      {txData.owner_did}
-                    </p>
-                    <CopyButton text={txData.owner_did} size="sm" />
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">Deployer :</p>
+                  <div className="flex items-center gap-2">
+                    <Tooltip content={txData.owner_did} position="top">
+                      <p className={`font-mono text-primary-600 dark:text-primary-400 truncate ${txData.owner_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
+                         onClick={() => txData.owner_did !== 'N/A' && navigate(`/did-explorer?did=${txData.owner_did}`)}>
+                        {formatAddress(txData.owner_did, 8)}
+                      </p>
+                    </Tooltip>
+                    {txData.owner_did !== 'N/A' && (
+                      <div className="flex-shrink-0">
+                        <CopyButton text={txData.owner_did} size="sm" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>

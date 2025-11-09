@@ -133,182 +133,108 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 
   return (
     <div className="w-full">
-      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700">
-        {/* Mobile Table View */}
-        <div className="block lg:hidden overflow-x-auto">
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[1100px] gap-6">
-              <div className="w-56 flex-shrink-0">Transaction</div>
-              <div className="w-56 flex-shrink-0">From</div>
-              <div className="w-56 flex-shrink-0">To</div>
-              <div className="w-36 flex-shrink-0 text-right">Amount</div>
+      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+        {/* Single Table Layout with Horizontal Scroll for Mobile & iPad */}
+        <div className="overflow-x-auto">
+          <div className="min-w-[1000px]">
+            {/* Table Header */}
+            <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
+              <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
+                <div className="w-56 md:w-60 flex-shrink-0">Transaction</div>
+                <div className="flex-1 min-w-[200px]">From</div>
+                <div className="flex-1 min-w-[200px]">To</div>
+                <div className="w-28 md:w-32 flex-shrink-0">Status</div>
+                <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount</div>
+              </div>
             </div>
-          </div>
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {transactions.map((tx, index) => (
-              <motion.div
-                key={tx.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTransactionClick(tx.id)}
-                className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[1100px] gap-6"
-              >
-                <div className="w-56 flex-shrink-0">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
-                        {tx.type.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <Tooltip content={tx.id} position="top">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                            {formatAddress(tx.id, 8)}
-                          </div>
-                        </Tooltip>
-                        <CopyButton text={tx.id} size="sm" />
-                      </div>
-                      <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
-                        {tx.timestamp}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* <div className="w-24 flex-shrink-0 flex items-center">
-                  <span className="text-sm text-secondary-900 dark:text-white">
-                    {tx.epoch}
-                  </span>
-                </div> */}
-                <div className="w-56 flex-shrink-0">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.from} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                        {formatAddress(tx.from, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.from} size="sm" />
-                  </div>
-                </div>
-                <div className="w-56 flex-shrink-0">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.to} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                        {formatAddress(tx.to, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.to} size="sm" />
-                  </div>
-                </div>
-                <div className="w-28 flex-shrink-0 flex items-center">
-                  <span
-                    className={`inline-flex px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap ${
-                      tx.status === "confirmed"
-                        ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
-                        : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                    }`}
-                  >
-                    {tx.status}
-                  </span>
-                </div>
-                <div className="w-36 flex-shrink-0 text-right flex items-center justify-end">
-                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {tx.value}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block">
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
-              <div className="col-span-3">Transaction</div>
-              {/* <div className="col-span-2">Type</div> */}
-              <div className="col-span-3">From</div>
-              <div className="col-span-2">To</div>
-              <div className="col-span-1">Status</div>
-              <div className="col-span-1 text-right">Amount</div>
-            </div>
-          </div>
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {transactions.map((tx, index) => (
-              <motion.div
-                key={tx.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTransactionClick(tx.id)}
-                className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
-              >
-                <div className="col-span-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
-                        {tx.type.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <Tooltip content={tx.id} position="top">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer">
-                            {formatAddress(tx.id, 8)}
+            {/* Table Body */}
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {transactions.map((tx, index) => (
+                <motion.div
+                  key={tx.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => onTransactionClick(tx.id)}
+                  className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
+                >
+                  {/* Transaction Column */}
+                  <div className="w-56 md:w-60 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <Tooltip content={tx.id} position="top">
+                            <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
+                              {formatAddress(tx.id, 8)}
+                            </div>
+                          </Tooltip>
+                          <div className="flex-shrink-0">
+                            <CopyButton text={tx.id} size="sm" />
                           </div>
-                        </Tooltip>
-                        <CopyButton text={tx.id} size="sm" />
-                      </div>
-                      <div className="text-xs text-secondary-500 dark:text-secondary-400">
-                        {tx.timestamp}
+                        </div>
+                        <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-0.5 truncate">
+                          {tx.timestamp}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                {/* <div className="col-span-2">
-                  <span className="text-sm text-secondary-900 dark:text-white">
-                    {tx.epoch}
-                  </span>
-                </div> */}
-                <div className="col-span-3">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.from} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer">
-                        {formatAddress(tx.from, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.from} size="sm" />
+
+                  {/* From Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={tx.from} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
+                          {formatAddress(tx.from, 8)}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.from} size="sm" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.to} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer">
-                        {formatAddress(tx.to, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.to} size="sm" />
+
+                  {/* To Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={tx.to} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
+                          {formatAddress(tx.to, 8)}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.to} size="sm" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-1">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      tx.status === "confirmed"
-                        ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
-                        : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                    }`}
-                  >
-                    {tx.status}
-                  </span>
-                </div>
-                <div className="col-span-1 text-right">
-                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {tx.value}
+
+                  {/* Status Column */}
+                  <div className="w-28 md:w-32 flex-shrink-0 flex items-center">
+                    <span
+                      className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
+                        tx.status === "confirmed"
+                          ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
+                          : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
+                      }`}
+                    >
+                      {tx.status}
+                    </span>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  {/* Amount Column */}
+                  <div className="w-28 md:w-32 flex-shrink-0 text-right flex items-center justify-end">
+                    <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                      {tx.value}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -351,94 +277,72 @@ const HoldersListView: React.FC<{
 
   return (
     <div className="w-full">
-      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700">
-        {/* Mobile Table View */}
-        <div className="block lg:hidden overflow-x-auto">
-          {/* Table Header */}
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[800px] gap-6">
-              <div className="w-64 flex-shrink-0">Address</div>
-              <div className="w-32 flex-shrink-0">Token Count</div>
+      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+        {/* Single Table Layout with Horizontal Scroll for Mobile & iPad */}
+        <div className="overflow-x-auto">
+          <div className="min-w-[450px]">
+            {/* Table Header */}
+            <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
+              <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-6">
+                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">Address</div>
+                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Token Count</div>
+              </div>
             </div>
-          </div>
 
-          {/* Table Body */}
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {holders.map((holder, index) => (
-              <motion.div
-                key={holder.owner_did}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onHolderClick(holder.owner_did)}
-                className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[800px] gap-6"
-              >
-                <div className="w-64 flex-shrink-0">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={holder.owner_did} position="top">
-                      <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                        {formatAddress(holder.owner_did, 8)}
+            {/* Table Body */}
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {holders.map((holder, index) => (
+                <motion.div
+                  key={holder.owner_did}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => onHolderClick(holder.owner_did)}
+                  className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-6"
+                >
+                  {/* Serial Number Column */}
+                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Address Column - Compact on mobile, flexible on tablet/desktop */}
+                  <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={holder.owner_did} position="top">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
+                          {formatAddress(holder.owner_did, 8)}
+                        </div>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={holder.owner_did} size="sm" />
                       </div>
-                    </Tooltip>
-                    <CopyButton text={holder.owner_did} size="sm" />
+                    </div>
                   </div>
-                </div>
-                <div className="w-32 flex-shrink-0 flex items-center">
-                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {holder.token_count}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block">
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="grid grid-cols-6 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
-              <div className="col-span-4">Address</div>
-              <div className="col-span-2">Token Count</div>
+                  {/* Token Count Column */}
+                  <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 flex items-center justify-end">
+                    <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                      {holder.token_count}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </div>
-
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {holders.map((holder, index) => (
-              <motion.div
-                key={holder.owner_did}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onHolderClick(holder.owner_did)}
-                className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
-              >
-                <div className="col-span-4">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={holder.owner_did} position="top">
-                      <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                        {formatAddress(holder.owner_did, 8)}
-                      </div>
-                    </Tooltip>
-                    <CopyButton text={holder.owner_did} size="sm" />
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {holder.token_count}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Pagination - ✅ Fixed to use calculated totalPages */}
+      {/* Pagination */}
       <Pagination
         currentPage={currentPage}
-        totalPages={totalPages || 1} // ✅ Use calculated totalPages with fallback
+        totalPages={totalPages || 1}
         onPageChange={onPageChange}
-        totalItems={data?.holders_response?.count || 0} // ✅ Add optional chaining
+        totalItems={data?.holders_response?.count || 0}
         itemsPerPage={itemsPerPage}
         className="mt-6"
       />
@@ -479,87 +383,75 @@ const TokensListView: React.FC<{
 
   return (
     <div className="w-full">
-      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700">
-        {/* Mobile Table */}
-        <div className="block lg:hidden overflow-x-auto">
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[800px] gap-6">
-              <div className="w-64 flex-shrink-0">Token</div>
-              <div className="w-24 flex-shrink-0">Type</div>
-              <div className="w-24 flex-shrink-0">Symbol</div>
-              <div className="w-32 flex-shrink-0">Value in RBT</div>
+      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+        {/* Single Table Layout with Horizontal Scroll */}
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full">
+            {/* Table Header */}
+            <div className="border-b border-outline-200 dark:border-outline-700">
+              <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
+                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="flex-1 min-w-[200px]">Token</div>
+                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0">Amount in RBT</div>
+                <div className="flex-1 min-w-[160px]">Owner</div>
+              </div>
             </div>
-          </div>
 
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {tokens.map((token: any, index: number) => (
-              <motion.div
-                key={token.rbt_id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTokenClick(token.token_id)}
-                className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[800px] gap-6"
-              >
-                <div className="w-64 flex-shrink-0">
-                  <div className="flex items-center space-x-4">
+            {/* Table Body */}
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {tokens.map((token: any, index: number) => (
+                <motion.div
+                  key={token.rbt_id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => onTokenClick(token.token_id)}
+                  className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
+                >
+                  {/* Serial Number Column */}
+                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Token Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
                         {token.token_id}
                       </div>
-                      <div className="text-xs text-secondary-500 dark:text-secondary-400 truncate">
-                        {token.owner_did}
+                      <div className="text-xs text-secondary-500 dark:text-secondary-400 truncate mt-0.5">
+                        Owner: {formatAddress(token.owner_did, 8)}
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="w-24 flex-shrink-0 flex items-center">
-                  <span className="text-sm font-medium text-secondary-900 dark:text-white">
-                    {token.token_value}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
-        {/* Desktop Table */}
-        <div className="hidden lg:block">
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="grid grid-cols-10 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
-              <div className="col-span-4">Token</div>
-              <div className="col-span-2">Amount in Rbt</div>
-              <div className="col-span-2">Owner</div>
+                  {/* Amount Column */}
+                  <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 flex items-center">
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                      {token.token_value} RBT
+                    </span>
+                  </div>
+
+                  {/* Owner Column - Flexible */}
+                  <div className="flex-1 min-w-[160px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={token.owner_did} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
+                          {formatAddress(token.owner_did, 8)}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={token.owner_did} size="sm" />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </div>
-
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {tokens.map((token: any, index: number) => (
-              <motion.div
-                key={token.rbt_id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTokenClick(token.token_id)}
-                className="grid grid-cols-10 gap-4 px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
-              >
-                <div className="col-span-4">
-                  <div className="text-sm font-medium text-secondary-900 dark:text-white">
-                    {token.token_id}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-sm font-semibold text-secondary-900 dark:text-white">
-                    {token.token_value} RBT
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-sm font-medium text-secondary-900 dark:text-white">
-                    {token.owner_did}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </div>
@@ -616,167 +508,111 @@ const SCBlocksList: React.FC<{
 
   return (
     <div className="w-full">
-      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700">
-        {/* Mobile Table View with Horizontal Scroll */}
-        <div className="block lg:hidden overflow-x-auto">
-          {/* Table Header */}
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[1100px] gap-6">
-              <div className="w-56 flex-shrink-0">Block Id</div>
-              <div className="w-56 flex-shrink-0">Contract Id</div>
-
-              <div className="w-24 flex-shrink-0">Deployer</div>
-              <div className="w-56 flex-shrink-0">Executor</div>
-              {/* <div className="w-56 flex-shrink-0">Epoch</div> */}
-              {/* <div className="w-36 flex-shrink-0 text-right">BlockHeight</div> */}
+      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+        {/* Single Table Layout with Horizontal Scroll */}
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full">
+            {/* Table Header */}
+            <div className="border-b border-outline-200 dark:border-outline-700">
+              <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
+                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="flex-1 min-w-[200px]">Block Id</div>
+                <div className="flex-1 min-w-[200px]">Contract Id</div>
+                <div className="flex-1 min-w-[200px]">Deployer</div>
+                <div className="flex-1 min-w-[200px]">Executor</div>
+              </div>
             </div>
-          </div>
 
-          {/* Table Body */}
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedTransactions.map((tx: any, index: any) => (
-              <motion.div
-                key={tx.block_id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTransactionClick(tx.block_id)}
-                className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[1100px] gap-6"
-              >
-                <div className="w-56 flex-shrink-0">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                      {/* <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
-                        {tx.type.charAt(0)}
-                      </span> */}
+            {/* Table Body */}
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {paginatedTransactions.map((tx: any, index: any) => (
+                <motion.div
+                  key={tx.block_id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => onTransactionClick(tx.block_id)}
+                  className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
+                >
+                  {/* Serial Number Column */}
+                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <Tooltip content={tx.block_id} position="top">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                            {formatAddress(tx.block_id, 8)}
-                          </div>
-                        </Tooltip>
+                  </div>
+
+                  {/* Block Id Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={tx.block_id} position="top">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
+                          {formatAddress(tx.block_id, 8)}
+                        </div>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
                         <CopyButton text={tx.block_id} size="sm" />
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="w-56 flex-shrink-0">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.owner_did} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                        {formatAddress(tx.owner_did, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.owner_did} size="sm" />
-                  </div>
-                </div>
-                <div className="w-56 flex-shrink-0">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.executor_did} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                        {formatAddress(tx.executor_did, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.executor_did} size="sm" />
-                  </div>
-                </div>
-                {/* <div className="w-28 flex-shrink-0 flex items-center">
-                  <span
-                    className={`inline-flex px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap ${
-                      tx.status === "confirmed"
-                        ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
-                        : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                    }`}
-                  >
-                    {tx.status}
-                  </span>
-                </div> */}
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block">
-          {/* Table Header */}
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
-              <div className="col-span-3">Block Id</div>
-              <div className="col-span-3">Contract Id</div>
-              <div className="col-span-3">Deployer</div>
-              <div className="col-span-2">Executor</div>
-            </div>
-          </div>
-
-          {/* Table Body */}
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {paginatedTransactions.map((tx: any, index: number) => (
-              <motion.div
-                key={tx.block_id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTransactionClick(tx.block_id)}
-                className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
-              >
-                {/* Block Id */}
-                <div className="col-span-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                      {/* Optional: <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">{tx.type.charAt(0)}</span> */}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <Tooltip content={tx.block_id} position="top">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer">
-                            {formatAddress(tx.block_id, 8)}
-                          </div>
-                        </Tooltip>
-                        <CopyButton text={tx.block_id} size="sm" />
+                  {/* Contract Id Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={tx.contract_id} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
+                          {formatAddress(tx.contract_id, 8)}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.contract_id} size="sm" />
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Contract Id */}
-                <div className="col-span-3">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.contract_id} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer">
-                        {formatAddress(tx.contract_id, 8)}
+                  {/* Deployer Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    {tx.owner_did && tx.owner_did !== "N/A" ? (
+                      <div className="flex items-center gap-1.5 w-full min-w-0">
+                        <Tooltip content={tx.owner_did} position="top">
+                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
+                            {formatAddress(tx.owner_did, 8)}
+                          </span>
+                        </Tooltip>
+                        <div className="flex-shrink-0">
+                          <CopyButton text={tx.owner_did} size="sm" />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400">
+                        N/A
                       </span>
-                    </Tooltip>
-                    <CopyButton text={tx.contract_id} size="sm" />
+                    )}
                   </div>
-                </div>
 
-                {/* Deployer (from) */}
-                <div className="col-span-3">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.owner_did} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer">
-                        {formatAddress(tx.owner_did, 8)}
+                  {/* Executor Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    {tx.executor_did && tx.executor_did !== "N/A" ? (
+                      <div className="flex items-center gap-1.5 w-full min-w-0">
+                        <Tooltip content={tx.executor_did} position="top">
+                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
+                            {formatAddress(tx.executor_did, 8)}
+                          </span>
+                        </Tooltip>
+                        <div className="flex-shrink-0">
+                          <CopyButton text={tx.executor_did} size="sm" />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400">
+                        N/A
                       </span>
-                    </Tooltip>
-                    <CopyButton text={tx.owner_did} size="sm" />
+                    )}
                   </div>
-                </div>
-
-                {/* Executor (to) */}
-                <div className="col-span-2">
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={tx.executor_did} position="top">
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer">
-                        {formatAddress(tx.executor_did, 8)}
-                      </span>
-                    </Tooltip>
-                    <CopyButton text={tx.executor_did} size="sm" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -853,142 +689,101 @@ const timeAgo = (epoch: number): string => {
 
   return (
     <div className="w-full">
-      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700">
-        {/* Mobile Table View */}
-        <div className="block lg:hidden overflow-x-auto">
-          {/* Table Header */}
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="flex px-6 py-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider min-w-[1100px] gap-6">
-              <div className="w-56 flex-shrink-0">Block Hash</div>
-              <div className="w-56 flex-shrink-0">Owner DID</div>
-              <div className="w-24 flex-shrink-0">Epoch</div>
-              <div className="w-24 flex-shrink-0">Burnt Token</div>
+      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full">
+            {/* Table Header */}
+            <div className="border-b border-outline-200 dark:border-outline-700">
+              <div className="flex px-4 md:px-6 py-3 gap-3 md:gap-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider bg-secondary-50 dark:bg-secondary-800">
+                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="flex-1 min-w-[200px]">Block Hash</div>
+                <div className="flex-1 min-w-[200px]">Owner DID</div>
+                <div className="w-32 md:w-40 flex-shrink-0">Epoch</div>
+                <div className="flex-1 min-w-[200px]">Burnt Token</div>
+              </div>
             </div>
-          </div>
 
-          {/* Table Body */}
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {transactions.map((tx, index) => (
-              <motion.div
-                key={tx.block_hash}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTransactionClick(tx.block_hash)}
-                className="flex px-6 py-5 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer min-w-[1100px] gap-6"
-              >
-                <div className="w-56 flex-shrink-0">
-                  <Tooltip content={tx.block_hash} position="top">
-                    <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                      {formatAddress(tx.block_hash, 8)}
+            {/* Table Body */}
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {transactions.map((tx, index) => (
+                <motion.div
+                  key={tx.block_hash}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => onTransactionClick(tx.block_hash)}
+                  className="flex px-4 md:px-6 py-4 gap-3 md:gap-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
+                >
+                  {/* Serial Number */}
+                  <div className="w-16 md:w-20 flex-shrink-0">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </span>
                     </div>
-                  </Tooltip>
-                  <CopyButton text={tx.block_hash} size="sm" />
-                </div>
+                  </div>
 
-                <div className="w-56 flex-shrink-0">
-                  <Tooltip content={tx.owner_did} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                      {formatAddress(tx.owner_did, 8)}
-                    </span>
-                  </Tooltip>
-                  <CopyButton text={tx.owner_did} size="sm" />
-                </div>
+                  {/* Block Hash */}
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip content={tx.block_hash} position="top">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
+                          {formatAddress(tx.block_hash, 8)}
+                        </div>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.block_hash} size="sm" />
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="w-56 flex-shrink-0">
-                  <Tooltip content={tx.epoch} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                      {timeAgo(tx.epoch)}
-                    </span>
-                  </Tooltip>
-                </div>
+                  {/* Owner DID */}
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip content={tx.owner_did} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
+                          {formatAddress(tx.owner_did, 8)}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.owner_did} size="sm" />
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="w-56 flex-shrink-0">
-                  <Tooltip
-                    content={tx.tokens ? Object.keys(tx.tokens).toString() : "N/A"}
-                    position="top"
-                  >
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                      {tx.tokens
-                        ? formatAddress(Object.keys(tx.tokens).toLocaleString(), 8)
-                        : "N/A"}
-                    </span>
-                  </Tooltip>
-                  <CopyButton
-                    text={tx.tokens ? Object.keys(tx.tokens).toLocaleString() : "N/A"}
-                    size="sm"
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+                  {/* Epoch */}
+                  <div className="w-32 md:w-40 flex-shrink-0">
+                    <Tooltip content={epochToGMT(tx.epoch)} position="top">
+                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer">
+                        {timeAgo(tx.epoch)}
+                      </span>
+                    </Tooltip>
+                  </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block">
-          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">
-              <div className="col-span-3">Block Hash</div>
-              <div className="col-span-3">Owner DID</div>
-              <div className="col-span-3">Epoch</div>
-              <div className="col-span-3">Burnt Token</div>
+                  {/* Burnt Token */}
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip
+                        content={tx.tokens ? Object.keys(tx.tokens).toString() : "N/A"}
+                        position="top"
+                      >
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
+                          {tx.tokens
+                            ? formatAddress(Object.keys(tx.tokens).toLocaleString(), 8)
+                            : "N/A"}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton
+                          text={tx.tokens ? Object.keys(tx.tokens).toLocaleString() : "N/A"}
+                          size="sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </div>
-
-          <div className="divide-y divide-outline-200 dark:divide-outline-700">
-            {transactions.map((tx, index) => (
-              <motion.div
-                key={tx.block_hash}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onTransactionClick(tx.block_hash)}
-                className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
-              >
-                <div className="col-span-3">
-                  <Tooltip content={tx.block_hash} position="top">
-                    <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                      {formatAddress(tx.block_hash, 8)}
-                    </div>
-                  </Tooltip>
-                  <CopyButton text={tx.block_hash} size="sm" />
-                </div>
-
-                <div className="col-span-3">
-                  <Tooltip content={tx.owner_did} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                      {formatAddress(tx.owner_did, 8)}
-                    </span>
-                  </Tooltip>
-                  <CopyButton text={tx.owner_did} size="sm" />
-                </div>
-
-                <div className="col-span-3">
-                  <Tooltip content={tx.epoch} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                     {timeAgo(tx.epoch)}
-                    </span>
-                  </Tooltip>
-                </div>
-
-                <div className="col-span-3">
-                  <Tooltip
-                    content={tx.tokens ? Object.keys(tx.tokens).toString() : "N/A"}
-                    position="top"
-                  >
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                      {tx.tokens
-                        ? formatAddress(Object.keys(tx.tokens).toLocaleString(), 8)
-                        : "N/A"}
-                    </span>
-                  </Tooltip>
-                  <CopyButton
-                    text={tx.tokens ? Object.keys(tx.tokens).toLocaleString() : "N/A"}
-                    size="sm"
-                  />
-                </div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </div>

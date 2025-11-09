@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { Info, ArrowLeft, Coins } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -22,6 +23,13 @@ export const DIDExplorerPage: React.FC = () => {
   const itemsPerPage = 5;
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Helper function to format long addresses
+  const formatAddress = (address: string, length: number = 8): string => {
+    if (!address || address === "N/A") return address;
+    if (address.length <= length * 2) return address;
+    return `${address.slice(0, length)}...${address.slice(-length)}`;
+  };
 
   // Fetch DID base info + RBTs
   const fetchDIDData = async (page = 1, limit = itemsPerPage) => {
@@ -102,7 +110,7 @@ export const DIDExplorerPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+          className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Home</span>
@@ -111,12 +119,18 @@ export const DIDExplorerPage: React.FC = () => {
 
       {/* DID Info */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">DID Explorer</h1>
-        <div className="flex items-center space-x-2 text-sm text-gray-600 break-all">
-          <span>Details for DID:</span>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-blue-600">{didData.did.did}</span>
-            <CopyButton text={didData.did.did} size="sm" />
+        <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold mb-2">DID Explorer</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm text-gray-600">
+          <span className="mb-2 sm:mb-0">Details for DID:</span>
+          <div className="flex items-center gap-2">
+            <Tooltip content={didData.did.did} position="top">
+              <span className="font-mono text-primary-600 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
+                {formatAddress(didData.did.did, 12)}
+              </span>
+            </Tooltip>
+            <div className="flex-shrink-0">
+              <CopyButton text={didData.did.did} size="sm" />
+            </div>
           </div>
         </div>
       </div>
@@ -168,7 +182,7 @@ export const DIDExplorerPage: React.FC = () => {
             }}
             className={`px-1 py-2 text-sm font-medium ${
               activeTab === "holdings"
-                ? "text-blue-600 border-b-2 border-blue-600"
+                ? "text-primary-600 border-b-2 border-primary-600"
                 : "text-gray-600"
             }`}
           >
@@ -182,7 +196,7 @@ export const DIDExplorerPage: React.FC = () => {
             }}
             className={`px-1 py-2 text-sm font-medium ${
               activeTab === "ftholdings"
-                ? "text-blue-600 border-b-2 border-blue-600"
+                ? "text-primary-600 border-b-2 border-primary-600"
                 : "text-gray-600"
             }`}
           >
@@ -197,13 +211,24 @@ export const DIDExplorerPage: React.FC = () => {
               didData.rbts.map((token: any) => (
                 <div
                   key={token.rbt_id}
-                  onClick={() =>
-                    navigate(`/token-explorer?token=${token.rbt_id}`)
-                  }
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100"
+                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 gap-3"
                 >
-                  <p className="text-sm font-medium">{token.rbt_id}</p>
-                  <div className="font-semibold">{token.token_value} RBT</div>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Tooltip content={token.rbt_id} position="top">
+                      <p
+                        className="text-sm font-medium truncate cursor-pointer hover:text-primary-600"
+                        onClick={() => navigate(`/token-explorer?token=${token.rbt_id}`)}
+                      >
+                        {formatAddress(token.rbt_id, 12)}
+                      </p>
+                    </Tooltip>
+                    <div className="flex-shrink-0">
+                      <CopyButton text={token.rbt_id} size="sm" />
+                    </div>
+                  </div>
+                  <div className="font-semibold text-sm sm:text-base whitespace-nowrap">
+                    {token.token_value} RBT
+                  </div>
                 </div>
               ))
             ) : (
@@ -231,15 +256,25 @@ export const DIDExplorerPage: React.FC = () => {
     .map((ft: any) => (
       <div
         key={ft.ft_id}
-        onClick={() => 
-        navigate(`/token-explorer?token=${ft.ft_id}`)}
-        className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100"
+        className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 gap-3"
       >
-        <div>
-          <p className="text-sm font-medium">{ft.ft_name || "Unnamed Token"}</p>
-          <p className="text-xs text-gray-500 break-all">{ft.ft_id}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium mb-2">{ft.ft_name || "Unnamed Token"}</p>
+          <div className="flex items-center gap-2">
+            <Tooltip content={ft.ft_id} position="top">
+              <p
+                className="text-xs text-gray-500 truncate cursor-pointer hover:text-primary-600"
+                onClick={() => navigate(`/token-explorer?token=${ft.ft_id}`)}
+              >
+                {formatAddress(ft.ft_id, 12)}
+              </p>
+            </Tooltip>
+            <div className="flex-shrink-0">
+              <CopyButton text={ft.ft_id} size="sm" />
+            </div>
+          </div>
         </div>
-        <div className="font-semibold">
+        <div className="font-semibold text-sm sm:text-base whitespace-nowrap">
           {isNaN(Number(ft.token_value)) ? "0" : Number(ft.token_value)} FT
         </div>
       </div>

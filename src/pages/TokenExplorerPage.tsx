@@ -124,6 +124,13 @@ export const TokenExplorerPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Helper function to format long addresses
+  const formatAddress = (address: string, length: number = 8): string => {
+    if (!address || address === "N/A") return address;
+    if (address.length <= length * 2) return address;
+    return `${address.slice(0, length)}...${address.slice(-length)}`;
+  };
+
   const normalizeToken = (raw: any, tokenId: string): TokenInfo => {
     const base = { tokenId, type: "UNKNOWN" as const };
     const payload = raw.rbt_info ?? raw.ft_info ?? raw.sc_info ?? raw.nft_info;
@@ -325,7 +332,7 @@ export const TokenExplorerPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Back to Home</span>
@@ -337,13 +344,17 @@ export const TokenExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
           Token Explorer
         </h1>
-        <div className="flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 break-all">
-          <span>Details for Token:</span>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-primary-600 dark:text-primary-400">
-              {tokenData.id}
-            </span>
-            <CopyButton text={tokenData.id} size="sm" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          <span className="mb-2 sm:mb-0">Details for Token:</span>
+          <div className="flex items-center gap-2">
+            <Tooltip content={tokenData.id} position="top">
+              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
+                {formatAddress(tokenData.id, 12)}
+              </span>
+            </Tooltip>
+            <div className="flex-shrink-0">
+              <CopyButton text={tokenData.id} size="sm" />
+            </div>
           </div>
         </div>
       </div>
@@ -390,22 +401,31 @@ export const TokenExplorerPage: React.FC = () => {
           {tokenData.type === "RBT" && (
             <>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">RBT ID:</p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.id}
-                  </p>
-                  <CopyButton text={tokenData.id!} size="sm" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">RBT ID:</p>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.id} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate">
+                      {formatAddress(tokenData.id, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.id!} size="sm" />
+                  </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.data.owner_did}
-                  </p>
-                  <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.owner_did} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
+                      {formatAddress(tokenData.data.owner_did, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                  </div>
                 </div>
               </div>
 
@@ -443,25 +463,32 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Creator DID:</p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text cursor-pointer"
-                     onClick={() => navigate(`/did-explorer?did=${tokenData.data.creator_did}`)}>
-                    {tokenData.data.creator_did}
-                  </p>
-                  <CopyButton text={tokenData.data.creator_did!} size="sm" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Creator DID:</p>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.creator_did} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.creator_did}`)}>
+                      {formatAddress(tokenData.data.creator_did, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.creator_did!} size="sm" />
+                  </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white cursor-pointer" 
-                                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}
->
-                    {tokenData.data.owner_did}
-                  </p>
-                  <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.owner_did} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
+                      {formatAddress(tokenData.data.owner_did, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                  </div>
                 </div>
               </div>
 
@@ -473,14 +500,18 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">
                   Transaction ID:
                 </p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.data.block_id}
-                  </p>
-                  <CopyButton text={tokenData.data.block_id!} size="sm" />
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.block_id} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate">
+                      {formatAddress(tokenData.data.block_id, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.block_id!} size="sm" />
+                  </div>
                 </div>
               </div>
             </>
@@ -499,26 +530,35 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">
                   Deployer DID:
                 </p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.data.creator_did}
-                  </p>
-                  <CopyButton text={tokenData.data.creator_did!} size="sm" />
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.creator_did} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.creator_did}`)}>
+                      {formatAddress(tokenData.data.creator_did, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.creator_did!} size="sm" />
+                  </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">
                   Transaction ID:
                 </p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.data.txn_id}
-                  </p>
-                  <CopyButton text={tokenData.data.txn_id!} size="sm" />
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.txn_id} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate">
+                      {formatAddress(tokenData.data.txn_id, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.txn_id!} size="sm" />
+                  </div>
                 </div>
               </div>
             </>
@@ -528,22 +568,31 @@ export const TokenExplorerPage: React.FC = () => {
           {tokenData.type === "NFT" && (
             <>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">NFT ID:</p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.id}
-                  </p>
-                  <CopyButton text={tokenData.id!} size="sm" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">NFT ID:</p>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.id} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate">
+                      {formatAddress(tokenData.id, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.id!} size="sm" />
+                  </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Owner DID:</p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.data.owner_did}
-                  </p>
-                  <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.owner_did} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                       onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
+                      {formatAddress(tokenData.data.owner_did, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                  </div>
                 </div>
               </div>
 
@@ -555,14 +604,18 @@ export const TokenExplorerPage: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">
                   Transaction ID:
                 </p>
-                <div className="flex items-center space-x-2">
-                  <p className="font-mono text-gray-900 dark:text-white">
-                    {tokenData.data.txn_id}
-                  </p>
-                  <CopyButton text={tokenData.data.txn_id!} size="sm" />
+                <div className="flex items-center gap-2">
+                  <Tooltip content={tokenData.data.txn_id} position="top">
+                    <p className="font-mono text-gray-900 dark:text-white truncate">
+                      {formatAddress(tokenData.data.txn_id, 8)}
+                    </p>
+                  </Tooltip>
+                  <div className="flex-shrink-0">
+                    <CopyButton text={tokenData.data.txn_id!} size="sm" />
+                  </div>
                 </div>
               </div>
             </>
@@ -643,14 +696,18 @@ export const TokenExplorerPage: React.FC = () => {
                             <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
                               Block Hash
                             </p>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                {block.TCBlockHashKey}
-                              </span>
-                              <CopyButton
-                                text={block.TCBlockHashKey}
-                                size="sm"
-                              />
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Tooltip content={block.TCBlockHashKey} position="top">
+                                <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
+                                  {formatAddress(block.TCBlockHashKey, 8)}
+                                </span>
+                              </Tooltip>
+                              <div className="flex-shrink-0">
+                                <CopyButton
+                                  text={block.TCBlockHashKey}
+                                  size="sm"
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -659,14 +716,22 @@ export const TokenExplorerPage: React.FC = () => {
                             <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
                               Owner DID
                             </p>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                {block.TCTokenOwnerKey}
-                              </span>
-                              <CopyButton
-                                text={block.TCTokenOwnerKey}
-                                size="sm"
-                              />
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Tooltip content={block.TCTokenOwnerKey} position="top">
+                                <span className="font-mono text-sm text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/did-explorer?did=${block.TCTokenOwnerKey}`);
+                                      }}>
+                                  {formatAddress(block.TCTokenOwnerKey, 8)}
+                                </span>
+                              </Tooltip>
+                              <div className="flex-shrink-0">
+                                <CopyButton
+                                  text={block.TCTokenOwnerKey}
+                                  size="sm"
+                                />
+                              </div>
                             </div>
                           </div>
 
