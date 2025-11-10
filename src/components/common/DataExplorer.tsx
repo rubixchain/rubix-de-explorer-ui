@@ -140,7 +140,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
             {/* Table Header */}
             <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700 min-w-[1000px]">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
-                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Transaction</div>
                 <div className="flex-1 min-w-[200px]">From</div>
                 <div className="flex-1 min-w-[200px]">To</div>
@@ -276,7 +276,7 @@ const HoldersListView: React.FC<{
             {/* Table Header */}
             <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-6">
-                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">Address</div>
                 <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Token Count</div>
               </div>
@@ -382,7 +382,7 @@ const TokensListView: React.FC<{
             {/* Table Header */}
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
-                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Token</div>
                 <div className="w-24 md:w-32 lg:w-40 flex-shrink-0">Amount in RBT</div>
                 <div className="flex-1 min-w-[160px]">Owner</div>
@@ -479,31 +479,10 @@ const SCBlocksList: React.FC<{
 }> = ({ currentPage, itemsPerPage, onPageChange, onTransactionClick }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
   const { data, isLoading, error } = useSCTxns(paramsTxn);
-  const [transactions, setTransactions] = useState<any>([]);
-  const [loading, setLoading] = useState(true);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  let paginatedTransactions = [];
 
-  if (data) {
-    paginatedTransactions = data!.sc_blocks.slice(startIndex, endIndex);
-  }
-
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setTransactions(data);
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
-  }, [data]);
-
-  const totalPages = Math.ceil(mockTransactions.length / itemsPerPage);
+  // Calculate total pages from API response
+  const scBlocks = data?.sc_blocks || [];
+  const totalPages = Math.ceil((data?.count || 0) / itemsPerPage);
 
   return (
     <div className="w-full">
@@ -514,7 +493,7 @@ const SCBlocksList: React.FC<{
             {/* Table Header */}
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
-                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Block Id</div>
                 <div className="flex-1 min-w-[200px]">Contract Id</div>
                 <div className="flex-1 min-w-[200px]">Deployer</div>
@@ -524,7 +503,7 @@ const SCBlocksList: React.FC<{
 
             {/* Table Body */}
             <div className="divide-y divide-outline-200 dark:divide-outline-700">
-              {paginatedTransactions.map((tx: any, index: any) => (
+              {scBlocks.map((tx: any, index: any) => (
                 <motion.div
                   key={tx.block_id}
                   initial={{ opacity: 0, y: 20 }}
@@ -544,16 +523,11 @@ const SCBlocksList: React.FC<{
 
                   {/* Block Id Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
-                    <div className="flex items-center gap-1.5 w-full min-w-0">
-                      <Tooltip content={tx.block_id} position="top">
-                        <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                          {formatAddress(tx.block_id, 8)}
-                        </div>
-                      </Tooltip>
-                      <div className="flex-shrink-0">
-                        <CopyButton text={tx.block_id} size="sm" />
+                    <Tooltip content={tx.block_id} position="top">
+                      <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
+                        {formatAddress(tx.block_id, 8)}
                       </div>
-                    </div>
+                    </Tooltip>
                   </div>
 
                   {/* Contract Id Column - Flexible */}
@@ -621,7 +595,7 @@ const SCBlocksList: React.FC<{
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={onPageChange}
-        totalItems={mockTransactions.length}
+        totalItems={data?.count || 0}
         itemsPerPage={itemsPerPage}
         className="mt-6"
       />
@@ -694,8 +668,8 @@ const timeAgo = (epoch: number): string => {
             {/* Table Header */}
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 gap-3 md:gap-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider bg-secondary-50 dark:bg-secondary-800">
-                <div className="w-16 md:w-20 flex-shrink-0">#</div>
-                <div className="flex-1 min-w-[200px]">Block Hash</div>
+                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
+                <div className="flex-1 min-w-[200px]">Block ID</div>
                 <div className="flex-1 min-w-[200px]">Owner DID</div>
                 <div className="w-32 md:w-40 flex-shrink-0">Epoch</div>
                 <div className="flex-1 min-w-[200px]">Burnt Token</div>
@@ -722,18 +696,13 @@ const timeAgo = (epoch: number): string => {
                     </div>
                   </div>
 
-                  {/* Block Hash */}
+                  {/* Block ID */}
                   <div className="flex-1 min-w-[200px]">
-                    <div className="flex items-center gap-1.5">
-                      <Tooltip content={tx.block_hash} position="top">
-                        <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                          {formatAddress(tx.block_hash, 8)}
-                        </div>
-                      </Tooltip>
-                      <div className="flex-shrink-0">
-                        <CopyButton text={tx.block_hash} size="sm" />
+                    <Tooltip content={tx.block_hash} position="top">
+                      <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
+                        {formatAddress(tx.block_hash, 8)}
                       </div>
-                    </div>
+                    </Tooltip>
                   </div>
 
                   {/* Owner DID */}

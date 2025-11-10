@@ -11,6 +11,8 @@ import {
   Hash,
   User,
   DollarSign,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -25,7 +27,22 @@ export const TransactionExplorerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "details" | "validators"
   >("details");
+  const [expandedValidator, setExpandedValidator] = useState<number | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Generate dummy token data for each validator
+  const generateDummyTokens = (validatorIndex: number) => {
+    const tokenCount = Math.floor(Math.random() * 5) + 3; // 3-7 tokens per validator
+    return Array.from({ length: tokenCount }, (_, i) => ({
+      id: `token-${validatorIndex}-${i}`,
+      tokenId: `${Math.random().toString(36).substr(2, 8)}...${Math.random().toString(36).substr(2, 8)}`,
+    }));
+  };
+
+  const toggleValidator = (index: number) => {
+    // If clicking the same validator, collapse it. Otherwise, open the new one and close others
+    setExpandedValidator((prev) => prev === index ? null : index);
+  };
 
   // Helper function to format addresses
   const formatAddress = (address: string, length: number = 8): string => {
@@ -374,39 +391,97 @@ export const TransactionExplorerPage: React.FC = () => {
           {activeTab === "validators" && (
             <div className="space-y-3">
               {txData.validators && txData.validators.length > 0 ? (
-                txData.validators.map((validator: any, index: number) => (
-                  <motion.div
-                    key={index}
-                    onClick={()=> {
-                      navigate(`/did-explorer?did=${validator.address}`)
-                    }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                        <span className="text-primary-600 dark:text-primary-400 text-sm font-bold">
-                          {index + 1}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                          Validator Address:
-                        </p>
-                        <Tooltip content={validator.address} position="top">
-                          <p className="font-mono text-sm text-gray-900 dark:text-white cursor-pointer flex-1">
-                            {formatAddress(validator.address, 8)}
-                          </p>
-                        </Tooltip>
-                        <div className="flex-shrink-0">
-                          <CopyButton text={validator.address} size="sm" />
+                txData.validators.map((validator: any, index: number) => {
+                  const isExpanded = expandedValidator === index;
+                  const dummyTokens = generateDummyTokens(index);
+
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors overflow-hidden"
+                    >
+                      {/* Validator Header - Clickable to expand/collapse */}
+                      <div
+                        onClick={() => toggleValidator(index)}
+                        className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                            <span className="text-primary-600 dark:text-primary-400 text-sm font-bold">
+                              {index + 1}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-center gap-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                              Validator Address:
+                            </p>
+                            <Tooltip content={validator.address} position="top">
+                              <p
+                                className="font-mono text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/did-explorer?did=${validator.address}`);
+                                }}
+                              >
+                                {formatAddress(validator.address, 8)}
+                              </p>
+                            </Tooltip>
+                            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <CopyButton text={validator.address} size="sm" />
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {isExpanded ? (
+                              <ChevronUp className="w-5 h-5 text-gray-400" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))
+
+                      {/* Expandable Token List */}
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
+                        >
+                          <div className="p-4">
+                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                              Token IDs ({dummyTokens.length})
+                            </h4>
+                            <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                              {dummyTokens.map((token, tokenIndex) => (
+                                <div
+                                  key={token.id}
+                                  className="flex items-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                                >
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                    #{tokenIndex + 1}
+                                  </span>
+                                  <Tooltip content={token.tokenId} position="top">
+                                    <span className="font-mono text-sm text-gray-900 dark:text-white truncate flex-1">
+                                      {token.tokenId}
+                                    </span>
+                                  </Tooltip>
+                                  <div className="flex-shrink-0">
+                                    <CopyButton text={token.tokenId} size="sm" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  );
+                })
               ) : (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   No validators found for this transaction.
