@@ -250,12 +250,6 @@ export const SCTransactionExplorerPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Type:</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {txData.type}
-                  </p>
-                </div>
-                <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-2">
                     Contract ID
                   </p>

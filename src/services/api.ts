@@ -208,17 +208,24 @@ class ApiClient {
 
       const txnResp = await response.json();
 
+      const formatTimeAgo = (epoch: number): string => {
+        if (!epoch) return "N/A";
+
+        // Convert to milliseconds if needed
+        const timestamp = epoch < 1e12 ? epoch * 1000 : epoch;
+        const now = Date.now();
+        const diff = Math.floor((now - timestamp) / 1000); // difference in seconds
+
+        if (diff < 60) return "just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+        if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
+        return `${Math.floor(diff / 2592000)} months ago`;
+      };
+
       const frontendTransactions = (txnResp.transactions_response || []).map(
         (txn: any) => {
-          // --- Inline timeAgo formatter ---
-          const dateString = txn.txn_time;
-          let timeAgo = "N/A";
-          if (dateString && !dateString.startsWith("0001-01-01")) {
-            const now = new Date();
-            const txnDate = new Date(dateString);
-            const diffMs = now.getTime() - txnDate.getTime();
-          }
-
           return {
             id: txn.txn_hash,
             type: txn.txn_type
@@ -230,21 +237,28 @@ class ApiClient {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} RBT`,
-            timestamp: txn.epoch,
+            timestamp: formatTimeAgo(txn.txn_time),
             status: txn.status || "confirmed",
           };
         }
       );
 
-      frontendTransactions.count = txnResp.count;
-
-      return { success: true, data: frontendTransactions };
+      return {
+        success: true,
+        data: {
+          transactions: frontendTransactions,
+          count: txnResp.count
+        }
+      };
     } catch (error) {
       console.error("Error fetching transactions:", error);
       return {
         success: false,
         message: "Failed to fetch transactions",
-        data: [],
+        data: {
+          transactions: [],
+          count: 0
+        },
       };
     }
   }

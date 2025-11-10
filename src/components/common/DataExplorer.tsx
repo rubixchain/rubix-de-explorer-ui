@@ -122,34 +122,35 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
   const { data, isLoading, error } = useTransactions(paramsTxn);
 
   useEffect(() => {
-    if (data?.data) {
+    if (data?.data?.transactions) {
       console.log(data)
-      setTransactions(data.data);
+      setTransactions(data.data.transactions);
     }
   }, [data]);
 
   // Compute total pages from totalCount returned by API
-  const totalPages = Math.ceil((data?.data.count || 0) / itemsPerPage);
+  const totalPages = Math.ceil((data?.data?.count || 0) / itemsPerPage);
 
   return (
     <div className="w-full">
       <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
         {/* Single Table Layout with Horizontal Scroll for Mobile & iPad */}
         <div className="overflow-x-auto">
-          <div className="min-w-[1000px]">
+          <div className="inline-block min-w-full">
             {/* Table Header */}
-            <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
+            <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700 min-w-[1000px]">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
-                <div className="w-56 md:w-60 flex-shrink-0">Transaction</div>
+                <div className="w-16 md:w-20 flex-shrink-0">#</div>
+                <div className="flex-1 min-w-[200px]">Transaction</div>
                 <div className="flex-1 min-w-[200px]">From</div>
                 <div className="flex-1 min-w-[200px]">To</div>
-                <div className="w-28 md:w-32 flex-shrink-0">Status</div>
+                <div className="w-32 md:w-40 flex-shrink-0">Time</div>
                 <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount</div>
               </div>
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+            <div className="divide-y divide-outline-200 dark:divide-outline-700 min-w-[1000px]">
               {transactions.map((tx, index) => (
                 <motion.div
                   key={tx.id}
@@ -159,28 +160,25 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                   onClick={() => onTransactionClick(tx.id)}
                   className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
                 >
+                  {/* Serial Number Column */}
+                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Transaction Column */}
-                  <div className="w-56 md:w-60 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
-                          {(currentPage - 1) * itemsPerPage + index + 1}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <Tooltip content={tx.id} position="top">
-                            <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                              {formatAddress(tx.id, 8)}
-                            </div>
-                          </Tooltip>
-                          <div className="flex-shrink-0">
-                            <CopyButton text={tx.id} size="sm" />
-                          </div>
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={tx.id} position="top">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
+                          {formatAddress(tx.id, 8)}
                         </div>
-                        <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-0.5 truncate">
-                          {tx.timestamp}
-                        </div>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.id} size="sm" />
                       </div>
                     </div>
                   </div>
@@ -213,16 +211,10 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Status Column */}
-                  <div className="w-28 md:w-32 flex-shrink-0 flex items-center">
-                    <span
-                      className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-                        tx.status === "confirmed"
-                          ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
-                          : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                      }`}
-                    >
-                      {tx.status}
+                  {/* Time Column */}
+                  <div className="w-32 md:w-40 flex-shrink-0 flex items-center">
+                    <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200">
+                      {tx.timestamp}
                     </span>
                   </div>
 
@@ -244,7 +236,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={onPageChange}
-        totalItems={data?.data.count || 0}
+        totalItems={data?.data?.count || 0}
         itemsPerPage={itemsPerPage}
         className="mt-6"
       />
@@ -401,7 +393,7 @@ const TokensListView: React.FC<{
             <div className="divide-y divide-outline-200 dark:divide-outline-700">
               {tokens.map((token: any, index: number) => (
                 <motion.div
-                  key={token.rbt_id}
+                  key={token.token_id || `token-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -420,8 +412,15 @@ const TokensListView: React.FC<{
                   {/* Token Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                        {token.token_id}
+                      <div className="flex items-center gap-1.5">
+                        <Tooltip content={token.token_id} position="top">
+                          <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
+                            {formatAddress(token.token_id, 8)}
+                          </div>
+                        </Tooltip>
+                        <div className="flex-shrink-0">
+                          <CopyButton text={token.token_id} size="sm" />
+                        </div>
                       </div>
                       <div className="text-xs text-secondary-500 dark:text-secondary-400 truncate mt-0.5">
                         Owner: {formatAddress(token.owner_did, 8)}
