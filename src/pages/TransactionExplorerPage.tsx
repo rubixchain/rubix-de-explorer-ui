@@ -406,27 +406,27 @@ export const TransactionExplorerPage: React.FC = () => {
                       {/* Validator Header - Clickable to expand/collapse */}
                       <div
                         onClick={() => toggleValidator(index)}
-                        className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       >
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                            <span className="text-primary-600 dark:text-primary-400 text-sm font-bold">
+                        <div className="flex items-center gap-2 sm:gap-4">
+                          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                            <span className="text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-bold">
                               {index + 1}
                             </span>
                           </div>
-                          <div className="flex-1 min-w-0 flex items-center gap-2">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                          <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:inline">
                               Validator Address:
                             </p>
                             <Tooltip content={validator.address} position="top">
                               <p
-                                className="font-mono text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer flex-1"
+                                className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer truncate flex-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/did-explorer?did=${validator.address}`);
                                 }}
                               >
-                                {formatAddress(validator.address, 8)}
+                                {formatAddress(validator.address, 6)}
                               </p>
                             </Tooltip>
                             <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -435,9 +435,9 @@ export const TransactionExplorerPage: React.FC = () => {
                           </div>
                           <div className="flex-shrink-0">
                             {isExpanded ? (
-                              <ChevronUp className="w-5 h-5 text-gray-400" />
+                              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                             ) : (
-                              <ChevronDown className="w-5 h-5 text-gray-400" />
+                              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                             )}
                           </div>
                         </div>
@@ -452,21 +452,21 @@ export const TransactionExplorerPage: React.FC = () => {
                           transition={{ duration: 0.3 }}
                           className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
                         >
-                          <div className="p-4">
-                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                          <div className="p-3 sm:p-4">
+                            <h4 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
                               Token IDs ({dummyTokens.length})
                             </h4>
-                            <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 sm:pr-2">
                               {dummyTokens.map((token, tokenIndex) => (
                                 <div
                                   key={token.id}
-                                  className="flex items-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                                 >
                                   <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                                     #{tokenIndex + 1}
                                   </span>
                                   <Tooltip content={token.tokenId} position="top">
-                                    <span className="font-mono text-sm text-gray-900 dark:text-white truncate flex-1">
+                                    <span className="font-mono text-xs sm:text-sm text-gray-900 dark:text-white truncate flex-1">
                                       {token.tokenId}
                                     </span>
                                   </Tooltip>

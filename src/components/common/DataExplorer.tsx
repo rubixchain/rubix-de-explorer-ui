@@ -911,77 +911,78 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
       <div className="p-6 w-full">
         {/* Header with Tab Switcher */}
         <div className="mb-6">
-          {/* Mobile Layout: Title and Description first, then Dropdown */}
+          {/* Mobile Layout: Title with Dropdown Icon on the right */}
           <div className="block sm:hidden mb-4">
-            <div className="mb-4">
-              <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
-                Rubix Explorer
-              </h2>
-              <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">
-                {viewMode === "list" && `Viewing ${activeTab} data`}
-                {/* {viewMode === "graph" && `Chart view for ${activeTab}`}
-                {viewMode === "quorums" && `Validator quorums overview`} */}
-              </p>
-            </div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
+                  Rubix Explorer
+                </h2>
+                <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">
+                  {viewMode === "list" && `Viewing ${activeTab} data`}
+                  {/* {viewMode === "graph" && `Chart view for ${activeTab}`}
+                  {viewMode === "quorums" && `Validator quorums overview`} */}
+                </p>
+              </div>
 
-            {/* View Mode Dropdown */}
-            <div className="relative w-full" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 text-secondary-900 dark:text-white font-semibold py-3 px-6 pr-10 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 w-full"
-              >
-                <span className="capitalize">{viewMode}</span>
-                <svg
-                  className={`w-4 h-4 text-secondary-600 dark:text-secondary-400 transition-transform duration-200 ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {/* View Mode Dropdown Icon */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-secondary-900 dark:text-white font-semibold p-2 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              <AnimatePresence>
-                {isDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1 w-full min-w-[160px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+                  <svg
+                    className={`w-4 h-4 text-secondary-600 dark:text-secondary-400 transition-transform duration-200 ${
+                      isDropdownOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    {[
-                      { value: "list", label: "List" },
-                      // { value: "graph", label: "Graph" },
-                      // { value: "quorums", label: "Quorums" },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setViewMode(
-                            option.value as "list"
-                          );
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-6 py-4 text-sm font-medium transition-colors duration-150 ${
-                          viewMode === option.value
-                            ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
-                            : "text-secondary-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full right-0 mt-1 w-[160px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+                    >
+                      {[
+                        { value: "list", label: "List" },
+                        // { value: "graph", label: "Graph" },
+                        // { value: "quorums", label: "Quorums" },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setViewMode(
+                              option.value as "list"
+                            );
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-6 py-4 text-sm font-medium transition-colors duration-150 ${
+                            viewMode === option.value
+                              ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
+                              : "text-secondary-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
@@ -1002,11 +1003,11 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 text-secondary-900 dark:text-white font-semibold py-3 px-6 pr-10 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 min-w-[160px]"
+                className="flex items-center justify-center sm:justify-between bg-gray-100 dark:bg-gray-800 text-secondary-900 dark:text-white font-semibold py-3 px-3 sm:px-6 sm:pr-10 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 sm:min-w-[160px]"
               >
-                <span className="capitalize">{viewMode}</span>
+                <span className="capitalize max-sm:hidden">{viewMode}</span>
                 <svg
-                  className={`w-4 h-4 text-secondary-600 dark:text-secondary-400 transition-transform duration-200 ${
+                  className={`w-5 h-5 sm:w-4 sm:h-4 text-secondary-600 dark:text-secondary-400 transition-transform duration-200 ${
                     isDropdownOpen ? "rotate-180" : ""
                   }`}
                   fill="none"
