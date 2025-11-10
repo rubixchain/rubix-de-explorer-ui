@@ -411,19 +411,14 @@ const TokensListView: React.FC<{
 
                   {/* Token Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <Tooltip content={token.token_id} position="top">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                            {formatAddress(token.token_id, 8)}
-                          </div>
-                        </Tooltip>
-                        <div className="flex-shrink-0">
-                          <CopyButton text={token.token_id} size="sm" />
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={token.token_id} position="top">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
+                          {formatAddress(token.token_id, 8)}
                         </div>
-                      </div>
-                      <div className="text-xs text-secondary-500 dark:text-secondary-400 truncate mt-0.5">
-                        Owner: {formatAddress(token.owner_did, 8)}
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={token.token_id} size="sm" />
                       </div>
                     </div>
                   </div>
