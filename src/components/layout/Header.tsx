@@ -130,9 +130,9 @@ export const Header: React.FC = () => {
                 alt="Rubix Logo"
                 className="h-6 w-auto"
               />
-              <span className="text-sm font-semibold text-heading font-heading whitespace-nowrap">
+              {/* <span className="text-sm font-semibold text-heading font-heading whitespace-nowrap">
                 Rubix Explorer
-              </span>
+              </span> */}
             </Link>
 
             <Button
