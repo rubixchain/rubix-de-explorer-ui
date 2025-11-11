@@ -570,7 +570,7 @@ export const TransactionExplorerPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between space-y-3 sm:space-y-0">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span
+                      {/* <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           transfer.tokenType === "RBT"
                             ? "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
@@ -582,7 +582,7 @@ export const TransactionExplorerPage: React.FC = () => {
                         }`}
                       >
                         {transfer.tokenType}
-                      </span>
+                      </span> */}
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
                           transfer.status === "confirmed"
@@ -609,11 +609,11 @@ export const TransactionExplorerPage: React.FC = () => {
                           From:
                         </p>
                         <div className="flex items-center gap-1.5">
-                          <Tooltip content={transfer.from} position="top">
+                         
                             <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
                               {formatAddress(transfer.from, 8)}
                             </p>
-                          </Tooltip>
+                         
                           <div className="flex-shrink-0">
                             <CopyButton text={transfer.from} size="sm" />
                           </div>
@@ -624,11 +624,10 @@ export const TransactionExplorerPage: React.FC = () => {
                           To:
                         </p>
                         <div className="flex items-center gap-1.5">
-                          <Tooltip content={transfer.to} position="top">
+                         
                             <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
                               {formatAddress(transfer.to, 8)}
                             </p>
-                          </Tooltip>
                           <div className="flex-shrink-0">
                             <CopyButton text={transfer.to} size="sm" />
                           </div>
@@ -643,9 +642,9 @@ export const TransactionExplorerPage: React.FC = () => {
                         {/* <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-lg">
                               {transfer.amount}
                             </div> */}
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {/* <div className="text-xs text-gray-500 dark:text-gray-400">
                           {transfer.tokenType}
-                        </div>
+                        </div> */}
                         {/* {transfer.amount && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                                 {transfer.amount}
