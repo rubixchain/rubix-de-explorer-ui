@@ -15,22 +15,24 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTransaction } from "@/hooks/useTransactions";
 
 export const TransactionExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const txId = searchParams.get("tx") || "";
-  const [loading, setLoading] = useState(true);
+
+  // Use React Query hook - same pattern as HomePage
+  const { data: rawData, isLoading, error: queryError } = useTransaction(txId);
+
   const [txData, setTxData] = useState<any>(null);
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"details" | "validators">(
     "details"
   );
   const [expandedValidator, setExpandedValidator] = useState<number | null>(
     null
   );
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Generate dummy token data for each validator
   const generateDummyTokens = (validatorIndex: number) => {
@@ -55,112 +57,93 @@ export const TransactionExplorerPage: React.FC = () => {
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
+  // Transform data when rawData changes - same pattern as HomePage
   useEffect(() => {
-    const fetchTransactionData = async () => {
-      try {
-        if (!txId) {
-          throw new Error("No transaction ID provided");
-        }
-        const response = await fetch(`${API_BASE_URL}/txnhash?hash=${txId}`);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch transaction data: ${response.statusText}`
-          );
-        }
-        const data = await response.json();
-        const mapTxnType = (type: string): string => {
-          switch (type) {
-            case "02":
-              return "Transfer";
-            default:
-              return "Unknown";
-          }
-        };
+    if (!rawData) return;
 
-        // Handle tokens as an object, using only keys
-        const tokenIds =
-          data.tokens && typeof data.tokens === "object"
-            ? Object.keys(data.tokens)
-            : [];
-        if (!Array.isArray(tokenIds)) {
-          console.warn(
-            "Tokens field does not contain valid keys:",
-            data.tokens
-          );
-        }
-        const formattedTxData = {
-          id: data.txn_id || "N/A",
-          status: "confirmed",
-          confirmations: 120,
-          type: mapTxnType(data.txn_type || ""),
-          value: data.amount ? `${data.amount} RBT` : "N/A",
-          valueUSD: "N/A",
-          timestamp: data.epoch
-            ? new Date(data.epoch * 1000).toUTCString()
-            : "N/A",
-          blockId: data.block_hash || "N/A",
-          from: data.sender_did || "N/A",
-          to: data.receiver_did || "N/A",
-          tokens: data.tokens
-            ? Object.entries(data.tokens).map(
-                ([tokenId, tokenData]: [string, any]) => ({
-                  tokenId,
-                  type: tokenData.TTTokenTypeKey,
-                  blockNumber: tokenData.TTBlockNumberKey,
-                  previousBlockId: tokenData.TTPreviousBlockIDKey,
-                })
-              )
-            : [],
-          validators: data.validator_pledge_map
-            ? Object.entries(data.validator_pledge_map).map(
-                ([validatorDid, pledgeArray]) => {
-                  const pledges = (pledgeArray as any[]).map((entry: any) => ({
-                    token: entry["8-1"],
-                  }));
-                  return {
-                    validator: validatorDid,
-                    pledgedTokens: pledges,
-                  };
-                }
-              )
-            : [],
-        };
-
-        // Map token IDs to tokenTransfers structure
-        const formattedTokenTransfers =
-          tokenIds.length > 0
-            ? tokenIds.map((tokenId: string, index: number) => ({
-                id: `transfer-${index + 1}`,
-                tokenId,
-                tokenName: `Token ${tokenId.slice(0, 8)}...`, // Truncate tokenId for display
-                tokenType: "RBT", // Default to RBT as token type is not used
-                from: data.sender_did || "N/A",
-                to: data.receiver_did || "N/A",
-                amount: data.amount ? data.amount.toString() : "N/A", // Use 'N/A' if amount is null
-                amountUSD: "N/A",
-                timestamp: "2 minutes ago", // No specific timestamp per token, using default
-                status: "confirmed",
-              }))
-            : [];
-
-        setTxData(formattedTxData);
-        setTokenTransfers(formattedTokenTransfers);
-        console.log("test-validators", formattedTxData);
-        setError(null);
-      } catch (error: any) {
-        console.error("Error fetching transaction data:", error);
-        setError(
-          error.message || "An error occurred while fetching transaction data"
-        );
-      } finally {
-        setLoading(false);
+    const data = rawData;
+    const mapTxnType = (type: string): string => {
+      switch (type) {
+        case "02":
+          return "Transfer";
+        default:
+          return "Unknown";
       }
     };
 
-    fetchTransactionData();
-  }, [txId]);
+    // Handle tokens as an object, using only keys
+    const tokenIds =
+      data.tokens && typeof data.tokens === "object"
+        ? Object.keys(data.tokens)
+        : [];
+    if (!Array.isArray(tokenIds)) {
+      console.warn(
+        "Tokens field does not contain valid keys:",
+        data.tokens
+      );
+    }
+    const formattedTxData = {
+      id: data.txn_id || "N/A",
+      status: "confirmed",
+      confirmations: 120,
+      type: mapTxnType(data.txn_type || ""),
+      value: data.amount ? `${data.amount} RBT` : "N/A",
+      valueUSD: "N/A",
+      timestamp: data.epoch
+        ? new Date(data.epoch * 1000).toUTCString()
+        : "N/A",
+      blockId: data.block_hash || "N/A",
+      from: data.sender_did || "N/A",
+      to: data.receiver_did || "N/A",
+      tokens: data.tokens
+        ? Object.entries(data.tokens).map(
+            ([tokenId, tokenData]: [string, any]) => ({
+              tokenId,
+              type: tokenData.TTTokenTypeKey,
+              blockNumber: tokenData.TTBlockNumberKey,
+              previousBlockId: tokenData.TTPreviousBlockIDKey,
+            })
+          )
+        : [],
+      validators: data.validator_pledge_map
+        ? Object.entries(data.validator_pledge_map).map(
+            ([validatorDid, pledgeArray]) => {
+              const pledges = (pledgeArray as any[]).map((entry: any) => ({
+                token: entry["8-1"],
+              }));
+              return {
+                validator: validatorDid,
+                pledgedTokens: pledges,
+              };
+            }
+          )
+        : [],
+    };
 
-  if (loading) {
+    // Map token IDs to tokenTransfers structure
+    const formattedTokenTransfers =
+      tokenIds.length > 0
+        ? tokenIds.map((tokenId: string, index: number) => ({
+            id: `transfer-${index + 1}`,
+            tokenId,
+            tokenName: `Token ${tokenId.slice(0, 8)}...`, // Truncate tokenId for display
+            tokenType: "RBT", // Default to RBT as token type is not used
+            from: data.sender_did || "N/A",
+            to: data.receiver_did || "N/A",
+            amount: data.amount ? data.amount.toString() : "N/A", // Use 'N/A' if amount is null
+            amountUSD: "N/A",
+            timestamp: "2 minutes ago", // No specific timestamp per token, using default
+            status: "confirmed",
+          }))
+        : [];
+
+    setTxData(formattedTxData);
+    setTokenTransfers(formattedTokenTransfers);
+    
+  }, [rawData]);
+
+  // Use React Query states - same pattern as HomePage
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-8">
@@ -176,15 +159,15 @@ export const TransactionExplorerPage: React.FC = () => {
     );
   }
 
-  if (error || !txData) {
+  if (queryError || !txData) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error ? "Error Loading Transaction" : "Transaction Not Found"}
+            {queryError ? "Error Loading Transaction" : "Transaction Not Found"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error || "The requested transaction could not be found."}
+            {queryError ? "An error occurred while fetching transaction data" : "The requested transaction could not be found."}
           </p>
           <button
             onClick={() => navigate("/")}

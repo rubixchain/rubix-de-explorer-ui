@@ -13,18 +13,18 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSCTransaction } from "@/hooks/useTransactions";
 
 export const SCTransactionExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const txId = searchParams.get("tx") || "";
-  const [loading, setLoading] = useState(true);
+
+  // Use React Query hook - same pattern as HomePage and other pages
+  const { data: rawData, isLoading, error: queryError } = useSCTransaction(txId);
+
   const [txData, setTxData] = useState<any>(null);
-  const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  //   const [activeTab, setActiveTab] = useState<'details' | 'transfers' | 'validators'>('details');
   const [activeTab, setActiveTab] = useState<"details">("details");
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Helper function to format long addresses
   const formatAddress = (address: string, length: number = 8): string => {
@@ -33,73 +33,50 @@ export const SCTransactionExplorerPage: React.FC = () => {
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
+  // Transform data when rawData changes - same pattern as other pages
   useEffect(() => {
-    const fetchTransactionData = async () => {
-      try {
-        if (!txId) {
-          throw new Error("No transaction ID provided");
-        }
+    if (!rawData) return;
 
-        const response = await fetch(`${API_BASE_URL}/sctxn-info?hash=${txId}`);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch transaction data: ${response.statusText}`
-          );
-        }
-        const data = await response.json();
-        const mapTxnType = (type: string): string => {
-          switch (type) {
-            case "02":
-              return "Transfer";
-            default:
-              return "Unknown";
-          }
-        };
-
-        // Handle tokens as an object, using only keys
-        const tokenIds =
-          data.tokens && typeof data.tokens === "object"
-            ? Object.keys(data.tokens)
-            : [];
-        if (!Array.isArray(tokenIds)) {
-          console.warn(
-            "Tokens field does not contain valid keys:",
-            data.tokens
-          );
-        }
-
-        const formattedTxData = {
-          id: data.block_id || "N/A",
-          contract_id: data.contract_id || "N/A",
-          status: "confirmed",
-          confirmations: 120,
-          type: mapTxnType(data.txn_type || ""),
-          timestamp: data.epoch || "N/A", // Convert epoch to UTC string
-          blockId: data.block_hash || "N/A",
-          executor_did: data.executor_did || "N/A",
-          owner_did: data.owner_did || "N/A",
-          block_height: data.block_height,
-          //   validators: data.validator_pledge_map
-          //     ? Object.keys(data.validator_pledge_map).map((address) => ({ address }))
-          //     : [],
-        };
-
-        setTxData(formattedTxData);
-        setError(null);
-      } catch (error: any) {
-        console.error("Error fetching transaction data:", error);
-        setError(
-          error.message || "An error occurred while fetching transaction data"
-        );
-      } finally {
-        setLoading(false);
+    const data = rawData;
+    const mapTxnType = (type: string): string => {
+      switch (type) {
+        case "02":
+          return "Transfer";
+        default:
+          return "Unknown";
       }
     };
 
-    fetchTransactionData();
-  }, [txId]);
+    // Handle tokens as an object, using only keys
+    const tokenIds =
+      data.tokens && typeof data.tokens === "object"
+        ? Object.keys(data.tokens)
+        : [];
+    if (!Array.isArray(tokenIds)) {
+      console.warn(
+        "Tokens field does not contain valid keys:",
+        data.tokens
+      );
+    }
 
-  if (loading) {
+    const formattedTxData = {
+      id: data.block_id || "N/A",
+      contract_id: data.contract_id || "N/A",
+      status: "confirmed",
+      confirmations: 120,
+      type: mapTxnType(data.txn_type || ""),
+      timestamp: data.epoch || "N/A",
+      blockId: data.block_hash || "N/A",
+      executor_did: data.executor_did || "N/A",
+      owner_did: data.owner_did || "N/A",
+      block_height: data.block_height,
+    };
+
+    setTxData(formattedTxData);
+  }, [rawData]);
+
+  // Use React Query states - same pattern as other pages
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-8">
@@ -115,15 +92,15 @@ export const SCTransactionExplorerPage: React.FC = () => {
     );
   }
 
-  if (error || !txData) {
+  if (queryError || !txData) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error ? "Error Loading Transaction" : "Transaction Not Found"}
+            {queryError ? "Error Loading Transaction" : "Transaction Not Found"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error || "The requested transaction could not be found."}
+            {queryError ? "An error occurred while fetching transaction data" : "The requested transaction could not be found."}
           </p>
           <button
             onClick={() => navigate("/")}

@@ -123,7 +123,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 
   useEffect(() => {
     if (data?.data?.transactions) {
-      console.log(data)
+      
       setTransactions(data.data.transactions);
     }
   }, [data]);
@@ -261,7 +261,7 @@ const HoldersListView: React.FC<{
 
   useEffect(() => {
     if (data?.holders_response?.holders_response) { // ✅ Add optional chaining
-      console.log("test", data?.holders_response?.holders_response)
+     
       setHolders(data.holders_response.holders_response);
     } else {
       setHolders([]);

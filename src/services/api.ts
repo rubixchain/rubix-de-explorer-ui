@@ -1,4 +1,4 @@
-import { API_ENDPOINTS, USE_MOCK_DATA } from "@/constants";
+import { API_ENDPOINTS, USE_MOCK_DATA, NETWORK_CONFIG, STORAGE_KEYS } from "@/constants";
 import {
   ApiResponse,
   Pagination,
@@ -9,6 +9,30 @@ import {
   Validator,
   NetworkMetrics,
 } from "@/types";
+
+// Helper function to get current network's base URL
+export const getCurrentBaseUrl = (): string => {
+  try {
+    const selectedNetwork = localStorage.getItem(STORAGE_KEYS.SELECTED_NETWORK) || 'testnet';
+    const baseUrl = selectedNetwork === 'mainnet'
+      ? NETWORK_CONFIG.mainnet.baseUrl
+      : NETWORK_CONFIG.testnet.baseUrl;
+    
+    return baseUrl;
+  } catch (error) {
+    console.error('Failed to get network from local storage:', error);
+    return NETWORK_CONFIG.testnet.baseUrl;
+  }
+};
+
+// Helper function to get base URL for a specific network
+export const getBaseUrlForNetwork = (network: string): string => {
+  const baseUrl = network === 'mainnet'
+    ? NETWORK_CONFIG.mainnet.baseUrl
+    : NETWORK_CONFIG.testnet.baseUrl;
+  
+  return baseUrl;
+};
 
 const generateMockMetrics = (): NetworkMetrics => ({
   totalTransactions: 1234567,
@@ -45,16 +69,16 @@ const generateMockTransactions = (count: number = 20): Transaction[] => {
 };
 
 class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = API_ENDPOINTS.BASE_URL) {
-    this.baseUrl = baseUrl;
+  // Getter for dynamic base URL based on current network
+  private get baseUrl(): string {
+    return getCurrentBaseUrl();
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
+
     if (USE_MOCK_DATA) {
       await new Promise((resolve) =>
         setTimeout(resolve, 300 + Math.random() * 200)
@@ -187,10 +211,10 @@ class ApiClient {
   async getTransactions(params?: {
     page?: number;
     limit?: number;
+    network?: string;
     // type?: string;
     // status?: string;
   }) {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
@@ -198,9 +222,11 @@ class ApiClient {
     // if (params?.type) searchParams.append("type", params.type);
     // if (params?.status) searchParams.append("status", params.status);
 
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
     try {
       const response = await fetch(
-        `${API_BASE_URL}/txnblocks?${searchParams.toString()}`
+        `${baseUrl}/txnblocks?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -263,13 +289,10 @@ class ApiClient {
     }
   }
 
-  async getTransaction(id: string) {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-
+  async getTransaction(id: string, network?: string) {
+    const baseUrl = network ? getBaseUrlForNetwork(network) : this.baseUrl;
     try {
-      // const response = await fetch(`${this.baseUrl}/txnhash?hash=${id}`);
-      const response = await fetch(`${API_BASE_URL}/txnhash?hash=${id}`);
+      const response = await fetch(`${baseUrl}/txnhash?hash=${id}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -285,6 +308,7 @@ class ApiClient {
   async getTokens(params?: {
     page?: number;
     limit?: number;
+    network?: string;
     // type?: string;
     // owner?: string;
   }) {
@@ -293,14 +317,12 @@ class ApiClient {
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     // if (params?.type) searchParams.append('type', params.type);
     // if (params?.owner) searchParams.append('owner', params.owner);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    if (params?.page) searchParams.append("page", params.page.toString());
-    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/getrbtlist?${searchParams.toString()}`
+        `${baseUrl}/getrbtlist?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -318,15 +340,17 @@ class ApiClient {
     return this.request<Token>(`${API_ENDPOINTS.TOKENS}/${id}`);
   }
 
-  async getDIDs(params?: { page?: number; limit?: number }) {
+  async getDIDs(params?: { page?: number; limit?: number; network?: string }) {
     const searchParams = new URLSearchParams();
 
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
 
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
     try {
       const response = await fetch(
-        `${this.baseUrl}/didwithmostrbts?${searchParams.toString()}`
+        `${baseUrl}/didwithmostrbts?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -381,24 +405,25 @@ class ApiClient {
     return this.request<Block>(`${API_ENDPOINTS.BLOCKS}/${height}`);
   }
 
-  async getMetrics(): Promise<{
+  async getMetrics(network?: string): Promise<{
     data: NetworkMetrics;
     success: boolean;
     message: string;
   }> {
+    const baseUrl = network ? getBaseUrlForNetwork(network) : this.baseUrl;
     try {
       const [rbtRes, ftRes, didRes, txnsRes, scRes, nftRes] = await Promise.all(
         [
-          fetch(`${this.baseUrl}/allrbtcount`).then((res) => res.json()),
-          fetch(`${this.baseUrl}/allftcount`).then((res) => res.json()),
-          fetch(`${this.baseUrl}/alldidcount`).then((res) => res.json()),
-          fetch(`${this.baseUrl}/alltransactionscount`).then((res) =>
+          fetch(`${baseUrl}/allrbtcount`).then((res) => res.json()),
+          fetch(`${baseUrl}/allftcount`).then((res) => res.json()),
+          fetch(`${baseUrl}/alldidcount`).then((res) => res.json()),
+          fetch(`${baseUrl}/alltransactionscount`).then((res) =>
             res.json()
           ),
-          fetch(`${this.baseUrl}/allsmartcontractscount`).then((res) =>
+          fetch(`${baseUrl}/allsmartcontractscount`).then((res) =>
             res.json()
           ),
-          fetch(`${this.baseUrl}/allnftcount`).then((res) => res.json()),
+          fetch(`${baseUrl}/allnftcount`).then((res) => res.json()),
         ]
       );
       // Combine results
@@ -426,14 +451,16 @@ class ApiClient {
     }
   }
 
-  async getSCTransactions(params?: { page?: number; limit?: number }) {
+  async getSCTransactions(params?: { page?: number; limit?: number; network?: string }) {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
 
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
     try {
       const response = await fetch(
-        `${this.baseUrl}/sc-blocks?${searchParams.toString()}`
+        `${baseUrl}/sc-blocks?${searchParams.toString()}`
       );
 
       if (!response.ok) {
@@ -447,13 +474,16 @@ class ApiClient {
     }
   }
 
-  async getBurntTransactions(params?: { page?: number; limit?: number }) {
+  async getBurntTransactions(params?: { page?: number; limit?: number; network?: string }) {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
     try {
       const response = await fetch(
-        `${this.baseUrl}/burnt-blocks?${searchParams.toString()}`
+        `${baseUrl}/burnt-blocks?${searchParams.toString()}`
       );
 
       if (!response.ok) {
@@ -473,7 +503,7 @@ export const apiClient = new ApiClient();
 export const api = {
   search: (query: string, type?: string) => apiClient.search(query, type),
   getTransactions: (params?: any) => apiClient.getTransactions(params),
-  getTransaction: (id: string) => apiClient.getTransaction(id),
+  getTransaction: (id: string, network?: string) => apiClient.getTransaction(id, network),
   getSCTransactions: (params: any) => apiClient.getSCTransactions(params),
   getBurntTransactions: (params?: any) =>
     apiClient.getBurntTransactions(params),
@@ -485,5 +515,5 @@ export const api = {
   getValidator: (id: string) => apiClient.getValidator(id),
   getBlocks: (params?: any) => apiClient.getBlocks(params),
   getBlock: (height: number) => apiClient.getBlock(height),
-  getMetrics: () => apiClient.getMetrics(),
+  getMetrics: (network?: string) => apiClient.getMetrics(network),
 };

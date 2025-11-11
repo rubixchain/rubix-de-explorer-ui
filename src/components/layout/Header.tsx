@@ -5,30 +5,30 @@ import { Search, X, Check, ChevronDown } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useSearch } from '@/hooks/useSearch';
 import { Button } from '@/components/ui/Button';
+import { NETWORK_CONFIG } from '@/constants';
 
 export const Header: React.FC = () => {
-  const { state, setSearchQuery } = useApp();
+  const { state, setSearchQuery, setSelectedChain } = useApp();
   const navigate = useNavigate();
   const { search, isLoading } = useSearch();
   const [isNetworkModalOpen, setIsNetworkModalOpen] = React.useState(false);
-  const [selectedNetwork, setSelectedNetwork] = React.useState('testnet');
   const [searchQuery, setSearchQueryState] = React.useState('');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const networks = [
-    // {
-    //   id: 'mainnet',
-    //   name: 'Mainnet',
-    //   description: 'Production network',
-    //   status: 'Active',
-    //   color: 'bg-green-500'
-    // },
     {
-      id: 'testnet',
-      name: 'Testnet',
-      description: 'Testing network',
+      id: NETWORK_CONFIG.mainnet.id,
+      name: NETWORK_CONFIG.mainnet.name,
+      description: NETWORK_CONFIG.mainnet.description,
       status: 'Active',
-      color: 'bg-blue-500'
+      color: NETWORK_CONFIG.mainnet.color
+    },
+    {
+      id: NETWORK_CONFIG.testnet.id,
+      name: NETWORK_CONFIG.testnet.name,
+      description: NETWORK_CONFIG.testnet.description,
+      status: 'Active',
+      color: NETWORK_CONFIG.testnet.color
     }
   ];
 
@@ -37,7 +37,7 @@ export const Header: React.FC = () => {
   };
 
   const selectNetwork = (network: string) => {
-    setSelectedNetwork(network);
+    setSelectedChain(network);
     setIsNetworkModalOpen(false);
   };
 
@@ -142,7 +142,7 @@ export const Header: React.FC = () => {
               className="flex px-2.5 py-2 rounded-md hover:bg-gray-100 items-center space-x-1.5 border border-gray-200"
             >
               <span className="text-xs font-medium text-gray-700 capitalize">
-                {selectedNetwork}
+                {state.selectedChain}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
             </Button>
@@ -250,7 +250,7 @@ export const Header: React.FC = () => {
             className="flex px-3 lg:px-4 py-2 lg:py-2.5 rounded-md hover:bg-gray-100 items-center space-x-1.5 lg:space-x-2 border border-gray-200 flex-shrink-0"
           >
             <span className="text-sm font-medium text-gray-700 capitalize whitespace-nowrap">
-              {selectedNetwork}
+              {state.selectedChain}
             </span>
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </Button>
@@ -303,7 +303,7 @@ export const Header: React.FC = () => {
                       key={network.id}
                       onClick={() => selectNetwork(network.id)}
                       className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors ${
-                        selectedNetwork === network.id
+                        state.selectedChain === network.id
                           ? 'bg-primary-50 dark:bg-primary-900/20'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
@@ -321,7 +321,7 @@ export const Header: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      {selectedNetwork === network.id && (
+                      {state.selectedChain === network.id && (
                         <Check className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                       )}
                     </button>

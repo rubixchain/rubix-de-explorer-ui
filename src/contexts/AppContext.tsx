@@ -2,9 +2,20 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AppState, AppAction } from '@/types';
 import { STORAGE_KEYS } from '@/constants';
 
+// Load selected network from local storage or default to testnet
+const loadSelectedNetwork = (): string => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_NETWORK);
+    return saved || 'testnet';
+  } catch (error) {
+    console.error('Failed to load network from local storage:', error);
+    return 'testnet';
+  }
+};
+
 const initialState: AppState = {
   searchQuery: '',
-  selectedChain: 'mainnet',
+  selectedChain: loadSelectedNetwork(),
   isLoading: false,
   error: null,
 };
@@ -39,11 +50,23 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
+  // Save selected network to local storage when it changes
+  useEffect(() => {
+    try {
+      
+      localStorage.setItem(STORAGE_KEYS.SELECTED_NETWORK, state.selectedChain);
+      
+    } catch (error) {
+      console.error('Failed to save network to local storage:', error);
+    }
+  }, [state.selectedChain]);
+
   const setSearchQuery = (query: string) => {
     dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
   };
 
   const setSelectedChain = (chain: string) => {
+    
     dispatch({ type: 'SET_SELECTED_CHAIN', payload: chain });
   };
 

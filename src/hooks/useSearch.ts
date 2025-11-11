@@ -2,8 +2,10 @@ import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { SearchQuery, SearchFilters } from '@/types';
+import { useApp } from '@/contexts/AppContext';
 
 export const useSearch = () => {
+  const { state } = useApp();
   const [query, setQuery] = useState('');
   const [type, setType] = useState<'all' | 'did' | 'token' | 'transaction' | 'block'>('all');
   const [filters, setFilters] = useState<SearchFilters>({});
@@ -14,16 +16,23 @@ export const useSearch = () => {
     filters,
   }), [query, type, filters]);
 
+ 
+
   const {
     data: searchResults,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['search', searchQuery],
-    queryFn: () => api.search(query, type === 'all' ? undefined : type),
+    queryKey: ['search', state.selectedChain, searchQuery],
+    queryFn: () => {
+     
+      return api.search(query, type === 'all' ? undefined : type);
+    },
     enabled: query.length >= 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache data
+    refetchOnMount: 'always', // Always refetch on mount
   });
 
   const search = useCallback((searchQuery: string, searchType?: string) => {

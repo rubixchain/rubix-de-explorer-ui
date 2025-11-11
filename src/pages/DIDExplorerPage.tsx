@@ -6,15 +6,13 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Info, ArrowLeft, Coins } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useDIDInfo, useFTHoldings } from "@/hooks/useDIDs";
 
 export const DIDExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const did = searchParams.get("did") || "";
 
-  const [loading, setLoading] = useState(true);
-  const [didData, setDidData] = useState<any>(null);
-  const [ftData, setFTData] = useState<any>(null); // for fungible tokens
   const [activeTab, setActiveTab] = useState<"holdings" | "ftholdings">(
     "holdings"
   );
@@ -22,7 +20,16 @@ export const DIDExplorerPage: React.FC = () => {
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const itemsPerPage = 5;
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  // Use React Query hooks - same pattern as HomePage and TransactionExplorerPage
+  const { data: didData, isLoading: isLoadingDID, error: didError } = useDIDInfo(did, currentPage, itemsPerPage);
+  const { data: ftData, isLoading: isLoadingFT, error: ftError } = useFTHoldings(
+    did,
+    currentPage,
+    itemsPerPage,
+    activeTab === "ftholdings" // Only fetch when FT tab is active
+  );
+
+  const loading = activeTab === "holdings" ? isLoadingDID : isLoadingFT;
 
   // Helper function to format long addresses
   const formatAddress = (address: string, length: number = 8): string => {
@@ -31,64 +38,40 @@ export const DIDExplorerPage: React.FC = () => {
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
-  // Fetch DID base info + RBTs
-  const fetchDIDData = async (page = 1, limit = itemsPerPage) => {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/getdidinfo?did=${did}&page=${page}&limit=${limit}`
-      );
-      const data = await res.json();
-      setDidData(data);
-      console.log("tt", data);
-    } catch (err) {
-      console.error("Error fetching DID data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch FT holdings
-  const fetchFTData = async (page = 1, limit = itemsPerPage) => {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/ftholdings?did=${did}&page=${page}&limit=${limit}`
-      );
-      const data = await res.json();
-      console.log("tst", data.ft_info);
-      setFTData(data.ft_info);
-    } catch (err) {
-      console.error("Error fetching FT data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch RBT holdings initially
-  useEffect(() => {
-    if (did) fetchDIDData(currentPage);
-  }, [did, currentPage]);
-
-  // Fetch FT holdings when tab is switched to "ftholdings"
-  useEffect(() => {
-    if (activeTab === "ftholdings" && did) {
-      fetchFTData(currentPage);
-    }
-  }, [activeTab, did, currentPage]);
-
+  // Use React Query states - same pattern as other pages
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-gray-500">Loading...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
+            <div className="space-y-4">
+              <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!didData) {
+  if (didError || ftError || !didData) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-gray-500">No data found for this DID</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {didError || ftError ? "Error Loading DID" : "DID Not Found"}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {didError || ftError ? "An error occurred while fetching DID data" : "No data found for this DID"}
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
     );
   }

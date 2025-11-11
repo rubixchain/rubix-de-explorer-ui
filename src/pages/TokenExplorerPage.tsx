@@ -13,6 +13,7 @@ import {
   PartyPopper,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTokenDetails, useTokenChain } from "@/hooks/useTokens";
 
 // Mock data for token information
 
@@ -113,16 +114,17 @@ export const TokenExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tokenId = searchParams.get("token") || "";
-  const [loading, setLoading] = useState(true);
-  const [tokenData, setTokenData] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>(
-    MOCK_TOKEN_TRANSACTIONS
-  );
-  const [error, setError] = useState<Boolean>(false);
+
+  // Use React Query hooks - same pattern as HomePage and other pages
+  const { data: rawTokenData, isLoading: isLoadingToken, error: tokenError } = useTokenDetails(tokenId);
+  const { data: tokenChainData, isLoading: isLoadingChain, error: chainError } = useTokenChain(tokenId);
+
   const [activeTab, setActiveTab] = useState<"transactions">("transactions");
-  const [tokenChainData, setTokenChainData] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const loading = isLoadingToken || isLoadingChain;
+  const error = tokenError || chainError;
 
   // Helper function to format long addresses
   const formatAddress = (address: string, length: number = 8): string => {
@@ -131,102 +133,8 @@ export const TokenExplorerPage: React.FC = () => {
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
-  const normalizeToken = (raw: any, tokenId: string): TokenInfo => {
-    const base = { tokenId, type: "UNKNOWN" as const };
-    const payload = raw.rbt_info ?? raw.ft_info ?? raw.sc_info ?? raw.nft_info;
-
-    if (!payload) return base;
-
-    const type = raw.type.toUpperCase() as "RBT" | "FT" | "SC" | "NFT";
-
-    if (type === "RBT") {
-      return {
-        ...base,
-        type,
-        id: payload.rbt_id,
-        owner_did: payload.owner_did,
-        block_height: payload.block_height,
-        token_value: payload.token_value,
-      };
-    }
-
-    if (type === "FT") {
-      return {
-        ...base,
-        type,
-        name: payload.ft_name,
-        block_height: payload.block_height,
-        creator_did: payload.creator_did,
-        token_value: payload.token_value,
-        owner_did: payload.owner_did,
-        txn_id: payload.txn_id,
-      };
-    }
-
-    if (type === "SC") {
-      return {
-        ...base,
-        type,
-        name: payload.contract_id,
-        creator_did: payload.deployer_did,
-        txn_id: payload.txn_id,
-      };
-    }
-
-    if (type === "NFT") {
-      return {
-        ...base,
-        type,
-        id: payload.nft_id,
-        token_value: payload.token_value,
-        owner_did: payload.owner_did,
-        txn_id: payload.txn_id,
-      };
-    }
-
-    return base;
-  };
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-
-  useEffect(() => {
-    const fetchTokenData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/search?id=${tokenId}`
-        );
-
-        if (!response.ok) {
-          setError(true);
-        }
-
-        const raw = await response.json();
-        // ---- NORMALISE ----
-        const tokenInfo = normalizeToken(raw, tokenId);
-        setTokenData(raw);
-        const tokenChainResp = await fetch(
-          `${API_BASE_URL}/token-chain?token_id=${tokenId}`
-        );
-        if (!tokenChainResp.ok) throw new Error("Failed to fetch token chain");
-
-        const tokenChainJson = await tokenChainResp.json();
-   
-        setTokenChainData(tokenChainJson.TokenChainData);
-
-        setTransactions(raw.transactions ?? MOCK_TOKEN_TRANSACTIONS);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    ("");
-
-    // setTimeout(() => setTokenChainData(mockTokenChain), 300);
-
-    if (tokenId) fetchTokenData();
-  }, [tokenId]);
+  // Store processed token data
+  const tokenData = rawTokenData;
 
   function getTransactionTypeLabel(type: string): string {
   switch (type) {
@@ -263,6 +171,7 @@ export const TokenExplorerPage: React.FC = () => {
 
 
 
+  // Use React Query states - same pattern as other pages
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -279,7 +188,7 @@ export const TokenExplorerPage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error || !tokenData) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -287,28 +196,7 @@ export const TokenExplorerPage: React.FC = () => {
             Token Not Found
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The requested token could not be found.
-          </p>
-          <button
-            onClick={() => navigate("/")}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!tokenChainData) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Token Not Found
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The requested token could not be found.
+            {error ? "An error occurred while fetching token data" : "The requested token could not be found."}
           </p>
           <button
             onClick={() => navigate("/")}
