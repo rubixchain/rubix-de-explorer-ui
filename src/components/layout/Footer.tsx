@@ -13,13 +13,13 @@ export const Footer: React.FC = () => {
           <div className="space-y-4 col-span-2 sm:col-span-2 lg:col-span-1">
             <div className="flex items-end space-x-2 sm:space-x-3">
               <img
-                src="/rubix-icon.png"
+                src="/rubix-logo.png"
                 alt="Rubix Logo"
                 className="h-6 sm:h-8 w-auto"
               />
-              <span className="text-lg sm:text-xl font-bold text-heading flex items-end font-heading">
+              {/* <span className="text-lg sm:text-xl font-bold text-heading flex items-end font-heading">
                 Rubix Explorer
-              </span>
+              </span> */}
             </div>
             <p className="text-gray-600 text-sm">
               Comprehensive blockchain explorer for the Rubix ecosystem.

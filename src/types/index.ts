@@ -91,7 +91,7 @@ export interface NetworkMetrics {
   totalFT?: number;
   totalNFT?: number;
   totalSmartContracts?: number;
-  // totalAssets?: number;
+  totalTVL?: number;
   marketCap?: number;
   rbtPrice?: number;
   // rbtPriceChange2h?: number;

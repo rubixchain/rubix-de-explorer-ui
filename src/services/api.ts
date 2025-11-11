@@ -399,16 +399,24 @@ class ApiClient {
             res.json()
           ),
           fetch(`${this.baseUrl}/allnftcount`).then((res) => res.json()),
+         
         ]
+        
       );
+
+      const KPIs  = await fetch(`https://rexplorerapi.azurewebsites.net/api/Analytics/GetKPIDetails`).then((res) => res.json())
+
       // Combine results
       const data: NetworkMetrics = {
         totalRBT: rbtRes.all_rbt_count || 0,
         totalFT: ftRes.all_ft_count || 0,
         totalDIDs: didRes.all_did_count || 0,
-        totalTransactions: txnsRes.all_txn_count || 0,
+        totalTransactions: txnsRes.all_block_count || 0,
         totalSmartContracts: scRes.all_sc_count || 0,
         totalNFT: nftRes.all_nft_count || 0,
+        marketCap: KPIs.data.circulatingSupply * KPIs.data.rbtPrice,
+        rbtPrice:  KPIs.data.rbtPrice,
+        totalTVL: KPIs.data.mainNetTVL,
       };
 
       return {

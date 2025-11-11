@@ -16,13 +16,13 @@ export const Header: React.FC = () => {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const networks = [
-    // {
-    //   id: 'mainnet',
-    //   name: 'Mainnet',
-    //   description: 'Production network',
-    //   status: 'Active',
-    //   color: 'bg-green-500'
-    // },
+    {
+      id: 'mainnet',
+      name: 'Mainnet',
+      description: 'Production network',
+      status: 'Active',
+      color: 'bg-green-500'
+    },
     {
       id: 'testnet',
       name: 'Testnet',
@@ -126,7 +126,7 @@ export const Header: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
               <img
-                src="/rubix-icon.png"
+                src="/rubix-logo.png"
                 alt="Rubix Logo"
                 className="h-6 w-auto"
               />
@@ -195,13 +195,13 @@ export const Header: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
             <img
-              src="/rubix-icon.png"
+              src="/rubix-logo.png"
               alt="Rubix Logo"
               className="h-7 lg:h-8 w-auto"
             />
-            <span className="text-base lg:text-lg font-semibold text-heading font-heading whitespace-nowrap">
+            {/* <span className="text-base lg:text-lg font-semibold text-heading font-heading whitespace-nowrap">
               Rubix Explorer
-            </span>
+            </span> */}
           </Link>
 
           {/* Search Bar - Takes remaining space */}
