@@ -24,10 +24,12 @@ export const TransactionExplorerPage: React.FC = () => {
   const [txData, setTxData] = useState<any>(null);
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "details" | "validators"
-  >("details");
-  const [expandedValidator, setExpandedValidator] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"details" | "validators">(
+    "details"
+  );
+  const [expandedValidator, setExpandedValidator] = useState<number | null>(
+    null
+  );
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Generate dummy token data for each validator
@@ -35,13 +37,15 @@ export const TransactionExplorerPage: React.FC = () => {
     const tokenCount = Math.floor(Math.random() * 5) + 3; // 3-7 tokens per validator
     return Array.from({ length: tokenCount }, (_, i) => ({
       id: `token-${validatorIndex}-${i}`,
-      tokenId: `${Math.random().toString(36).substr(2, 8)}...${Math.random().toString(36).substr(2, 8)}`,
+      tokenId: `${Math.random().toString(36).substr(2, 8)}...${Math.random()
+        .toString(36)
+        .substr(2, 8)}`,
     }));
   };
 
   const toggleValidator = (index: number) => {
     // If clicking the same validator, collapse it. Otherwise, open the new one and close others
-    setExpandedValidator((prev) => prev === index ? null : index);
+    setExpandedValidator((prev) => (prev === index ? null : index));
   };
 
   // Helper function to format addresses
@@ -84,24 +88,41 @@ export const TransactionExplorerPage: React.FC = () => {
             data.tokens
           );
         }
-
         const formattedTxData = {
           id: data.txn_id || "N/A",
           status: "confirmed",
           confirmations: 120,
           type: mapTxnType(data.txn_type || ""),
-          value: data.amount ? `${data.amount} RBT` : "N/A", // Use 'N/A' if amount is null
+          value: data.amount ? `${data.amount} RBT` : "N/A",
           valueUSD: "N/A",
           timestamp: data.epoch
             ? new Date(data.epoch * 1000).toUTCString()
-            : "N/A", // Convert epoch to UTC string
+            : "N/A",
           blockId: data.block_hash || "N/A",
           from: data.sender_did || "N/A",
           to: data.receiver_did || "N/A",
+          tokens: data.tokens
+            ? Object.entries(data.tokens).map(
+                ([tokenId, tokenData]: [string, any]) => ({
+                  tokenId,
+                  type: tokenData.TTTokenTypeKey,
+                  blockNumber: tokenData.TTBlockNumberKey,
+                  previousBlockId: tokenData.TTPreviousBlockIDKey,
+                })
+              )
+            : [],
           validators: data.validator_pledge_map
-            ? Object.keys(data.validator_pledge_map).map((address) => ({
-                address,
-              }))
+            ? Object.entries(data.validator_pledge_map).map(
+                ([validatorDid, pledgeArray]) => {
+                  const pledges = (pledgeArray as any[]).map((entry: any) => ({
+                    token: entry["8-1"],
+                  }));
+                  return {
+                    validator: validatorDid,
+                    pledgedTokens: pledges,
+                  };
+                }
+              )
             : [],
         };
 
@@ -124,6 +145,7 @@ export const TransactionExplorerPage: React.FC = () => {
 
         setTxData(formattedTxData);
         setTokenTransfers(formattedTokenTransfers);
+        console.log("test-validators", formattedTxData);
         setError(null);
       } catch (error: any) {
         console.error("Error fetching transaction data:", error);
@@ -353,7 +375,9 @@ export const TransactionExplorerPage: React.FC = () => {
                     <Tooltip content={txData.from} position="top">
                       <p
                         className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer"
-                        onClick={() => navigate(`/did-explorer?did=${txData.from}`)}
+                        onClick={() =>
+                          navigate(`/did-explorer?did=${txData.from}`)
+                        }
                       >
                         {formatAddress(txData.from, 8)}
                       </p>
@@ -367,7 +391,9 @@ export const TransactionExplorerPage: React.FC = () => {
                     <Tooltip content={txData.to} position="top">
                       <p
                         className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer"
-                        onClick={() => navigate(`/did-explorer?did=${txData.to}`)}
+                        onClick={() =>
+                          navigate(`/did-explorer?did=${txData.to}`)
+                        }
                       >
                         {formatAddress(txData.to, 8)}
                       </p>
@@ -388,107 +414,125 @@ export const TransactionExplorerPage: React.FC = () => {
               </div>
             </div>
           )}
-          {activeTab === "validators" && (
-            <div className="space-y-3">
-              {txData.validators && txData.validators.length > 0 ? (
-                txData.validators.map((validator: any, index: number) => {
-                  const isExpanded = expandedValidator === index;
-                  const dummyTokens = generateDummyTokens(index);
+{activeTab === "validators" && (
+  <div className="space-y-3">
+    {txData.validators && txData.validators.length > 0 ? (
+      txData.validators.map((validator: any, index: number) => {
+        const isExpanded = expandedValidator === index;
+        const pledgedTokens = validator.pledgedTokens || [];
 
-                  return (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors overflow-hidden"
+        return (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors overflow-hidden"
+          >
+            {/* Validator Header - Clickable to expand/collapse */}
+            <div
+              onClick={() => toggleValidator(index)}
+              className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                  <span className="text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-bold">
+                    {index + 1}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:inline">
+                    Validator Address:
+                  </p>
+                 
+                    <p
+                      className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer truncate flex-1"
+                      // onClick={(e) => {
+                      //   e.stopPropagation();
+                      //   navigate(
+                      //     `/did-explorer?did=${validator.validator}`
+                      //   );
+                      // }}
                     >
-                      {/* Validator Header - Clickable to expand/collapse */}
-                      <div
-                        onClick={() => toggleValidator(index)}
-                        className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 sm:gap-4">
-                          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                            <span className="text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-bold">
-                              {index + 1}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:inline">
-                              Validator Address:
-                            </p>
-                            <Tooltip content={validator.address} position="top">
-                              <p
-                                className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer truncate flex-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/did-explorer?did=${validator.address}`);
-                                }}
-                              >
-                                {formatAddress(validator.address, 6)}
-                              </p>
-                            </Tooltip>
-                            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <CopyButton text={validator.address} size="sm" />
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0">
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Expandable Token List */}
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
-                        >
-                          <div className="p-3 sm:p-4">
-                            <h4 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
-                              Token IDs ({dummyTokens.length})
-                            </h4>
-                            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 sm:pr-2">
-                              {dummyTokens.map((token, tokenIndex) => (
-                                <div
-                                  key={token.id}
-                                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
-                                >
-                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                                    #{tokenIndex + 1}
-                                  </span>
-                                  <Tooltip content={token.tokenId} position="top">
-                                    <span className="font-mono text-xs sm:text-sm text-gray-900 dark:text-white truncate flex-1">
-                                      {token.tokenId}
-                                    </span>
-                                  </Tooltip>
-                                  <div className="flex-shrink-0">
-                                    <CopyButton text={token.tokenId} size="sm" />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No validators found for this transaction.
-                </p>
-              )}
+                      {formatAddress(validator.validator, 6)}
+                    </p>
+                  <div
+                    className="flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <CopyButton text={validator.validator} size="sm" />
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  {isExpanded ? (
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  )}
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Expandable Token List */}
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
+              >
+                <div className="p-3 sm:p-4">
+                  <h4 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
+                    Pledged Tokens ({pledgedTokens.length})
+                  </h4>
+                  {pledgedTokens.length > 0 ? (
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1 sm:pr-2">
+                      {pledgedTokens.map((pledge: any, tokenIndex: number) => (
+                        <div
+                          key={pledge.token}
+                          className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
+                     
+                    
+                            <span 
+                              className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 flex-1"
+                            //   onClick={() => 
+                            //     navigate(`/token-explorer?token=${pledge.token}`)
+                            // }
+                            >
+                              {pledge.token}
+                            </span>
+                          {/* <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                            <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                              Amount: {pledge.pledgeAmount}
+                            </span>
+                            <CopyButton
+                              text={pledge.token}
+                              size="sm"
+                            />
+                          </div> */}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      No pledged tokens found for this validator.
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        );
+      })
+    ) : (
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        No validators found for this transaction.
+      </p>
+    )}
+  </div>
+)}
         </motion.div>
       </Card>
 
@@ -507,116 +551,116 @@ export const TransactionExplorerPage: React.FC = () => {
             </p>
           )}
           {/* Card View for All Resolutions */}
-              <div className="space-y-3">
-                {tokenTransfers.map((transfer: any, index: number) => (
-                  <motion.div
-                    key={transfer.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    onClick={() =>
-                      navigate(
-                        `/token-explorer?token=${encodeURIComponent(
-                          transfer.tokenId
-                        )}`
-                      )
-                    }
-                    className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between space-y-3 sm:space-y-0">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              transfer.tokenType === "RBT"
-                                ? "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                                : transfer.tokenType === "FT"
-                                ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
-                                : transfer.tokenType === "NFT"
-                                ? "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                                : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                            }`}
-                          >
-                            {transfer.tokenType}
-                          </span>
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              transfer.status === "confirmed"
-                                ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
-                                : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
-                            }`}
-                          >
-                            {transfer.status}
-                          </span>
+          <div className="space-y-3">
+            {tokenTransfers.map((transfer: any, index: number) => (
+              <motion.div
+                key={transfer.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() =>
+                  navigate(
+                    `/token-explorer?token=${encodeURIComponent(
+                      transfer.tokenId
+                    )}`
+                  )
+                }
+                className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between space-y-3 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          transfer.tokenType === "RBT"
+                            ? "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
+                            : transfer.tokenType === "FT"
+                            ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
+                            : transfer.tokenType === "NFT"
+                            ? "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
+                            : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
+                        }`}
+                      >
+                        {transfer.tokenType}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          transfer.status === "confirmed"
+                            ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
+                            : "bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200"
+                        }`}
+                      >
+                        {transfer.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tooltip content={transfer.tokenId} position="top">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer truncate flex-1">
+                          {formatAddress(transfer.tokenId, 12)}
                         </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Tooltip content={transfer.tokenId} position="top">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer truncate flex-1">
-                              {formatAddress(transfer.tokenId, 12)}
-                            </div>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={transfer.tokenId} size="sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 mb-1">
+                          From:
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <Tooltip content={transfer.from} position="top">
+                            <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
+                              {formatAddress(transfer.from, 8)}
+                            </p>
                           </Tooltip>
                           <div className="flex-shrink-0">
-                            <CopyButton text={transfer.tokenId} size="sm" />
+                            <CopyButton text={transfer.from} size="sm" />
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400 mb-1">
-                              From:
-                            </p>
-                            <div className="flex items-center gap-1.5">
-                              <Tooltip content={transfer.from} position="top">
-                                <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                                  {formatAddress(transfer.from, 8)}
-                                </p>
-                              </Tooltip>
-                              <div className="flex-shrink-0">
-                                <CopyButton text={transfer.from} size="sm" />
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400 mb-1">
-                              To:
-                            </p>
-                            <div className="flex items-center gap-1.5">
-                              <Tooltip content={transfer.to} position="top">
-                                <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                                  {formatAddress(transfer.to, 8)}
-                                </p>
-                              </Tooltip>
-                              <div className="flex-shrink-0">
-                                <CopyButton text={transfer.to} size="sm" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        {/* <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{transfer.timestamp}</div> */}
                       </div>
-                      <div className="flex items-center justify-between sm:justify-end space-x-2 sm:ml-4">
-                        <div className="text-right">
-                          <div className="flex items-center justify-end space-x-2 mb-1">
-                            {/* <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-lg">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 mb-1">
+                          To:
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <Tooltip content={transfer.to} position="top">
+                            <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
+                              {formatAddress(transfer.to, 8)}
+                            </p>
+                          </Tooltip>
+                          <div className="flex-shrink-0">
+                            <CopyButton text={transfer.to} size="sm" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{transfer.timestamp}</div> */}
+                  </div>
+                  <div className="flex items-center justify-between sm:justify-end space-x-2 sm:ml-4">
+                    <div className="text-right">
+                      <div className="flex items-center justify-end space-x-2 mb-1">
+                        {/* <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-lg">
                               {transfer.amount}
                             </div> */}
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {transfer.tokenType}
-                            </div>
-                            {/* {transfer.amount && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {transfer.tokenType}
+                        </div>
+                        {/* {transfer.amount && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                                 {transfer.amount}
                               </span>
                             )} */}
-                          </div>
-                        </div>
-                        <div className="text-gray-400 dark:text-gray-500 text-xs">
-                          →
-                        </div>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                    <div className="text-gray-400 dark:text-gray-500 text-xs">
+                      →
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </Card>
     </motion.div>
