@@ -16,13 +16,13 @@ export const Header: React.FC = () => {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const networks = [
-    {
-      id: 'mainnet',
-      name: 'Mainnet',
-      description: 'Production network',
-      status: 'Active',
-      color: 'bg-green-500'
-    },
+    // {
+    //   id: 'mainnet',
+    //   name: 'Mainnet',
+    //   description: 'Production network',
+    //   status: 'Active',
+    //   color: 'bg-green-500'
+    // },
     {
       id: 'testnet',
       name: 'Testnet',
