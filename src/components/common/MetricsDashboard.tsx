@@ -236,13 +236,13 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
       color: 'text-pink-600',
       tooltip: 'Total Transactions represents the cumulative number of transactions that have been processed on the Rubix blockchain network since its inception.',
     },
-        {
-      title: 'RBT Price',
-      value: formatNumber(currentMetrics.rbtPrice || 23400),
-      icon: Image,
-      color: 'text-pink-600',
-      tooltip: 'RBT Price represents the current market value of a single Rubix Base Token (RBT) in USD.',
-    },
+    //     {
+    //   title: 'RBT Price',
+    //   value: formatNumber(currentMetrics.rbtPrice || 23400),
+    //   icon: Image,
+    //   color: 'text-pink-600',
+    //   tooltip: 'RBT Price represents the current market value of a single Rubix Base Token (RBT) in USD.',
+    // },
   ];
 
   if (error) {

@@ -67,7 +67,6 @@ const mockTokens = [
   },
 ];
 
-
 //  const TransactionsListView = () => {
 //   const [transactions, setTransactions] = useState<Transaction[]>([]);
 //   const [loading, setLoading] = useState(true);
@@ -101,7 +100,6 @@ const mockTokens = [
 //   );
 // };
 
-
 interface TransactionsListViewProps {
   currentPage: number;
   itemsPerPage: number;
@@ -123,7 +121,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 
   useEffect(() => {
     if (data?.data?.transactions) {
-      console.log(data)
+      console.log(data);
       setTransactions(data.data.transactions);
     }
   }, [data]);
@@ -145,7 +143,9 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                 <div className="flex-1 min-w-[200px]">From</div>
                 <div className="flex-1 min-w-[200px]">To</div>
                 <div className="w-32 md:w-40 flex-shrink-0">Time</div>
-                <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount</div>
+                <div className="w-28 md:w-32 flex-shrink-0 text-right">
+                  Amount
+                </div>
               </div>
             </div>
 
@@ -244,7 +244,6 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
   );
 };
 
-
 const HoldersListView: React.FC<{
   currentPage: number;
   itemsPerPage: number;
@@ -252,17 +251,40 @@ const HoldersListView: React.FC<{
   onHolderClick: (holderAddress: string) => void;
 }> = ({ currentPage, itemsPerPage, onPageChange, onHolderClick }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
+  const [price , setPrice] = useState<number>(0);
 
   const { data, isLoading, error } = useDIDs(paramsTxn);
   const [holders, setHolders] = useState<any[]>([]);
 
   // ✅ Move totalPages outside useEffect and add optional chaining
-  const totalPages = Math.ceil((data?.holders_response?.count || 0) / itemsPerPage);
+  const totalPages = Math.ceil(
+    (data?.holders_response?.count || 0) / itemsPerPage
+  );
+
+  const getPrice = async() => {
+    try {
+      const response = await fetch(import.meta.env.VITE_API_MARKET_INFO);
+      const result = await response.json();
+      if (response.ok) {
+        const rbtPrice = parseFloat(result.data.rbtPrice.replace(/[^0-9.]/g, ""));
+
+        console.log("RBT Price:", (rbtPrice));
+       
+        setPrice(rbtPrice);
+
+      }
+    } catch (error) {
+      console.error("Error fetching RBT price:", error);
+    }
+  }
+
 
   useEffect(() => {
-    if (data?.holders_response?.holders_response) { // ✅ Add optional chaining
-      console.log("test", data?.holders_response?.holders_response)
+    if (data?.holders_response?.holders_response) {
+      // ✅ Add optional chaining
+      console.log("test", data?.holders_response?.holders_response);
       setHolders(data.holders_response.holders_response);
+      getPrice()
     } else {
       setHolders([]);
     }
@@ -278,54 +300,59 @@ const HoldersListView: React.FC<{
             <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-6">
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
-                <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">Address</div>
-                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Token Count</div>
+                <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">
+                  Address
+                </div>
+                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">
+                 Balance
+                </div>
               </div>
             </div>
 
             {/* Table Body */}
-        <div className="divide-y divide-outline-200 dark:divide-outline-700">
-  {holders
-    .filter((holder) => holder.owner_did !== '')
-    .map((holder, index) => (
-      <motion.div
-        key={holder.owner_did}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
-        onClick={() => onHolderClick(holder.owner_did)}
-        className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-6"
-      >
-        {/* Serial Number Column */}
-        <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
-          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
-              {(currentPage - 1) * itemsPerPage + index + 1}
-            </span>
-          </div>
-        </div>
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {holders
+                .filter((holder) => holder.owner_did !== "")
+                .map((holder, index) => (
+                  <motion.div
+                    key={holder.owner_did}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => onHolderClick(holder.owner_did)}
+                    className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-6"
+                  >
+                    {/* Serial Number Column */}
+                    <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                      <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </span>
+                      </div>
+                    </div>
 
-        {/* Address Column - Compact on mobile, flexible on tablet/desktop */}
-        <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
-          <div className="flex items-center gap-1.5 w-full min-w-0">
-              <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                {formatAddress(holder.owner_did, 8)}
-              </div>
-            <div className="flex-shrink-0">
-              <CopyButton text={holder.owner_did} size="sm" />
+                    {/* Address Column - Compact on mobile, flexible on tablet/desktop */}
+                    <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
+                      <div className="flex items-center gap-1.5 w-full min-w-0">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
+                          {formatAddress(holder.owner_did, 8)}
+                        </div>
+                        <div className="flex-shrink-0">
+                          <CopyButton text={holder.owner_did} size="sm" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Token Count Column */}
+                    <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 flex items-center justify-end">
+                      <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                        {/* {(holder.token_count * price).toFixed(3)} $ */}
+                        {holder.token_count}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
             </div>
-          </div>
-        </div>
-
-        {/* Token Count Column */}
-        <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 flex items-center justify-end">
-          <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
-            {holder.token_count}
-          </div>
-        </div>
-      </motion.div>
-    ))}
-</div>
           </div>
         </div>
       </div>
@@ -342,7 +369,6 @@ const HoldersListView: React.FC<{
     </div>
   );
 };
-
 
 const TokensListView: React.FC<{
   currentPage: number;
@@ -385,7 +411,9 @@ const TokensListView: React.FC<{
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Token</div>
-                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0">Amount in RBT</div>
+                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0">
+                  Amount in RBT
+                </div>
                 <div className="flex-1 min-w-[160px]">Owner</div>
               </div>
             </div>
@@ -465,7 +493,6 @@ const TokensListView: React.FC<{
     </div>
   );
 };
-
 
 const SCBlocksList: React.FC<{
   currentPage: number;
@@ -624,34 +651,33 @@ const BurntBlockList: React.FC<BurntBlockListProps> = ({
   }, [data]);
 
   const epochToGMT = (epoch: number): string => {
-  if (epoch < 1e12) epoch *= 1000; // convert seconds → milliseconds
-  const date = new Date(epoch);
-  return date.toUTCString();
-};
+    if (epoch < 1e12) epoch *= 1000; // convert seconds → milliseconds
+    const date = new Date(epoch);
+    return date.toUTCString();
+  };
 
-const timeAgo = (epoch: number): string => {
-  if (epoch < 1e12) epoch *= 1000; // convert seconds → ms
-  const now = Date.now();
-  const diff = Math.floor((now - epoch) / 1000); // in seconds
+  const timeAgo = (epoch: number): string => {
+    if (epoch < 1e12) epoch *= 1000; // convert seconds → ms
+    const now = Date.now();
+    const diff = Math.floor((now - epoch) / 1000); // in seconds
 
-  const units = [
-    { label: "year", seconds: 31536000 },
-    { label: "month", seconds: 2592000 },
-    { label: "week", seconds: 604800 },
-    { label: "day", seconds: 86400 },
-    { label: "hour", seconds: 3600 },
-    { label: "minute", seconds: 60 },
-  ];
+    const units = [
+      { label: "year", seconds: 31536000 },
+      { label: "month", seconds: 2592000 },
+      { label: "week", seconds: 604800 },
+      { label: "day", seconds: 86400 },
+      { label: "hour", seconds: 3600 },
+      { label: "minute", seconds: 60 },
+    ];
 
-  for (const unit of units) {
-    const value = Math.floor(diff / unit.seconds);
-    if (value >= 1) {
-      return `${value} ${unit.label}${value > 1 ? "s" : ""} ago`;
+    for (const unit of units) {
+      const value = Math.floor(diff / unit.seconds);
+      if (value >= 1) {
+        return `${value} ${unit.label}${value > 1 ? "s" : ""} ago`;
+      }
     }
-  }
-  return "just now";
-};
-
+    return "just now";
+  };
 
   // Compute total pages from backend totalCount
   const totalPages = Math.ceil((data?.count || 1) / itemsPerPage);
@@ -728,18 +754,27 @@ const timeAgo = (epoch: number): string => {
                   <div className="flex-1 min-w-[200px]">
                     <div className="flex items-center gap-1.5">
                       <Tooltip
-                        content={tx.tokens ? Object.keys(tx.tokens).toString() : "N/A"}
+                        content={
+                          tx.tokens ? Object.keys(tx.tokens).toString() : "N/A"
+                        }
                         position="top"
                       >
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
                           {tx.tokens
-                            ? formatAddress(Object.keys(tx.tokens).toLocaleString(), 8)
+                            ? formatAddress(
+                                Object.keys(tx.tokens).toLocaleString(),
+                                8
+                              )
                             : "N/A"}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
                         <CopyButton
-                          text={tx.tokens ? Object.keys(tx.tokens).toLocaleString() : "N/A"}
+                          text={
+                            tx.tokens
+                              ? Object.keys(tx.tokens).toLocaleString()
+                              : "N/A"
+                          }
                           size="sm"
                         />
                       </div>
@@ -765,16 +800,12 @@ const timeAgo = (epoch: number): string => {
   );
 };
 
-
-
 export const DataExplorer: React.FC<DataExplorerProps> = ({
   className = "",
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("transactions");
-  const [viewMode, setViewMode] = useState<"list">(
-    "list"
-  );
+  const [viewMode, setViewMode] = useState<"list">("list");
   const [currentPage, setCurrentPage] = useState(1);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -966,9 +997,7 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
                         <button
                           key={option.value}
                           onClick={() => {
-                            setViewMode(
-                              option.value as "list"
-                            );
+                            setViewMode(option.value as "list");
                             setIsDropdownOpen(false);
                           }}
                           className={`w-full text-left px-6 py-4 text-sm font-medium transition-colors duration-150 ${
@@ -1041,9 +1070,7 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
                       <button
                         key={option.value}
                         onClick={() => {
-                          setViewMode(
-                            option.value as "list"
-                          );
+                          setViewMode(option.value as "list");
                           setIsDropdownOpen(false);
                         }}
                         className={`w-full text-left px-6 py-4 text-sm font-medium transition-colors duration-150 ${

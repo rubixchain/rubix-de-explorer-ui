@@ -404,7 +404,7 @@ class ApiClient {
         
       );
 
-      const KPIs  = await fetch(`https://rexplorerapi.azurewebsites.net/api/Analytics/GetKPIDetails`).then((res) => res.json())
+      // const KPIs  = await fetch(`https://rexplorerapi.azurewebsites.net/api/Analytics/GetKPIDetails`).then((res) => res.json())
 
       // Combine results
       const data: NetworkMetrics = {
@@ -414,9 +414,9 @@ class ApiClient {
         totalTransactions: txnsRes.all_block_count || 0,
         totalSmartContracts: scRes.all_sc_count || 0,
         totalNFT: nftRes.all_nft_count || 0,
-        marketCap: KPIs.data.circulatingSupply * KPIs.data.rbtPrice,
-        rbtPrice:  KPIs.data.rbtPrice,
-        totalTVL: KPIs.data.mainNetTVL,
+        // marketCap: KPIs.data.circulatingSupply * KPIs.data.rbtPrice,
+        // rbtPrice:  KPIs.data.rbtPrice,
+        // totalTVL: KPIs.data.mainNetTVL,
       };
 
       return {
