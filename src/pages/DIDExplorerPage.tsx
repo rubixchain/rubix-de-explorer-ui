@@ -21,15 +21,15 @@ export const DIDExplorerPage: React.FC = () => {
   const itemsPerPage = 5;
 
   // Use React Query hooks - same pattern as HomePage and TransactionExplorerPage
-  const { data: didData, isLoading: isLoadingDID, error: didError } = useDIDInfo(did, currentPage, itemsPerPage);
+  const { data: didData, isLoading: isLoadingDID, error: didError } = useDIDInfo(did, currentPage, itemsPerPage) as any 
   const { data: ftData, isLoading: isLoadingFT, error: ftError } = useFTHoldings(
     did,
     currentPage,
     itemsPerPage,
     activeTab === "ftholdings" // Only fetch when FT tab is active
-  );
+  ) as any ;
 
-  const loading = activeTab === "holdings" ? isLoadingDID : isLoadingFT;
+  const loading = activeTab === "holdings" ? isLoadingDID : isLoadingFT ; 
 
   // Helper function to format long addresses
   const formatAddress = (address: string, length: number = 8): string => {

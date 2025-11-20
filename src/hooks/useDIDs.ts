@@ -19,7 +19,7 @@ export const useDIDs = (params: UseDIDsParams) => {
       return api.getDIDs({ ...params, network: state.selectedChain });
     },
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
     refetchOnWindowFocus: false,
   });
@@ -43,7 +43,7 @@ export const useDIDInfo = (did: string, page: number, limit: number) => {
     },
     enabled: !!did, // Only run if did exists
     staleTime: 0,
-    cacheTime: 0,
+    // cacheTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });
@@ -68,7 +68,7 @@ export const useFTHoldings = (did: string, page: number, limit: number, enabled:
     },
     enabled: enabled && !!did, // Only run if enabled (tab is active) and did exists
     staleTime: 0,
-    cacheTime: 0,
+    // cacheTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });

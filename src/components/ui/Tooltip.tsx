@@ -23,7 +23,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    const id = setTimeout(() => {
+    const id : any  = setTimeout(() => {
       setIsVisible(true);
     }, delay);
     setTimeoutId(id);

@@ -31,7 +31,7 @@ export const useSearch = () => {
     },
     enabled: query.length >= 2,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 

@@ -22,7 +22,7 @@ export const useTransactions = (params?: UseTransactionsParams) => {
       return api.getTransactions({ ...params, network: state.selectedChain });
     },
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 };
@@ -40,7 +40,7 @@ export const useTransaction = (id: string) => {
     },
     enabled: !!id,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 };
@@ -57,7 +57,7 @@ export const useSCTxns = (params?: UseTransactionsParams) => {
       return api.getSCTransactions({ ...params, network: state.selectedChain });
     },
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 }
@@ -75,7 +75,7 @@ export const useBurntTxn = (params?: UseTransactionsParams) => {
       return result;
     },
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
     refetchOnWindowFocus: false,
   });
@@ -103,7 +103,7 @@ export const useBurntTransaction = (hash: string) => {
     },
     enabled: !!hash,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 };
@@ -129,8 +129,9 @@ export const useSCTransaction = (hash: string) => {
       return response.json();
     },
     enabled: !!hash,
-    staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    staleTime: 0,
+     // Always consider data stale
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 };

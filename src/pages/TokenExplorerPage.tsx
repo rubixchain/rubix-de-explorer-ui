@@ -134,7 +134,7 @@ export const TokenExplorerPage: React.FC = () => {
   };
 
   // Store processed token data
-  const tokenData = rawTokenData;
+  const tokenData : any  = rawTokenData;
 
   function getTransactionTypeLabel(type: string): string {
   switch (type) {
@@ -247,39 +247,7 @@ export const TokenExplorerPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Token Info */}
-      {/* <Card className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${
-            tokenData.type === 'RBT' ? 'bg-primary-100 dark:bg-primary-900' :
-            tokenData.type === 'FT' ? 'bg-tertiary-100 dark:bg-tertiary-900' :
-            tokenData.type === 'NFT' ? 'bg-primary-100 dark:bg-primary-900' :
-            'bg-primary-100 dark:bg-primary-900'
-          }`}>
-            <span className={`text-lg sm:text-xl font-bold ${
-              tokenData.type === 'RBT' ? 'text-primary-600 dark:text-primary-400' :
-              tokenData.type === 'FT' ? 'text-tertiary-600 dark:text-tertiary-400' :
-              tokenData.type === 'NFT' ? 'text-primary-600 dark:text-primary-400' :
-              'text-primary-600 dark:text-primary-400'
-            }`}>
-             
-            </span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg sm:text-xl font-semibold text-heading dark:text-white truncate">{tokenData.name} ({tokenData.symbol})</h2>
-            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-              tokenData.type === 'RBT' ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' :
-              tokenData.type === 'FT' ? 'bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200' :
-              tokenData.type === 'NFT' ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' :
-              'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
-            }`}>
-              {tokenData.type}
-            </span>
-          </div>
-        </div>
-      </Card> */}
-
-      {/* Token Details */}
+     
       <Card className="p-6">
         <h3 className="text-xl font-semibold text-heading dark:text-white mb-4">
           Token Details

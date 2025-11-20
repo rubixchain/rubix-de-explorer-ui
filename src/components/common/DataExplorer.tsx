@@ -119,7 +119,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
 
   // Fetch transactions for current page
-  const { data, isLoading, error } = useTransactions(paramsTxn);
+  const { data, isLoading, error } = useTransactions(paramsTxn) as any 
 
   useEffect(() => {
     if (data?.data?.transactions) {
@@ -253,11 +253,11 @@ const HoldersListView: React.FC<{
 }> = ({ currentPage, itemsPerPage, onPageChange, onHolderClick }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
 
-  const { data, isLoading, error } = useDIDs(paramsTxn);
+  const { data, isLoading, error } = useDIDs(paramsTxn) as any ;
   const [holders, setHolders] = useState<any[]>([]);
 
   // ✅ Move totalPages outside useEffect and add optional chaining
-  const totalPages = Math.ceil((data?.holders_response?.count || 0) / itemsPerPage);
+  const totalPages = Math.ceil((data?.holders_response?.count || 0) / itemsPerPage)
 
   useEffect(() => {
     if (data?.holders_response?.holders_response) { // ✅ Add optional chaining
@@ -351,7 +351,7 @@ const TokensListView: React.FC<{
   onTokenClick: (tokenId: string) => void;
 }> = ({ currentPage, itemsPerPage, onPageChange, onTokenClick }) => {
   const params = { page: currentPage, limit: itemsPerPage };
-  const { data, isLoading, error } = useTokens(params);
+  const { data, isLoading, error } = useTokens(params) as any 
 
   // State for total pages
   const [totalPages, setTotalPages] = React.useState(0);
@@ -474,7 +474,7 @@ const SCBlocksList: React.FC<{
   onTransactionClick: (transactionId: string) => void;
 }> = ({ currentPage, itemsPerPage, onPageChange, onTransactionClick }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
-  const { data, isLoading, error } = useSCTxns(paramsTxn);
+  const { data, isLoading, error } = useSCTxns(paramsTxn) as any 
 
   // Calculate total pages from API response
   const scBlocks = data?.sc_blocks || [];
@@ -613,8 +613,8 @@ const BurntBlockList: React.FC<BurntBlockListProps> = ({
   onTransactionClick,
 }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
-  const { data, isLoading, error } = useBurntTxn(paramsTxn);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const { data, isLoading, error } = useBurntTxn(paramsTxn) as any ;
+  const [transactions, setTransactions] = useState<any[]>([])
 
   // Update transactions when API data changes
   useEffect(() => {

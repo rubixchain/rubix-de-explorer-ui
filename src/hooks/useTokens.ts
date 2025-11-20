@@ -23,7 +23,7 @@ export const useTokens =  (params?: UseTokensParams) => {
       return api.getTokens({ ...params, network: state.selectedChain });
     },
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    // cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 };
@@ -46,7 +46,7 @@ export const useTokenDetails = (tokenId: string) => {
     },
     enabled: !!tokenId, // Only run if tokenId exists
     staleTime: 0,
-    cacheTime: 0,
+    // cacheTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });
@@ -71,7 +71,7 @@ export const useTokenChain = (tokenId: string) => {
     },
     enabled: !!tokenId, // Only run if tokenId exists
     staleTime: 0,
-    cacheTime: 0,
+    // cacheTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });

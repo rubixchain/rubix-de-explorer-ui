@@ -37,7 +37,7 @@ export const BurntTransactionExplorerPage: React.FC = () => {
   useEffect(() => {
     if (!rawData) return;
 
-    const data = rawData;
+    const data : any = rawData;
     const mapTxnType = (type: string): string => {
       switch (type) {
         case "02":

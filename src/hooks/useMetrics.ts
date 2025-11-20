@@ -15,7 +15,6 @@ export const useMetrics = () => {
       return api.getMetrics(state.selectedChain);
     },
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
     refetchOnMount: 'always', // Always refetch on mount
   });
 };
