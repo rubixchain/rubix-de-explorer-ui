@@ -1,49 +1,51 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Check, ChevronDown } from 'lucide-react';
+// import { motion, AnimatePresence } from 'framer-motion';
+import { Search, X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useSearch } from '@/hooks/useSearch';
-import { Button } from '@/components/ui/Button';
-import { NETWORK_CONFIG } from '@/constants';
+// import { Button } from '@/components/ui/Button';
+// import { NETWORK_CONFIG } from '@/constants';
+// Commented out unused imports - Check, ChevronDown, Button, NETWORK_CONFIG, motion, AnimatePresence
 
 export const Header: React.FC = () => {
-  const { state, setSearchQuery, setSelectedChain } = useApp();
+  const { setSearchQuery } = useApp();
   const navigate = useNavigate();
   const { search, isLoading } = useSearch();
-  const [isNetworkModalOpen, setIsNetworkModalOpen] = React.useState(false);
+  // const [isNetworkModalOpen, setIsNetworkModalOpen] = React.useState(false);
   const [searchQuery, setSearchQueryState] = React.useState('');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
-  const networks = [
-    {
-      id: NETWORK_CONFIG.mainnet.id,
-      name: NETWORK_CONFIG.mainnet.name,
-      description: NETWORK_CONFIG.mainnet.description,
-      status: 'Active',
-      color: NETWORK_CONFIG.mainnet.color
-    },
-    {
-      id: NETWORK_CONFIG.testnet.id,
-      name: NETWORK_CONFIG.testnet.name,
-      description: NETWORK_CONFIG.testnet.description,
-      status: 'Active',
-      color: NETWORK_CONFIG.testnet.color
-    }
-  ];
+  // Commented out - Network switcher functionality
+  // const networks = [
+  //   {
+  //     id: NETWORK_CONFIG.mainnet.id,
+  //     name: NETWORK_CONFIG.mainnet.name,
+  //     description: NETWORK_CONFIG.mainnet.description,
+  //     status: 'Active',
+  //     color: NETWORK_CONFIG.mainnet.color
+  //   },
+  //   {
+  //     id: NETWORK_CONFIG.testnet.id,
+  //     name: NETWORK_CONFIG.testnet.name,
+  //     description: NETWORK_CONFIG.testnet.description,
+  //     status: 'Active',
+  //     color: NETWORK_CONFIG.testnet.color
+  //   }
+  // ];
 
-  const toggleNetworkModal = () => {
-    setIsNetworkModalOpen(!isNetworkModalOpen);
-  };
+  // const toggleNetworkModal = () => {
+  //   setIsNetworkModalOpen(!isNetworkModalOpen);
+  // };
 
-  const selectNetwork = (network: string) => {
-    setSelectedChain(network);
-    setIsNetworkModalOpen(false);
-  };
+  // const selectNetwork = (network: string) => {
+  //   setSelectedChain(network);
+  //   setIsNetworkModalOpen(false);
+  // };
 
-  const closeNetworkModal = () => {
-    setIsNetworkModalOpen(false);
-  };
+  // const closeNetworkModal = () => {
+  //   setIsNetworkModalOpen(false);
+  // };
 
   const clearSearch = () => {
     setSearchQueryState('');
@@ -135,7 +137,8 @@ export const Header: React.FC = () => {
               </span>
             </Link>
 
-            <Button
+            {/* Network Switcher - Commented out */}
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={toggleNetworkModal}
@@ -145,7 +148,7 @@ export const Header: React.FC = () => {
                 {state.selectedChain}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-            </Button>
+            </Button> */}
           </div>
 
           {/* Mobile Search Bar */}
@@ -191,7 +194,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Tablet (iPad) & Desktop Layout: Everything in one line */}
-        <div className="hidden md:flex items-center justify-between gap-3 lg:gap-6">
+        <div className="hidden md:flex items-center gap-3 lg:gap-6">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
             <img
@@ -205,7 +208,7 @@ export const Header: React.FC = () => {
           </Link>
 
           {/* Search Bar - Takes remaining space */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md lg:max-w-2xl mx-4 lg:mx-8">
+          <form onSubmit={handleSearch} className="flex-1 max-w-3xl lg:max-w-4xl mx-4 lg:mx-8">
             <div className="relative w-full flex items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -242,8 +245,8 @@ export const Header: React.FC = () => {
             </div>
           </form>
 
-          {/* Network Switcher */}
-          <Button
+          {/* Network Switcher - Commented out */}
+          {/* <Button
             variant="ghost"
             size="sm"
             onClick={toggleNetworkModal}
@@ -253,15 +256,16 @@ export const Header: React.FC = () => {
               {state.selectedChain}
             </span>
             <ChevronDown className="w-4 h-4 text-gray-500" />
-          </Button>
+          </Button> */}
         </div>
       </div>
 
-      <AnimatePresence>
+      {/* Network Switcher Modal - Commented out */}
+      {/* <AnimatePresence>
         {isNetworkModalOpen && (
           <motion.div
             className="fixed bg-black/50 flex items-center justify-center z-50 p-4"
-            style={{ 
+            style={{
               position: 'fixed',
               top: 0,
               left: 0,
@@ -337,7 +341,7 @@ export const Header: React.FC = () => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </header>
   );
 };

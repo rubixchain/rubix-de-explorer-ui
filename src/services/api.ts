@@ -11,27 +11,39 @@ import {
 } from "@/types";
 
 // Helper function to get current network's base URL
+// Modified to always use testnet
 export const getCurrentBaseUrl = (): string => {
+  // Always return testnet base URL
+  return NETWORK_CONFIG.testnet.baseUrl;
+
+  /* Original network switching logic - commented out
   try {
     const selectedNetwork = localStorage.getItem(STORAGE_KEYS.SELECTED_NETWORK) || 'testnet';
     const baseUrl = selectedNetwork === 'mainnet'
       ? NETWORK_CONFIG.mainnet.baseUrl
       : NETWORK_CONFIG.testnet.baseUrl;
-    
+
     return baseUrl;
   } catch (error) {
     console.error('Failed to get network from local storage:', error);
     return NETWORK_CONFIG.testnet.baseUrl;
   }
+  */
 };
 
 // Helper function to get base URL for a specific network
+// Modified to always use testnet regardless of network parameter
 export const getBaseUrlForNetwork = (network: string): string => {
+  // Always return testnet base URL, ignore network parameter
+  return NETWORK_CONFIG.testnet.baseUrl;
+
+  /* Original network switching logic - commented out
   const baseUrl = network === 'mainnet'
     ? NETWORK_CONFIG.mainnet.baseUrl
     : NETWORK_CONFIG.testnet.baseUrl;
-  
+
   return baseUrl;
+  */
 };
 
 const generateMockMetrics = (): NetworkMetrics => ({
