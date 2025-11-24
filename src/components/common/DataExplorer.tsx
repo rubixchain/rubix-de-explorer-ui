@@ -279,7 +279,7 @@ const HoldersListView: React.FC<{
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-6">
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">Address</div>
-                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Token Count</div>
+                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Balance</div>
               </div>
             </div>
 

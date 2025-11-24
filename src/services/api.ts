@@ -272,8 +272,8 @@ class ApiClient {
             from: txn.sender_did || "N/A",
             to: txn.receiver_did || "N/A",
             value: `${Number(txn.amount || 0).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
+              minimumFractionDigits: 3,
+              maximumFractionDigits: 3,
             })} RBT`,
             timestamp: formatTimeAgo(txn.txn_time),
             status: txn.status || "confirmed",
