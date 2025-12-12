@@ -81,8 +81,13 @@ export interface TokenMetadata {
 
 export interface NetworkMetrics {
   totalTransactions: number;
-  // totalValueSettled: number;
+  totalSupply?: number;
+  maxSupply?: number;
   totalDIDs: number;
+  circulatingSupply?: number;
+  mainNetTVL?: number;
+  subNetTVL?: number;
+  tvL_RBT?: number;
   // activeValidators: number;
   // totalPledge: number;
   // averageBlockTime: number;

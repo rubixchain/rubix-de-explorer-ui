@@ -417,51 +417,76 @@ class ApiClient {
     return this.request<Block>(`${API_ENDPOINTS.BLOCKS}/${height}`);
   }
 
-  async getMetrics(network?: string): Promise<{
-    data: NetworkMetrics;
-    success: boolean;
-    message: string;
-  }> {
-    const baseUrl = network ? getBaseUrlForNetwork(network) : this.baseUrl;
-    try {
-      const [rbtRes, ftRes, didRes, txnsRes, scRes, nftRes] = await Promise.all(
-        [
-          fetch(`${baseUrl}/allrbtcount`).then((res) => res.json()),
-          fetch(`${baseUrl}/allftcount`).then((res) => res.json()),
-          fetch(`${baseUrl}/alldidcount`).then((res) => res.json()),
-          fetch(`${baseUrl}/alltransactionscount`).then((res) =>
-            res.json()
-          ),
-          fetch(`${baseUrl}/allsmartcontractscount`).then((res) =>
-            res.json()
-          ),
-          fetch(`${baseUrl}/allnftcount`).then((res) => res.json()),
-        ]
-      );
-      // Combine results
-      const data: NetworkMetrics = {
-        totalRBT: rbtRes.all_rbt_count || 0,
-        totalFT: ftRes.all_ft_count || 0,
-        totalDIDs: didRes.all_did_count || 0,
-        totalTransactions: txnsRes.all_txn_count || 0,
-        totalSmartContracts: scRes.all_sc_count || 0,
-        totalNFT: nftRes.all_nft_count || 0,
-      };
+async getMetrics(network?: string): Promise<{
+  data: NetworkMetrics;
+  success: boolean;
+  message: string;
+}> {
+  const baseUrl = network ? getBaseUrlForNetwork(network) : this.baseUrl;
 
-      return {
-        data,
-        success: true,
-        message: "Metrics loaded successfully",
-      };
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-      return {
-        data: generateMockMetrics(), // fallback to mock if error occurs
-        success: false,
-        message: "Failed to fetch metrics",
-      };
-    }
+  try {
+    // Existing API calls (RBT, FT, DID, TXN, SC, NFT)
+    const metricsCalls = Promise.all([
+      fetch(`${baseUrl}/allrbtcount`).then((res) => res.json()),
+      fetch(`${baseUrl}/allftcount`).then((res) => res.json()),
+      fetch(`${baseUrl}/alldidcount`).then((res) => res.json()),
+      fetch(`${baseUrl}/alltransactionscount`).then((res) => res.json()),
+      fetch(`${baseUrl}/allsmartcontractscount`).then((res) => res.json()),
+      fetch(`${baseUrl}/allnftcount`).then((res) => res.json()),
+    ]);
+
+    // New KPI API call
+    const kpiCall = fetch(
+      "https://rexplorerapi.azurewebsites.net/api/Analytics/GetKPIDetails"
+    ).then((res) => res.json());
+
+    // Await all promises together
+    const [
+      rbtRes,
+      ftRes,
+      didRes,
+      txnsRes,
+      scRes,
+      nftRes,
+    ] = await metricsCalls;
+
+    const kpiRes = await kpiCall;
+
+    // Build combined NetworkMetrics
+    const data: NetworkMetrics = {
+      totalRBT: rbtRes.all_rbt_count || 0,
+      totalFT: ftRes.all_ft_count || 0,
+      totalDIDs: didRes.all_did_count || 0,
+      totalTransactions: txnsRes.all_txn_count || 0,
+      totalSmartContracts: scRes.all_sc_count || 0,
+      totalNFT: nftRes.all_nft_count || 0,
+
+      // Attach KPI details
+      totalSupply: kpiRes?.data?.totalSupply || "0",
+      maxSupply: kpiRes?.data?.maxSupply || "0",
+      circulatingSupply: kpiRes?.data?.circulatingSupply || "0",
+      rbtPrice: kpiRes?.data?.rbtPrice || "0",
+      mainNetTVL: kpiRes?.data?.mainNetTVL || "0",
+      subNetTVL: kpiRes?.data?.subNetTVL || "0",
+      tvL_RBT: kpiRes?.data?.tvL_RBT || "0",
+    };
+
+    return {
+      data,
+      success: true,
+      message: "Metrics loaded successfully",
+    };
+
+  } catch (error) {
+    console.error("Error fetching metrics:", error);
+    return {
+      data: generateMockMetrics(),
+      success: false,
+      message: "Failed to fetch metrics",
+    };
   }
+}
+
 
   async getSCTransactions(params?: { page?: number; limit?: number; network?: string }) {
     const searchParams = new URLSearchParams();

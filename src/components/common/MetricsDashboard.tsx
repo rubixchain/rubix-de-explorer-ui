@@ -229,6 +229,35 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
       color: 'text-pink-600',
       tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
     },
+        {
+      title: 'Max Supply',
+      value: formatNumber(currentMetrics.maxSupply || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+    },
+        {
+      title: 'Total Supply',
+      value: formatNumber(currentMetrics.totalSupply || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+    },
+         {
+      title: 'RBT Price',
+      value: formatNumber(currentMetrics.rbtPrice || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+    },
+         {
+      title: 'Circulating Supply',
+      value: formatNumber(currentMetrics.circulatingSupply || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+    },
+
   ];
 
   if (error) {
