@@ -234,28 +234,28 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
       value: formatNumber(currentMetrics.maxSupply || 23400),
       icon: Image,
       color: 'text-pink-600',
-      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+      tooltip: 'Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.',
     },
         {
       title: 'Total Supply',
       value: formatNumber(currentMetrics.totalSupply || 23400),
       icon: Image,
       color: 'text-pink-600',
-      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+      tooltip: 'Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.',
     },
          {
       title: 'RBT Price',
       value: formatNumber(currentMetrics.rbtPrice || 23400),
       icon: Image,
       color: 'text-pink-600',
-      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+      tooltip: 'Price of Single RBT token in USD.',
     },
          {
       title: 'Circulating Supply',
       value: formatNumber(currentMetrics.circulatingSupply || 23400),
       icon: Image,
       color: 'text-pink-600',
-      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+      tooltip: 'Circulating supply refers to the total amount of Rubix tokens that are currently available and circulating in the market.',
     },
 
   ];
