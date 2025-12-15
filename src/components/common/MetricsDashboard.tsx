@@ -91,7 +91,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
             </div>
 
             {/* Large value - Responsive sizing */}
-            <div className="text-2xl md:text-3xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="text-xl md:text-2xl lg:text-2xl font-bold text-gray-900 dark:text-white">
               {value}
             </div>
 
