@@ -246,21 +246,25 @@ class ApiClient {
 
       const txnResp = await response.json();
 
-      const formatTimeAgo = (epoch: number): string => {
-        if (!epoch) return "N/A";
+    const formatTimeAgo = (epoch: number): string => {
+  if (!epoch) return "N/A";
 
-        // Convert to milliseconds if needed
-        const timestamp = epoch < 1e12 ? epoch * 1000 : epoch;
-        const now = Date.now();
-        const diff = Math.floor((now - timestamp) / 1000); // difference in seconds
+  const timestamp = epoch < 1e12 ? epoch * 1000 : epoch;
+  const now = Date.now();
+  const diff = Math.floor((now - timestamp) / 1000); // seconds
 
-        if (diff < 60) return "just now";
-        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
-        if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
-        if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
-        return `${Math.floor(diff / 2592000)} months ago`;
-      };
+  const format = (value: number, unit: string) =>
+    `${value} ${unit}${value === 1 ? "" : "s"} ago`;
+
+  if (diff < 60) return "just now";
+  if (diff < 3600) return format(Math.floor(diff / 60), "min");
+  if (diff < 86400) return format(Math.floor(diff / 3600), "hr");
+  if (diff < 604800) return format(Math.floor(diff / 86400), "day");
+  if (diff < 2592000) return format(Math.floor(diff / 604800), "week");
+
+  return format(Math.floor(diff / 2592000), "month");
+};
+
 
       const frontendTransactions = (txnResp.transactions_response || []).map(
         (txn: any) => {
