@@ -8,66 +8,94 @@ import { Info, ArrowLeft, Coins } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDIDInfo, useFTHoldings } from "@/hooks/useDIDs";
 
+/* -----------------------------------------
+   Hook: Detect Mobile Screen
+------------------------------------------ */
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 640px)"); // Tailwind sm
+    const listener = () => setIsMobile(media.matches);
+
+    listener(); // initial
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
+
+  return isMobile;
+};
+
 export const DIDExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const did = searchParams.get("did") || "";
 
+  const isMobile = useIsMobile();
+
   const [activeTab, setActiveTab] = useState<"holdings" | "ftholdings">(
     "holdings"
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const itemsPerPage = 5;
 
-  // Use React Query hooks - same pattern as HomePage and TransactionExplorerPage
-  const { data: didData, isLoading: isLoadingDID, error: didError } = useDIDInfo(did, currentPage, itemsPerPage) as any 
-  const { data: ftData, isLoading: isLoadingFT, error: ftError } = useFTHoldings(
-    did,
-    currentPage,
-    itemsPerPage,
-    activeTab === "ftholdings" // Only fetch when FT tab is active
-  ) as any ;
+  const { data: didData, isLoading: isLoadingDID, error: didError } =
+    useDIDInfo(did, currentPage, itemsPerPage) as any;
 
-  const loading = activeTab === "holdings" ? isLoadingDID : isLoadingFT ; 
+  const { data: ftData, isLoading: isLoadingFT, error: ftError } =
+    useFTHoldings(
+      did,
+      currentPage,
+      itemsPerPage,
+      activeTab === "ftholdings"
+    ) as any;
 
-  // Helper function to format long addresses
-  const formatAddress = (address: string, length: number = 8): string => {
+  const loading = activeTab === "holdings" ? isLoadingDID : isLoadingFT;
+
+  /* -----------------------------------------
+     Helper: Responsive Address Formatter
+  ------------------------------------------ */
+  const formatAddress = (
+    address: string,
+    desktopLength = 30,
+    mobileLength = 6
+  ): string => {
     if (!address || address === "N/A") return address;
+
+    const length = isMobile ? mobileLength : desktopLength;
     if (address.length <= length * 2) return address;
+
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
-  // Use React Query states - same pattern as other pages
+  /* -----------------------------------------
+     Loading State
+  ------------------------------------------ */
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
-            <div className="space-y-4">
-              <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
+        <div className="container mx-auto px-4 py-8 animate-pulse">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6" />
+          <div className="space-y-4">
+            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
           </div>
         </div>
       </div>
     );
   }
 
+  /* -----------------------------------------
+     Error State
+  ------------------------------------------ */
   if (didError || ftError || !didData) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {didError || ftError ? "Error Loading DID" : "DID Not Found"}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {didError || ftError ? "An error occurred while fetching DID data" : "No data found for this DID"}
-          </p>
+          <h1 className="text-2xl font-bold mb-4">Error Loading DID</h1>
           <button
             onClick={() => navigate("/")}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg"
           >
             Back to Home
           </button>
@@ -79,203 +107,110 @@ export const DIDExplorerPage: React.FC = () => {
   const totalPages =
     activeTab === "holdings"
       ? Math.ceil(didData.count / itemsPerPage)
-      : ftData && Array.isArray(ftData)
-      ? Math.ceil(ftData.length / itemsPerPage)
-      : 1;
+      : Math.ceil((ftData?.length || 1) / itemsPerPage);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6 sm:space-y-8 p-4 sm:p-6"
+      className="space-y-6 p-4 sm:p-6"
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
-        </button>
-      </div>
+      <button
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2 text-gray-600 hover:text-primary-600"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Home
+      </button>
 
       {/* DID Info */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold mb-2">DID Explorer</h1>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm text-gray-600">
-          <span className="mb-2 sm:mb-0">Details for DID:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={didData.did.did} position="top">
-              <span className="font-mono text-primary-600 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(didData.did.did, 12)}
-              </span>
-            </Tooltip>
-            <div className="flex-shrink-0">
-              <CopyButton text={didData.did.did} size="sm" />
-            </div>
-          </div>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">DID Explorer</h1>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Tooltip content={didData.did.did}>
+            <span className="font-mono text-primary-600 truncate max-w-[70vw]">
+              {formatAddress(didData.did.did, 50, 8)}
+            </span>
+          </Tooltip>
+          <CopyButton text={didData.did.did} size="sm" />
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <Card className="p-4 sm:p-6">
-          <div>
-            <div className="flex items-center space-x-2 mb-3">
-              <p className="text-xs sm:text-sm text-gray-500">Total RBTs</p>
-              <Info className="w-3 h-3 text-gray-500" />
-            </div>
-            <p className="text-lg sm:text-2xl font-bold">
-              {didData.did.total_rbts} RBT
-            </p>
-          </div>
-        </Card>
-        <Card className="p-4 sm:p-6">
-          <div>
-            <div className="flex items-center space-x-2 mb-3">
-              <p className="text-xs sm:text-sm text-gray-500">Total FTs</p>
-              <Info className="w-3 h-3 text-gray-500" />
-            </div>
-            <p className="text-lg sm:text-2xl font-bold">
-              {didData.did.total_fts}
-            </p>
-          </div>
-        </Card>
-        <Card className="p-4 sm:p-6">
-          <div>
-            <div className="flex items-center space-x-2 mb-3">
-              <p className="text-xs sm:text-sm text-gray-500">Total NFTs</p>
-              <Info className="w-3 h-3 text-gray-500" />
-            </div>
-            <p className="text-lg sm:text-2xl font-bold">
-              {didData.did.total_nfts}
-            </p>
-          </div>
-        </Card>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          ["Total RBTs", didData.did.total_rbts],
+          ["Total FTs", didData.did.total_fts],
+          ["Total NFTs", didData.did.total_nfts],
+        ].map(([label, value]) => (
+          <Card key={label} className="p-4">
+            <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <p className="text-xl font-bold">{value}</p>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}
-      <Card className="p-4 sm:p-6">
-        <div className="flex space-x-4 border-b border-gray-200 mb-4">
-          <button
-            onClick={() => {
-              setActiveTab("holdings");
-              setCurrentPage(1);
-            }}
-            className={`px-1 py-2 text-sm font-medium ${
-              activeTab === "holdings"
-                ? "text-primary-600 border-b-2 border-primary-600"
-                : "text-gray-600"
-            }`}
-          >
-            <Coins className="w-4 h-4 inline mr-1" /> Token Holdings
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab("ftholdings");
-              setCurrentPage(1);
-            }}
-            className={`px-1 py-2 text-sm font-medium ${
-              activeTab === "ftholdings"
-                ? "text-primary-600 border-b-2 border-primary-600"
-                : "text-gray-600"
-            }`}
-          >
-            <Coins className="w-4 h-4 inline mr-1" /> FT Holdings
-          </button>
+      <Card className="p-4">
+        <div className="flex gap-4 border-b mb-4">
+          {["holdings", "ftholdings"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab as any);
+                setCurrentPage(1);
+              }}
+              className={`pb-2 text-sm font-medium ${
+                activeTab === tab
+                  ? "text-primary-600 border-b-2 border-primary-600"
+                  : "text-gray-600"
+              }`}
+            >
+              <Coins className="inline w-4 h-4 mr-1" />
+              {tab === "holdings" ? "Token Holdings" : "FT Holdings"}
+            </button>
+          ))}
         </div>
 
-        {/* RBT Holdings */}
-        {activeTab === "holdings" && (
-          <div className="space-y-3">
-            {didData.rbts && didData.rbts.length > 0 ? (
-              didData.rbts.map((token: any) => (
-                <div
-                  key={token.rbt_id}
-                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 gap-3"
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Tooltip content={token.rbt_id} position="top">
-                      <p
-                        className="text-sm font-medium truncate cursor-pointer hover:text-primary-600"
-                        onClick={() => navigate(`/token-explorer?token=${token.rbt_id}`)}
-                      >
-                        {formatAddress(token.rbt_id, 12)}
-                      </p>
-                    </Tooltip>
-                    <div className="flex-shrink-0">
-                      <CopyButton text={token.rbt_id} size="sm" />
-                    </div>
-                  </div>
-                  <div className="font-semibold text-sm sm:text-base whitespace-nowrap">
-                    {token.token_value} RBT
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm text-center">
-                No RBT tokens found
-              </p>
-            )}
+        {/* Holdings */}
+        {(activeTab === "holdings" ? didData.rbts : ftData)?.map((item: any) => {
+          const id = item.rbt_id || item.ft_id;
+          console.log("Rendering item:", item);
+          return (
+            <div
+              key={id}
+              className="flex justify-between items-center p-3 bg-gray-50 rounded border mb-2"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Tooltip content={id}>
+                  <p
+                    className="truncate text-sm cursor-pointer hover:text-primary-600"
+                    onClick={() =>
+                      navigate(`/token-explorer?token=${id}`)
+                    }
+                  >
+                    {formatAddress(id)}
+                  </p>
+                </Tooltip>
+                <CopyButton text={id} size="sm" />
+              </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={didData.count}
-              itemsPerPage={itemsPerPage}
-            />
-          </div>
-        )}
-
-        {/* FT Holdings */}
-        {activeTab === "ftholdings" && (
-          <div className="space-y-3">
-         {ftData && Array.isArray(ftData) && ftData.length > 0 ? (
-  ftData
-    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-    .map((ft: any) => (
-      <div
-        key={ft.ft_id}
-        className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 gap-3"
-      >
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium mb-2">{ft.ft_name || "Unnamed Token"}</p>
-          <div className="flex items-center gap-2">
-            <Tooltip content={ft.ft_id} position="top">
-              <p
-                className="text-xs text-gray-500 truncate cursor-pointer hover:text-primary-600"
-                onClick={() => navigate(`/token-explorer?token=${ft.ft_id}`)}
-              >
-                {formatAddress(ft.ft_id, 12)}
+              <p className="font-semibold text-sm whitespace-nowrap">
+                {item.token_value || 0} {item.rbt_id ? "RBT" : "FT"}
               </p>
-            </Tooltip>
-            <div className="flex-shrink-0">
-              <CopyButton text={ft.ft_id} size="sm" />
             </div>
-          </div>
-        </div>
-        <div className="font-semibold text-sm sm:text-base whitespace-nowrap">
-          {isNaN(Number(ft.token_value)) ? "0" : Number(ft.token_value)} FT
-        </div>
-      </div>
-    ))
-) : (
-  <p className="text-gray-500 text-sm text-center">No FT tokens found</p>
-)}
-            {ftData && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                totalItems={ftData.length}
-                itemsPerPage={5}
-              />
-            )}
-          </div>
-        )}
+          );
+        })}
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={
+            activeTab === "holdings" ? didData.count : ftData?.length || 0
+          }
+          itemsPerPage={itemsPerPage}
+        />
       </Card>
     </motion.div>
   );
