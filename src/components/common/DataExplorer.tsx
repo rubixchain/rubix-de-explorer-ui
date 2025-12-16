@@ -283,7 +283,7 @@ const HoldersListView: React.FC<{
             {/* Table Header */}
             <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-6">
-                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
+                {/* <div className="w-16 md:w-20 flex-shrink-0">SN No</div> */}
                 <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">Address</div>
                 <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Balance</div>
               </div>
@@ -303,13 +303,13 @@ const HoldersListView: React.FC<{
         className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-6"
       >
         {/* Serial Number Column */}
-        <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+        {/* <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
           <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
               {(currentPage - 1) * itemsPerPage + index + 1}
             </span>
           </div>
-        </div>
+        </div> */}
 
         {/* Address Column - Compact on mobile, flexible on tablet/desktop */}
         <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
