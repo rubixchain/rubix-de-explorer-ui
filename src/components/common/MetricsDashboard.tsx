@@ -36,7 +36,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="p-6"
+        className="p-0.5 md:p-0.5 lg:p-0.5"
       >
         {loading ? (
           <div className="space-y-3">
@@ -49,13 +49,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
         ) : (
           <>
             {/* Label with info icon */}
-            <div className="flex items-center space-x-2 mb-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex items-center space-x-2 mb-1 md:mb-1">
+              <span className="text-sm md:text-sm font-medium text-gray-700 dark:text-gray-300">
                 {title}
               </span>
               {tooltip && (
                 <div className="relative">
-                  <div 
+                  <div
                     ref={iconRef}
                     className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center cursor-help hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     onMouseEnter={() => {
@@ -65,7 +65,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
                   >
                     <Info className="w-2.5 h-2.5 text-gray-500 dark:text-gray-400" />
                   </div>
-                  
+
                   {/* Tooltip */}
                   {showTooltip && (
                     <motion.div
@@ -89,12 +89,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* Large value */}
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">
+
+            {/* Large value - Responsive sizing */}
+            <div className="text-xl md:text-2xl lg:text-2xl font-bold text-gray-900 dark:text-white">
               {value}
             </div>
-            
+
             {/* Price change indicator */}
             {change && (
               <div className={`flex items-center space-x-1 mt-2 ${
@@ -120,24 +120,22 @@ interface MetricsDashboardProps {
 
 export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = '' }) => {
   const { data: metrics, isLoading, error } = useMetrics();
-
   const mockMetrics: NetworkMetrics = {
     totalTransactions: 1234567,
-    totalValueSettled: 45200000,
+    // totalValueSettled: 45200000,
     totalDIDs: 89432,
-    activeValidators: 1247,
-    totalPledge: 45200000,
-    averageBlockTime: 2.3,
-    networkHealth: 99.8,
+    // activeValidators: 1247,
+    // totalPledge: 45200000,
+    // averageBlockTime: 2.3,
+    // networkHealth: 99.8,
     totalRBT: 1250000,
     totalFT: 45600,
     totalNFT: 23400,
     totalSmartContracts: 890,
-    totalAssets: 1250000 + 45600 + 23400 + 890,
+    // totalAssets: 1250000 + 45600 + 23400 + 890,
     marketCap: 2850000000, // $2.85B market cap
     rbtPrice: 2.28, // $2.28 per RBT
-    rbtPriceChange2h: 3.45, // +3.45% change in 2h
-    averageTransactionSize: 1250.75, // $1,250.75 average transaction size
+    // rbtPriceChange2h: 3.45, // +3.45% change in 2h
   };
 
   const getMetricsData = (data: any): NetworkMetrics => {
@@ -195,41 +193,58 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
   };
 
   const metricsData = [
-    {
-      title: 'Market Cap',
-      value: formatLargeCurrency(currentMetrics.marketCap || 2850000000),
-      icon: DollarSign,
-      color: 'text-green-600',
-      tooltip: 'Market capitalization represents the total value of all Rubix tokens in circulation, calculated by multiplying the current price by the total supply.',
-    },
-    {
+    // {
+    //   title: 'Market Cap',
+    //   value: formatLargeCurrency(currentMetrics.marketCap || 2850000000),
+    //   icon: DollarSign,
+    //   color: 'text-green-600',
+    //   tooltip: 'Market capitalization represents the total value of all Rubix tokens in circulation, calculated by multiplying the current price by the total supply.',
+    // },
+
+    // {
+    //   title: 'Total RBT',
+    //   value: formatNumber(currentMetrics.totalRBT || 1250000),
+    //   icon: Circle,
+    //   color: 'text-primary-600',
+    //   tooltip: 'Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.',
+    // },
+
+            {
       title: 'RBT Price',
-      value: formatCurrency(currentMetrics.rbtPrice || 2.28),
-      change: currentMetrics.rbtPriceChange2h ? formatPriceChange(currentMetrics.rbtPriceChange2h) : null,
-      icon: Coins,
-      color: 'text-primary-600',
-      tooltip: 'Current price of Rubix Base Token (RBT) in USD, with 2-hour price change percentage.',
+      value: formatNumber(currentMetrics.rbtPrice || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Price of Single RBT token in USD.',
     },
-    {
-      title: 'ATS',
-      value: formatCurrency(currentMetrics.averageTransactionSize || 1250.75),
-      icon: BarChart3,
-      color: 'text-blue-600',
-      tooltip: 'Average Transaction Size (ATS) represents the mean value of all transactions on the Rubix network, indicating typical transaction volumes.',
+
+            {
+      title: 'Max Supply',
+      value: formatNumber(currentMetrics.maxSupply || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.',
     },
-    {
-      title: 'Total RBT',
-      value: formatNumber(currentMetrics.totalRBT || 1250000),
-      icon: Circle,
-      color: 'text-primary-600',
-      tooltip: 'Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.',
+        {
+      title: 'Total Supply',
+      value: formatNumber(currentMetrics.totalSupply || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.',
     },
+
     {
       title: 'Total FT',
       value: formatNumber(currentMetrics.totalFT || 45600),
       icon: Square,
       color: 'text-tertiary-600',
       tooltip: 'Fungible Tokens (FT) are digital assets that are interchangeable and identical, representing standardized units of value.',
+    },
+             {
+      title: 'Circulating Supply',
+      value: formatNumber(currentMetrics.circulatingSupply || 23400),
+      icon: Image,
+      color: 'text-pink-600',
+      tooltip: 'Circulating supply refers to the total amount of Rubix tokens that are currently available and circulating in the market.',
     },
     {
       title: 'Smart Contracts',
@@ -245,6 +260,16 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
       color: 'text-pink-600',
       tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
     },
+
+      {
+      title: 'Total Value Locked (TVL)',
+      value: formatNumber(currentMetrics.tvL_RBT || 1250000),
+      icon: Circle,
+      color: 'text-primary-600',
+      tooltip: 'Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.',
+    },
+ 
+
   ];
 
   if (error) {
@@ -266,9 +291,9 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
   }
 
   return (
-    <div className={`${className}`}>
+    <div className={`${className} px-4 sm:px-6 lg:px-8`}>
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -283,8 +308,8 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
             <MetricCard
               title={metric.title}
               value={metric.value}
-              change={metric.change?.text}
-              changeType={metric.change?.isPositive ? 'positive' : 'negative'}
+              // change={metric.change?.text}
+              // changeType={metric.change?.isPositive ? 'positive' : 'negative'}
               icon={metric.icon}
               color={metric.color}
               loading={isLoading}

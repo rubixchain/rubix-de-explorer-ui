@@ -81,21 +81,26 @@ export interface TokenMetadata {
 
 export interface NetworkMetrics {
   totalTransactions: number;
-  totalValueSettled: number;
+  totalSupply?: number;
+  maxSupply?: number;
   totalDIDs: number;
-  activeValidators: number;
-  totalPledge: number;
-  averageBlockTime: number;
-  networkHealth: number;
+  circulatingSupply?: number;
+  mainNetTVL?: number;
+  subNetTVL?: number;
+  tvL_RBT?: number;
+  // activeValidators: number;
+  // totalPledge: number;
+  // averageBlockTime: number;
+  // networkHealth: number;
   totalRBT?: number;
   totalFT?: number;
   totalNFT?: number;
   totalSmartContracts?: number;
-  totalAssets?: number;
+  // totalAssets?: number;
   marketCap?: number;
   rbtPrice?: number;
-  rbtPriceChange2h?: number;
-  averageTransactionSize?: number;
+  // rbtPriceChange2h?: number;
+  // averageTransactionSize?: number;
 }
 
 export interface SearchQuery {

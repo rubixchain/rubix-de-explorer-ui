@@ -1,5 +1,5 @@
 export const API_ENDPOINTS = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'mock://api.rubix.explorer',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL ,
   SEARCH: '/search',
   TRANSACTIONS: '/transactions',
   TOKENS: '/tokens',
@@ -10,6 +10,24 @@ export const API_ENDPOINTS = {
 } as const;
 
 export const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || true;
+
+export const NETWORK_CONFIG = {
+  // Mainnet configuration - commented out (not in use)
+  // mainnet: {
+  //   id: 'mainnet',
+  //   name: 'Mainnet',
+  //   description: 'Production network',
+  //   baseUrl: import.meta.env.VITE_API_BASE_URL_MAINNET,
+  //   color: 'bg-green-500',
+  // },
+  testnet: {
+    id: 'testnet',
+    name: 'Testnet',
+    description: 'Testing network',
+    baseUrl: import.meta.env.VITE_API_BASE_URL_TESTNET, // Using env variable - always testnet
+    color: 'bg-blue-500',
+  },
+} as const;
 
 export const CHAINS = {
   MAINNET: {
@@ -137,6 +155,7 @@ export const STORAGE_KEYS = {
   SEARCH_HISTORY: 'rubix-explorer-search-history',
   FAVORITES: 'rubix-explorer-favorites',
   SETTINGS: 'rubix-explorer-settings',
+  SELECTED_NETWORK: 'rubix-explorer-selected-network',
 } as const;
 
 export const ERROR_MESSAGES = {
