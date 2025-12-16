@@ -63,7 +63,9 @@ export const BurntTransactionExplorerPage: React.FC = () => {
       block_hash: data.block_hash || "N/A",
       status: "confirmed",
       type: data.txn_type || "",
-      timestamp: data.epoch || "N/A",
+       timestamp: data.epoch
+        ? new Date(data.epoch * 1000).toUTCString()
+        : "N/A",
       owner_did: data.owner_did || "N/A",
       tokens: data.tokens,
       child_tokens: Array.isArray(data.child_tokens)
