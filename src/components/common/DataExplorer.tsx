@@ -667,7 +667,7 @@ const timeAgo = (epoch: number): string => {
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Block ID</div>
                 <div className="flex-1 min-w-[200px]">Owner DID</div>
-                <div className="w-32 md:w-40 flex-shrink-0">Epoch</div>
+                <div className="w-32 md:w-40 flex-shrink-0">Time</div>
                 <div className="flex-1 min-w-[200px]">Burnt Token</div>
               </div>
             </div>
