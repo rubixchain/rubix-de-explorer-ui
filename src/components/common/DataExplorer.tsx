@@ -15,6 +15,9 @@ import {
 } from "@/hooks/useTransactions";
 import { useDIDs } from "@/hooks/useDIDs";
 import { useTokens } from "@/hooks/useTokens";
+import { useIsMobile, useFormatAddress } from "@/hooks/useFormatAddress";
+
+
 
 interface DataExplorerProps {
   className?: string;
@@ -27,12 +30,8 @@ interface Quorum {
   status: "active" | "standby" | "inactive";
   lastActivity: string;
 }
-const formatAddress = (address: string, length: number = 6): string => {
-  if (address == null) return "N/A";
-  if (address == "") return "N/A";
-  if (address.length <= length * 2) return address;
-  return `${address.slice(0, length)}...${address.slice(-length)}`;
-};
+
+
 
 const mockTransactions = [
   {
@@ -115,8 +114,14 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
   onPageChange,
   onTransactionClick,
 }) => {
+  const isMobile = useIsMobile();
   const [transactions, setTransactions] = useState<any[]>([]);
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
+  const formatAddress = (address: string, length: number = 8): string => {
+  if (!address || address === "N/A") return address;
+  if (address.length <= length * 2) return address;
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
+};
 
   // Fetch transactions for current page
   const { data, isLoading, error } = useTransactions(paramsTxn) as any 
@@ -140,7 +145,6 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
             {/* Table Header */}
             <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700 min-w-[1000px]">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
-                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Transaction</div>
                 <div className="flex-1 min-w-[200px]">From</div>
                 <div className="flex-1 min-w-[200px]">To</div>
@@ -161,20 +165,20 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                   className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
                 >
                   {/* Serial Number Column */}
-                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                  {/* <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
                     <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
                       <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </span>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Transaction Column */}
                   <div className="flex-1 min-w-[200px] flex items-center">
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={tx.id} position="top">
                         <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                          {formatAddress(tx.id, 8)}
+                          {formatAddress(tx.id)}
                         </div>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -188,7 +192,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={tx.from} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
-                          {formatAddress(tx.from, 8)}
+                          {formatAddress(tx.from)}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -202,7 +206,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={tx.to} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
-                          {formatAddress(tx.to, 8)}
+                          {formatAddress(tx.to)}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -252,6 +256,8 @@ const HoldersListView: React.FC<{
   onHolderClick: (holderAddress: string) => void;
 }> = ({ currentPage, itemsPerPage, onPageChange, onHolderClick }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
+ const isMobile = useIsMobile();
+  const formatAddress = useFormatAddress(50, 8);
 
   const { data, isLoading, error } = useDIDs(paramsTxn) as any ;
   const [holders, setHolders] = useState<any[]>([]);
@@ -309,7 +315,7 @@ const HoldersListView: React.FC<{
         <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
           <div className="flex items-center gap-1.5 w-full min-w-0">
               <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                {formatAddress(holder.owner_did, 8)}
+                {formatAddress(holder.owner_did)}
               </div>
             <div className="flex-shrink-0">
               <CopyButton text={holder.owner_did} size="sm" />
@@ -352,6 +358,8 @@ const TokensListView: React.FC<{
 }> = ({ currentPage, itemsPerPage, onPageChange, onTokenClick }) => {
   const params = { page: currentPage, limit: itemsPerPage };
   const { data, isLoading, error } = useTokens(params) as any 
+  const formatAddress = useFormatAddress(50, 8);
+
 
   // State for total pages
   const [totalPages, setTotalPages] = React.useState(0);
@@ -383,7 +391,6 @@ const TokensListView: React.FC<{
             {/* Table Header */}
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
-                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Token</div>
                 <div className="w-24 md:w-32 lg:w-40 flex-shrink-0">Amount in RBT</div>
                 <div className="flex-1 min-w-[160px]">Owner</div>
@@ -402,20 +409,20 @@ const TokensListView: React.FC<{
                   className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
                 >
                   {/* Serial Number Column */}
-                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                  {/* <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
                     <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
                       <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </span>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Token Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={token.token_id} position="top">
                         <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                          {formatAddress(token.token_id, 8)}
+                          {formatAddress(token.token_id)}
                         </div>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -436,7 +443,7 @@ const TokensListView: React.FC<{
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={token.owner_did} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
-                          {formatAddress(token.owner_did, 8)}
+                          {formatAddress(token.owner_did)}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -474,12 +481,18 @@ const SCBlocksList: React.FC<{
   onTransactionClick: (transactionId: string) => void;
 }> = ({ currentPage, itemsPerPage, onPageChange, onTransactionClick }) => {
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
+
   const { data, isLoading, error } = useSCTxns(paramsTxn) as any 
 
   // Calculate total pages from API response
   const scBlocks = data?.sc_blocks || [];
   const totalPages = Math.ceil((data?.count || 0) / itemsPerPage);
 
+const formatAddress = (address: string, length: number = 14): string => {
+  if (!address || address === "N/A") return address;
+  if (address.length <= length * 2) return address;
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
+};
   return (
     <div className="w-full">
       <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
@@ -489,7 +502,6 @@ const SCBlocksList: React.FC<{
             {/* Table Header */}
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
-                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Block Id</div>
                 <div className="flex-1 min-w-[200px]">Contract Id</div>
                 <div className="flex-1 min-w-[200px]">Deployer</div>
@@ -509,19 +521,19 @@ const SCBlocksList: React.FC<{
                   className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
                 >
                   {/* Serial Number Column */}
-                  <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
+                  {/* <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
                     <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
                       <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </span>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Block Id Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
                     <Tooltip content={tx.block_id} position="top">
                       <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                        {formatAddress(tx.block_id, 8)}
+                        {formatAddress(tx.block_id)}
                       </div>
                     </Tooltip>
                   </div>
@@ -531,7 +543,7 @@ const SCBlocksList: React.FC<{
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={tx.contract_id} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                          {formatAddress(tx.contract_id, 8)}
+                          {formatAddress(tx.contract_id)}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -546,7 +558,7 @@ const SCBlocksList: React.FC<{
                       <div className="flex items-center gap-1.5 w-full min-w-0">
                         <Tooltip content={tx.owner_did} position="top">
                           <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                            {formatAddress(tx.owner_did, 8)}
+                            {formatAddress(tx.owner_did)}
                           </span>
                         </Tooltip>
                         <div className="flex-shrink-0">
@@ -566,7 +578,7 @@ const SCBlocksList: React.FC<{
                       <div className="flex items-center gap-1.5 w-full min-w-0">
                         <Tooltip content={tx.executor_did} position="top">
                           <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                            {formatAddress(tx.executor_did, 8)}
+                            {formatAddress(tx.executor_did)}
                           </span>
                         </Tooltip>
                         <div className="flex-shrink-0">
@@ -612,9 +624,11 @@ const BurntBlockList: React.FC<BurntBlockListProps> = ({
   onPageChange,
   onTransactionClick,
 }) => {
+  const isMobile = useIsMobile();
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
   const { data, isLoading, error } = useBurntTxn(paramsTxn) as any ;
   const [transactions, setTransactions] = useState<any[]>([])
+  const formatAddress = useFormatAddress(14, 8);
 
   // Update transactions when API data changes
   useEffect(() => {
@@ -653,6 +667,7 @@ const timeAgo = (epoch: number): string => {
 };
 
 
+
   // Compute total pages from backend totalCount
   const totalPages = Math.ceil((data?.count || 1) / itemsPerPage);
 
@@ -664,7 +679,6 @@ const timeAgo = (epoch: number): string => {
             {/* Table Header */}
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 gap-3 md:gap-4 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider bg-secondary-50 dark:bg-secondary-800">
-                <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
                 <div className="flex-1 min-w-[200px]">Block ID</div>
                 <div className="flex-1 min-w-[200px]">Owner DID</div>
                 <div className="w-32 md:w-40 flex-shrink-0">Time</div>
@@ -684,21 +698,27 @@ const timeAgo = (epoch: number): string => {
                   className="flex px-4 md:px-6 py-4 gap-3 md:gap-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer"
                 >
                   {/* Serial Number */}
-                  <div className="w-16 md:w-20 flex-shrink-0">
+                  {/* <div className="w-16 md:w-20 flex-shrink-0">
                     <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
                       <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </span>
                     </div>
-                  </div>
+                  </div> */}
 
-                  {/* Block ID */}
+        
+
                   <div className="flex-1 min-w-[200px]">
-                    <Tooltip content={tx.block_hash} position="top">
-                      <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                        {formatAddress(tx.block_hash, 8)}
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip content={tx.block_hash} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
+                          {formatAddress(tx.block_hash)}
+                        </span>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.block_hash} size="sm" />
                       </div>
-                    </Tooltip>
+                    </div>
                   </div>
 
                   {/* Owner DID */}
@@ -706,7 +726,7 @@ const timeAgo = (epoch: number): string => {
                     <div className="flex items-center gap-1.5">
                       <Tooltip content={tx.owner_did} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                          {formatAddress(tx.owner_did, 8)}
+                          {formatAddress(tx.owner_did)}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -733,7 +753,7 @@ const timeAgo = (epoch: number): string => {
                       >
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
                           {tx.tokens
-                            ? formatAddress(Object.keys(tx.tokens).toLocaleString(), 8)
+                            ? formatAddress(Object.keys(tx.tokens).toLocaleString())
                             : "N/A"}
                         </span>
                       </Tooltip>
@@ -775,6 +795,24 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
   const [viewMode, setViewMode] = useState<"list">(
     "list"
   );
+  const isMobile = useIsMobile();
+
+
+const formatAddress = (
+  address: string,
+  desktopLength = 20,
+  mobileLength = 8
+): string => {
+  if (!address || address === "N/A") return address;
+
+  const length = isMobile ? mobileLength : desktopLength;
+  if (address.length <= length * 2) return address;
+
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
+};
+
+
+
   const [currentPage, setCurrentPage] = useState(1);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

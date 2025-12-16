@@ -50,12 +50,35 @@ export const TransactionExplorerPage: React.FC = () => {
     setExpandedValidator((prev) => (prev === index ? null : index));
   };
 
-  // Helper function to format addresses
-  const formatAddress = (address: string, length: number = 8): string => {
-    if (!address || address === "N/A") return address;
-    if (address.length <= length * 2) return address;
-    return `${address.slice(0, length)}...${address.slice(-length)}`;
-  };
+  const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 640px)"); // Tailwind sm
+    const listener = () => setIsMobile(media.matches);
+
+    listener(); // initial check
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
+
+  return isMobile;
+};
+
+const isMobile = useIsMobile();
+
+const formatAddress = (
+  address: string,
+  desktopLength = 50,
+  mobileLength = 8
+): string => {
+  if (!address || address === "N/A") return address;
+
+  const length = isMobile ? mobileLength : desktopLength;
+  if (address.length <= length * 2) return address;
+
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
+};
 
   // Transform data when rawData changes - same pattern as HomePage
   useEffect(() => {
@@ -237,7 +260,7 @@ export const TransactionExplorerPage: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Tooltip content={txData.id} position="top">
               <span className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer">
-                {formatAddress(txData.id, 8)}
+                {formatAddress(txData.id)}
               </span>
             </Tooltip>
             <CopyButton text={txData.id} size="sm" />
@@ -249,7 +272,7 @@ export const TransactionExplorerPage: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Tooltip content={txData.id} position="top">
               <span className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer">
-                {formatAddress(txData.id, 12)}
+                {formatAddress(txData.id)}
               </span>
             </Tooltip>
             <CopyButton text={txData.id} size="sm" />
@@ -322,7 +345,7 @@ export const TransactionExplorerPage: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Tooltip content={txData.id} position="top">
                       <p className="font-mono text-gray-900 dark:text-white cursor-pointer">
-                        {formatAddress(txData.id, 8)}
+                        {formatAddress(txData.id)}
                       </p>
                     </Tooltip>
                     <CopyButton text={txData.id} size="sm" />
@@ -363,7 +386,7 @@ export const TransactionExplorerPage: React.FC = () => {
                           navigate(`/did-explorer?did=${txData.from}`)
                         }
                       >
-                        {formatAddress(txData.from, 8)}
+                        {formatAddress(txData.from)}
                       </p>
                     </Tooltip>
                     <CopyButton text={txData.from} size="sm" />
@@ -379,7 +402,7 @@ export const TransactionExplorerPage: React.FC = () => {
                           navigate(`/did-explorer?did=${txData.to}`)
                         }
                       >
-                        {formatAddress(txData.to, 8)}
+                        {formatAddress(txData.to)}
                       </p>
                     </Tooltip>
                     <CopyButton text={txData.to} size="sm" />
@@ -391,7 +414,7 @@ export const TransactionExplorerPage: React.FC = () => {
                   </p>
                   <Tooltip content={txData.blockId} position="top">
                     <p className="font-medium text-gray-900 dark:text-white cursor-pointer">
-                      {formatAddress(txData.blockId, 8)}
+                      {formatAddress(txData.blockId)}
                     </p>
                   </Tooltip>
                 </div>
@@ -438,7 +461,7 @@ export const TransactionExplorerPage: React.FC = () => {
                       //   );
                       // }}
                     >
-                      {formatAddress(validator.validator, 6)}
+                      {formatAddress(validator.validator)}
                     </p>
                   <div
                     className="flex-shrink-0"
@@ -580,7 +603,7 @@ export const TransactionExplorerPage: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <Tooltip content={transfer.tokenId} position="top">
                         <div className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer truncate flex-1">
-                          {formatAddress(transfer.tokenId, 12)}
+                          {formatAddress(transfer.tokenId)}
                         </div>
                       </Tooltip>
                       <div className="flex-shrink-0">
@@ -595,7 +618,7 @@ export const TransactionExplorerPage: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                          
                             <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                              {formatAddress(transfer.from, 8)}
+                              {formatAddress(transfer.from)}
                             </p>
                          
                           <div className="flex-shrink-0">
@@ -610,7 +633,7 @@ export const TransactionExplorerPage: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                          
                             <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                              {formatAddress(transfer.to, 8)}
+                              {formatAddress(transfer.to)}
                             </p>
                           <div className="flex-shrink-0">
                             <CopyButton text={transfer.to} size="sm" />

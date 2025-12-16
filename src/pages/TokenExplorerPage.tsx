@@ -4,6 +4,9 @@ import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { useFormatAddress } from "@/hooks/useFormatAddress";
+
+
 import {
   ArrowLeft,
   Coins,
@@ -114,6 +117,7 @@ export const TokenExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tokenId = searchParams.get("token") || "";
+  const formatAddress = useFormatAddress(20, 8);
 
   // Use React Query hooks - same pattern as HomePage and other pages
   const { data: rawTokenData, isLoading: isLoadingToken, error: tokenError } = useTokenDetails(tokenId);
@@ -127,11 +131,6 @@ export const TokenExplorerPage: React.FC = () => {
   const error = tokenError || chainError;
 
   // Helper function to format long addresses
-  const formatAddress = (address: string, length: number = 8): string => {
-    if (!address || address === "N/A") return address;
-    if (address.length <= length * 2) return address;
-    return `${address.slice(0, length)}...${address.slice(-length)}`;
-  };
 
   // Store processed token data
   const tokenData : any  = rawTokenData;
@@ -237,7 +236,7 @@ export const TokenExplorerPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Tooltip content={tokenData.id} position="top">
               <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(tokenData.id, 12)}
+                {formatAddress(tokenData.id)}
               </span>
             </Tooltip>
             <div className="flex-shrink-0">
@@ -261,7 +260,7 @@ export const TokenExplorerPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Tooltip content={tokenData.id} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate">
-                      {formatAddress(tokenData.id, 8)}
+                      {formatAddress(tokenData.id)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -276,7 +275,7 @@ export const TokenExplorerPage: React.FC = () => {
                   <Tooltip content={tokenData.data.owner_did} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
                        onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
-                      {formatAddress(tokenData.data.owner_did, 8)}
+                      {formatAddress(tokenData.data.owner_did)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -324,7 +323,7 @@ export const TokenExplorerPage: React.FC = () => {
                   <Tooltip content={tokenData.data.creator_did} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
                        onClick={() => navigate(`/did-explorer?did=${tokenData.data.creator_did}`)}>
-                      {formatAddress(tokenData.data.creator_did, 8)}
+                      {formatAddress(tokenData.data.creator_did)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -339,7 +338,7 @@ export const TokenExplorerPage: React.FC = () => {
                   <Tooltip content={tokenData.data.owner_did} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
                        onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
-                      {formatAddress(tokenData.data.owner_did, 8)}
+                      {formatAddress(tokenData.data.owner_did)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -362,7 +361,7 @@ export const TokenExplorerPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Tooltip content={tokenData.data.block_id} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate">
-                      {formatAddress(tokenData.data.block_id, 8)}
+                      {formatAddress(tokenData.data.block_id)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -393,7 +392,7 @@ export const TokenExplorerPage: React.FC = () => {
                   <Tooltip content={tokenData.data.creator_did} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
                        onClick={() => navigate(`/did-explorer?did=${tokenData.data.creator_did}`)}>
-                      {formatAddress(tokenData.data.creator_did, 8)}
+                      {formatAddress(tokenData.data.creator_did)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -409,7 +408,7 @@ export const TokenExplorerPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Tooltip content={tokenData.data.txn_id} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate">
-                      {formatAddress(tokenData.data.txn_id, 8)}
+                      {formatAddress(tokenData.data.txn_id)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -428,7 +427,7 @@ export const TokenExplorerPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Tooltip content={tokenData.id} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate">
-                      {formatAddress(tokenData.id, 8)}
+                      {formatAddress(tokenData.id)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -443,7 +442,7 @@ export const TokenExplorerPage: React.FC = () => {
                   <Tooltip content={tokenData.data.owner_did} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
                        onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
-                      {formatAddress(tokenData.data.owner_did, 8)}
+                      {formatAddress(tokenData.data.owner_did)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -466,7 +465,7 @@ export const TokenExplorerPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Tooltip content={tokenData.data.txn_id} position="top">
                     <p className="font-mono text-gray-900 dark:text-white truncate">
-                      {formatAddress(tokenData.data.txn_id, 8)}
+                      {formatAddress(tokenData.data.txn_id)}
                     </p>
                   </Tooltip>
                   <div className="flex-shrink-0">
@@ -555,7 +554,7 @@ export const TokenExplorerPage: React.FC = () => {
                             <div className="flex items-center gap-2 min-w-0">
                               <Tooltip content={block.TCBlockHashKey} position="top">
                                 <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                  {formatAddress(block.TCBlockHashKey, 8)}
+                                  {formatAddress(block.TCBlockHashKey)}
                                 </span>
                               </Tooltip>
                               <div className="flex-shrink-0">
@@ -579,7 +578,7 @@ export const TokenExplorerPage: React.FC = () => {
                                         e.stopPropagation();
                                         navigate(`/did-explorer?did=${block.TCTokenOwnerKey}`);
                                       }}>
-                                  {formatAddress(block.TCTokenOwnerKey, 8)}
+                                  {formatAddress(block.TCTokenOwnerKey)}
                                 </span>
                               </Tooltip>
                               <div className="flex-shrink-0">
