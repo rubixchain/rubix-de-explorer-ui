@@ -9,7 +9,7 @@ export const HomePage: React.FC = () => {
       <div className="relative z-10 space-y-8 md:space-y-10 lg:space-y-12">
         {/* Hero Section */}
         <motion.div
-          className="text-center py-8 md:py-12 lg:py-16"
+          className="text-center py-8 md:py-4 lg:py-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -21,9 +21,7 @@ export const HomePage: React.FC = () => {
             </h1>
 
             {/* Description - Mobile: base, iPad: lg, Desktop: xl */}
-            <p className="text-base md:text-lg lg:text-xl text-secondary-600 max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto leading-relaxed">
-              Comprehensive blockchain explorer for the Rubix ecosystem. Explore transactions, tokens, DIDs, and network metrics with real-time insights.
-            </p>
+           
           </div>
         </motion.div>
       
