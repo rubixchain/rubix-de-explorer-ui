@@ -17,7 +17,7 @@ function App() {
       <ScrollToTop />
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-6 lg:py-2">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/did-explorer" element={<DIDExplorerPage />} />

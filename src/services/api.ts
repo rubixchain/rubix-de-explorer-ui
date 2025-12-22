@@ -474,7 +474,7 @@ async getMetrics(network?: string): Promise<{
       subNetTVL: kpiRes?.data?.subNetTVL || "0",
       tvL_RBT: kpiRes?.data?.tvL_RBT || "0",
     };
-
+    console.log("Fetched Metrics Data:", data);
     return {
       data,
       success: true,

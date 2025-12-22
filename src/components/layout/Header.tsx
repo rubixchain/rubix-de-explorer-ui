@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useSearch } from '@/hooks/useSearch';
+import { Button } from '../ui/Button';
 // import { Button } from '@/components/ui/Button';
 // import { NETWORK_CONFIG } from '@/constants';
 // Commented out unused imports - Check, ChevronDown, Button, NETWORK_CONFIG, motion, AnimatePresence
@@ -249,13 +250,12 @@ export const Header: React.FC = () => {
           {/* <Button
             variant="ghost"
             size="sm"
-            onClick={toggleNetworkModal}
-            className="flex px-3 lg:px-4 py-2 lg:py-2.5 rounded-md hover:bg-gray-100 items-center space-x-1.5 lg:space-x-2 border border-gray-200 flex-shrink-0"
+            onClick={()=> {navigate.bind('https://testnetexplorer.rubix.net')}}
+            className="flex px-3 lg:px-6 py-2 lg:py-4.5 rounded-md hover:bg-gray-100  space-x-1.5 lg:space-x-2 border border-gray-400 flex-shrink-0"
           >
             <span className="text-sm font-medium text-gray-700 capitalize whitespace-nowrap">
-              {state.selectedChain}
+              Explore Testnet
             </span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
           </Button> */}
         </div>
       </div>

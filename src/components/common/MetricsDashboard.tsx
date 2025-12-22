@@ -147,15 +147,9 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
 
   const currentMetrics = getMetricsData(metrics) || mockMetrics;
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
+const formatNumber = (num: number): string => {
+  return num.toLocaleString("en-US");
+};
 
   const formatCurrency = (num: number): string => {
     return new Intl.NumberFormat('en-US', {
@@ -275,7 +269,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
   if (error) {
     return (
       <div className={`${className}`}>
-        <Card className="text-center py-8">
+        <Card className="text-center py-1">
           <div className="text-red-500 mb-2">
             <Activity className="w-8 h-8 mx-auto" />
           </div>
