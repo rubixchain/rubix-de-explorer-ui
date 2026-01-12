@@ -54,7 +54,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   );
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const isSmallTitle =
-    title === "Circulating Supply" || title === "Smart Contracts";
+    title === "Circulating Supply" || title === "Smart Contracts" || title === "TVL";
 
   return (
     <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-[70px] !p-2 overflow-visible">
