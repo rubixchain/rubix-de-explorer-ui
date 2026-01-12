@@ -472,7 +472,8 @@ async getMetrics(network?: string): Promise<{
       rbtPrice: kpiRes?.data?.rbtPrice || "0",
       mainNetTVL: kpiRes?.data?.mainNetTVL || "0",
       subNetTVL: kpiRes?.data?.subNetTVL || "0",
-      tvL_RBT: kpiRes?.data?.tvL_RBT || "0",
+      tvL_RBT: kpiRes?.data?.tvL_RBT?.replace(' $Mn', '') || "0",
+      // tvL_RBT: kpiRes?.data?.tvL_RBT || "0",
     };
     console.log("Fetched Metrics Data:", data);
     return {
