@@ -1,15 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Card } from '@/components/ui/Card';
-import { TrendingUp, TrendingDown, Activity, Users, Shield, Coins, DollarSign, Clock, Circle, Square, Hexagon, Image, Info, BarChart3 } from 'lucide-react';
-import { NetworkMetrics } from '@/types';
-import { useMetrics } from '@/hooks/useMetrics';
+import React, { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/Card";
+import { createPortal } from "react-dom";
+
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Users,
+  Shield,
+  Coins,
+  DollarSign,
+  Clock,
+  Circle,
+  Square,
+  Hexagon,
+  Image,
+  Info,
+  BarChart3,
+} from "lucide-react";
+import { NetworkMetrics } from "@/types";
+import { useMetrics } from "@/hooks/useMetrics";
 
 interface MetricCardProps {
   title: string;
   value: string;
   change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
+  changeType?: "positive" | "negative" | "neutral";
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   loading?: boolean;
@@ -20,23 +37,32 @@ const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
   change,
-  changeType = 'neutral',
+  changeType = "neutral",
   icon: Icon,
   color,
   loading = false,
   tooltip,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
+  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">(
+    "top"
+  );
   const [tooltipCoords, setTooltipCoords] = useState({ x: 0, y: 0 });
   const iconRef = useRef<HTMLDivElement>(null);
+  const [tooltipAlign, setTooltipAlign] = useState<"left" | "center" | "right">(
+    "center"
+  );
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const isSmallTitle =
+    title === "Circulating Supply" || title === "Smart Contracts";
+
   return (
-    <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-[70px] !p-2 overflow-visible">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="p-0.5 md:p-0.5 lg:p-0.5"
+        className="px-2 py-0 h-full flex flex-col"
       >
         {loading ? (
           <div className="space-y-3">
@@ -49,16 +75,49 @@ const MetricCard: React.FC<MetricCardProps> = ({
         ) : (
           <>
             {/* Label with info icon */}
-            <div className="flex items-center space-x-2 mb-1 md:mb-1">
-              <span className="text-sm md:text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex items-start space-x-2 mb-0 leading-tight">
+              <span
+                className={`font-medium text-gray-700 dark:text-gray-300 ${
+                  isSmallTitle ? "text-xs" : "text-sm"
+                }`}
+              >
                 {title}
               </span>
               {tooltip && (
-                <div className="relative">
+                <div className="relative inline-flex self-start">
                   <div
                     ref={iconRef}
-                    className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center cursor-help hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded-full
+             flex items-center justify-center cursor-help
+             hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     onMouseEnter={() => {
+                      if (!iconRef.current) return;
+
+                      const rect = iconRef.current.getBoundingClientRect();
+                      const vw = window.innerWidth;
+                      const vh = window.innerHeight;
+
+                      const tooltipWidth = 260;
+                      const tooltipHeight = 80;
+
+                      // Vertical position (prefer bottom)
+                      const top =
+                        rect.bottom + tooltipHeight < vh
+                          ? rect.bottom + 8
+                          : rect.top - tooltipHeight - 8;
+
+                      // Horizontal position (clamp to viewport)
+                      let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+                      left = Math.max(8, Math.min(left, vw - tooltipWidth - 8));
+
+                      setTooltipStyle({
+                        position: "fixed",
+                        top,
+                        left,
+                        width: tooltipWidth,
+                        zIndex: 9999,
+                      });
+
                       setShowTooltip(true);
                     }}
                     onMouseLeave={() => setShowTooltip(false)}
@@ -67,43 +126,51 @@ const MetricCard: React.FC<MetricCardProps> = ({
                   </div>
 
                   {/* Tooltip */}
-                  {showTooltip && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg z-50"
-                      style={{
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        maxWidth: 'min(16rem, calc(100vw - 2rem))'
-                      }}
-                    >
-                      <div className="text-center break-words">
+                  {showTooltip &&
+                    createPortal(
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        style={tooltipStyle}
+                        className="p-3 text-xs rounded-lg shadow-lg
+                 bg-gray-900 dark:bg-gray-700 text-white"
+                      >
                         {tooltip}
-                      </div>
-                      {/* Tooltip arrow */}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
-                    </motion.div>
-                  )}
+                      </motion.div>,
+                      document.body
+                    )}
                 </div>
               )}
             </div>
 
             {/* Large value - Responsive sizing */}
-            <div className="text-xl md:text-2xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+            <div
+              className={`font-bold text-gray-900 dark:text-white ${
+                isSmallTitle ? "text-lg" : "text-xl"
+              }`}
+            >
               {value}
             </div>
 
             {/* Price change indicator */}
             {change && (
-              <div className={`flex items-center space-x-1 mt-2 ${
-                changeType === 'positive' ? 'text-green-600 dark:text-green-400' :
-                changeType === 'negative' ? 'text-red-600 dark:text-red-400' :
-                'text-gray-600 dark:text-gray-400'
-              }`}>
-                {changeType === 'positive' && <TrendingUp className="w-4 h-4" />}
-                {changeType === 'negative' && <TrendingDown className="w-4 h-4" />}
+              <div
+                className={`flex items-center space-x-1 mt-2 ${
+                  changeType === "positive"
+                    ? "text-green-600 dark:text-green-400"
+                    : changeType === "negative"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-gray-600 dark:text-gray-400"
+                }`}
+              >
+                {changeType === "positive" && (
+                  <TrendingUp className="w-4 h-4" />
+                )}
+                {changeType === "negative" && (
+                  <TrendingDown className="w-4 h-4" />
+                )}
                 <span className="text-sm font-medium">{change}</span>
               </div>
             )}
@@ -118,7 +185,9 @@ interface MetricsDashboardProps {
   className?: string;
 }
 
-export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = '' }) => {
+export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
+  className = "",
+}) => {
   const { data: metrics, isLoading, error } = useMetrics();
   const mockMetrics: NetworkMetrics = {
     totalTransactions: 1234567,
@@ -147,14 +216,14 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({ className = 
 
   const currentMetrics = getMetricsData(metrics) || mockMetrics;
 
-const formatNumber = (num: number): string => {
-  return num.toLocaleString("en-US");
-};
+  const formatNumber = (num: number): string => {
+    return num.toLocaleString("en-US");
+  };
 
   const formatCurrency = (num: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 1,
     }).format(num);
@@ -177,12 +246,14 @@ const formatNumber = (num: number): string => {
     return `${num.toFixed(1)}%`;
   };
 
-  const formatPriceChange = (change: number): { text: string; isPositive: boolean } => {
+  const formatPriceChange = (
+    change: number
+  ): { text: string; isPositive: boolean } => {
     const isPositive = change >= 0;
-    const sign = isPositive ? '+' : '';
+    const sign = isPositive ? "+" : "";
     return {
       text: `${sign}${change.toFixed(2)}%`,
-      isPositive
+      isPositive,
     };
   };
 
@@ -203,67 +274,72 @@ const formatNumber = (num: number): string => {
     //   tooltip: 'Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.',
     // },
 
-            {
-      title: 'RBT Price',
+    {
+      title: "RBT Price",
       value: formatNumber(currentMetrics.rbtPrice || 23400),
       icon: Image,
-      color: 'text-pink-600',
-      tooltip: 'Price of Single RBT token in USD.',
+      color: "text-pink-600",
+      tooltip: "Price of Single RBT token in USD.",
     },
 
-            {
-      title: 'Max Supply',
+    {
+      title: "Max Supply",
       value: formatNumber(currentMetrics.maxSupply || 23400),
       icon: Image,
-      color: 'text-pink-600',
-      tooltip: 'Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.',
+      color: "text-pink-600",
+      tooltip:
+        "Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.",
     },
-        {
-      title: 'Total Supply',
+    {
+      title: "Total Supply",
       value: formatNumber(currentMetrics.totalSupply || 23400),
       icon: Image,
-      color: 'text-pink-600',
-      tooltip: 'Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.',
+      color: "text-pink-600",
+      tooltip:
+        "Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.",
     },
 
     {
-      title: 'Total FT',
+      title: "Total FT",
       value: formatNumber(currentMetrics.totalFT || 45600),
       icon: Square,
-      color: 'text-tertiary-600',
-      tooltip: 'Fungible Tokens (FT) are digital assets that are interchangeable and identical, representing standardized units of value.',
+      color: "text-tertiary-600",
+      tooltip:
+        "Fungible Tokens (FT) are digital assets that are interchangeable and identical, representing standardized units of value.",
     },
-             {
-      title: 'Circulating Supply',
+    {
+      title: "Circulating Supply",
       value: formatNumber(currentMetrics.circulatingSupply || 23400),
       icon: Image,
-      color: 'text-pink-600',
-      tooltip: 'Circulating supply refers to the total amount of Rubix tokens that are currently available and circulating in the market.',
+      color: "text-pink-600",
+      tooltip:
+        "Circulating supply refers to the total amount of Rubix tokens that are currently available and circulating in the market.",
     },
     {
-      title: 'Smart Contracts',
+      title: "Smart Contracts",
       value: formatNumber(currentMetrics.totalSmartContracts || 890),
       icon: Hexagon,
-      color: 'text-primary-600',
-      tooltip: 'Smart contracts are self-executing programs deployed on the blockchain that automatically execute when predefined conditions are met.',
+      color: "text-primary-600",
+      tooltip:
+        "Smart contracts are self-executing programs deployed on the blockchain that automatically execute when predefined conditions are met.",
     },
     {
-      title: 'Total NFT',
+      title: "Total NFT",
       value: formatNumber(currentMetrics.totalNFT || 23400),
       icon: Image,
-      color: 'text-pink-600',
-      tooltip: 'Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.',
+      color: "text-pink-600",
+      tooltip:
+        "Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.",
     },
 
-      {
-      title: 'Total Value Locked (TVL)',
+    {
+      title: "TVL    ",
       value: formatNumber(currentMetrics.tvL_RBT || 1250000),
       icon: Circle,
-      color: 'text-primary-600',
-      tooltip: 'Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.',
+      color: "text-primary-600",
+      tooltip:
+        "Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.",
     },
- 
-
   ];
 
   if (error) {
@@ -287,7 +363,7 @@ const formatNumber = (num: number): string => {
   return (
     <div className={`${className} px-4 sm:px-6 lg:px-8`}>
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6"
+        className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-8 gap-3 md:gap-5 lg:gap-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -299,6 +375,8 @@ const formatNumber = (num: number): string => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
+            {/* <div className="w-full max-w-[180px]"> */}
+
             <MetricCard
               title={metric.title}
               value={metric.value}
@@ -309,6 +387,7 @@ const formatNumber = (num: number): string => {
               loading={isLoading}
               tooltip={metric.tooltip}
             />
+            {/* </div> */}
           </motion.div>
         ))}
       </motion.div>
