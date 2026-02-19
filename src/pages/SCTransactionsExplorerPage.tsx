@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { AutoTruncateAddress } from "@/components/ui/AutoTruncateAddress";
 import {
   ArrowLeft,
   CheckCircle,
@@ -25,13 +25,6 @@ export const SCTransactionExplorerPage: React.FC = () => {
 
   const [txData, setTxData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"details">("details");
-
-  // Helper function to format long addresses
-  const formatAddress = (address: string, length: number = 8): string => {
-    if (!address || address === "N/A") return address;
-    if (address.length <= length * 2) return address;
-    return `${address.slice(0, length)}...${address.slice(-length)}`;
-  };
 
   // Transform data when rawData changes - same pattern as other pages
   useEffect(() => {
@@ -163,12 +156,8 @@ export const SCTransactionExplorerPage: React.FC = () => {
         </h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           <span className="mb-2 sm:mb-0">Details for Smart contract:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(txData.id, 12)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <AutoTruncateAddress address={txData.id} className="font-mono text-primary-600 dark:text-primary-400" />
             <div className="flex-shrink-0">
               <CopyButton text={txData.id} size="sm" />
             </div>
@@ -214,11 +203,7 @@ export const SCTransactionExplorerPage: React.FC = () => {
                     Transaction Hash:
                   </p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.id} position="top">
-                      <p className="font-mono text-gray-900 dark:text-white truncate">
-                        {formatAddress(txData.id, 8)}
-                      </p>
-                    </Tooltip>
+                    <AutoTruncateAddress address={txData.id} className="font-mono text-gray-900 dark:text-white" />
                     {txData.id !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.id} size="sm" />
@@ -231,11 +216,7 @@ export const SCTransactionExplorerPage: React.FC = () => {
                     Contract ID
                   </p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.contract_id} position="top">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {formatAddress(txData.contract_id, 8)}
-                      </p>
-                    </Tooltip>
+                    <AutoTruncateAddress address={txData.contract_id} className="font-medium text-gray-900 dark:text-white" />
                     {txData.contract_id !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.contract_id} size="sm" />
@@ -251,13 +232,8 @@ export const SCTransactionExplorerPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-2">Executor :</p>
-                  <div className="flex items-center gap-2">
-                    <Tooltip content={txData.executor_did} position="top">
-                      <p className={`font-mono text-primary-600 dark:text-primary-400 truncate ${txData.executor_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
-                         onClick={() => txData.executor_did !== 'N/A' && navigate(`/did-explorer?did=${txData.executor_did}`)}>
-                        {formatAddress(txData.executor_did, 8)}
-                      </p>
-                    </Tooltip>
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => txData.executor_did !== 'N/A' && navigate(`/did-explorer?did=${txData.executor_did}`)}>
+                    <AutoTruncateAddress address={txData.executor_did} className={`font-mono text-primary-600 dark:text-primary-400 ${txData.executor_did !== 'N/A' ? 'hover:text-primary-700' : ''}`} />
                     {txData.executor_did !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.executor_did} size="sm" />
@@ -267,13 +243,8 @@ export const SCTransactionExplorerPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-2">Deployer :</p>
-                  <div className="flex items-center gap-2">
-                    <Tooltip content={txData.owner_did} position="top">
-                      <p className={`font-mono text-primary-600 dark:text-primary-400 truncate ${txData.owner_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
-                         onClick={() => txData.owner_did !== 'N/A' && navigate(`/did-explorer?did=${txData.owner_did}`)}>
-                        {formatAddress(txData.owner_did, 8)}
-                      </p>
-                    </Tooltip>
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => txData.owner_did !== 'N/A' && navigate(`/did-explorer?did=${txData.owner_did}`)}>
+                    <AutoTruncateAddress address={txData.owner_did} className={`font-mono text-primary-600 dark:text-primary-400 ${txData.owner_did !== 'N/A' ? 'hover:text-primary-700' : ''}`} />
                     {txData.owner_did !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.owner_did} size="sm" />

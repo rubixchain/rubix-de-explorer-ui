@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { AutoTruncateAddress } from "@/components/ui/AutoTruncateAddress";
 import { TabSwitcher, TabType } from "./TabSwitcher";
 import { TransactionsGraph } from "@/components/charts/TransactionsGraph";
 import { RecentActivityTable } from "./RecentActivityTable";
@@ -308,9 +309,10 @@ const HoldersListView: React.FC<{
         {/* Address Column - Compact on mobile, flexible on tablet/desktop */}
         <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
           <div className="flex items-center gap-1.5 w-full min-w-0">
-              <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">
-                {formatAddress(holder.owner_did, 8)}
-              </div>
+            <AutoTruncateAddress
+              address={holder.owner_did}
+              className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            />
             <div className="flex-shrink-0">
               <CopyButton text={holder.owner_did} size="sm" />
             </div>

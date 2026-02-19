@@ -161,7 +161,7 @@ export const Header: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQueryState(e.target.value)}
                   placeholder="Search DID, tokens, transactions..."
-                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-l-full text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                  className="w-full h-10 pl-10 pr-10 bg-gray-50 border border-gray-200 rounded-l-full text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                 />
                 {isLoading ? (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -185,7 +185,7 @@ export const Header: React.FC = () => {
                 type="button"
                 onClick={handleSearchButtonClick}
                 disabled={isLoading || !searchQuery.trim()}
-                className="px-4 py-2.5 bg-primary-600 text-white rounded-r-full hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center text-sm font-medium"
+                className="px-4 h-10 bg-primary-600 text-white rounded-r-full hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center text-sm font-medium"
               >
                 Search
               </button>
@@ -218,7 +218,7 @@ export const Header: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQueryState(e.target.value)}
                   placeholder="Search DID, tokens, or transactions..."
-                  className="w-full pl-9 lg:pl-11 pr-10 py-2 lg:py-2.5 bg-gray-50 border border-gray-200 rounded-l-full text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                  className="w-full h-10 lg:h-11 pl-9 lg:pl-11 pr-10 bg-gray-50 border border-gray-200 rounded-l-full text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                 />
                 {isLoading ? (
                   <div className="absolute right-3 lg:right-4 top-1/2 transform -translate-y-1/2">
@@ -238,7 +238,7 @@ export const Header: React.FC = () => {
                 type="button"
                 onClick={handleSearchButtonClick}
                 disabled={isLoading || !searchQuery.trim()}
-                className="px-4 lg:px-6 py-2 lg:py-2.5 bg-primary-600 text-white rounded-r-full hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center text-sm font-medium whitespace-nowrap"
+                className="px-4 lg:px-6 h-10 lg:h-11 bg-primary-600 text-white rounded-r-full hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center text-sm font-medium whitespace-nowrap"
               >
                 Search
               </button>

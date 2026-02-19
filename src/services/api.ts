@@ -274,7 +274,7 @@ class ApiClient {
             value: `${Number(txn.amount || 0).toLocaleString("en-US", {
               minimumFractionDigits: 3,
               maximumFractionDigits: 3,
-            })} RBT`,
+            })} ${txn.asset_type || "RBT"}`,
             timestamp: formatTimeAgo(txn.txn_time),
             status: txn.status || "confirmed",
           };

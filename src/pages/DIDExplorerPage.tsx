@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { AutoTruncateAddress } from "@/components/ui/AutoTruncateAddress";
 import { Info, ArrowLeft, Coins } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDIDInfo, useFTHoldings } from "@/hooks/useDIDs";
@@ -17,7 +17,6 @@ export const DIDExplorerPage: React.FC = () => {
     "holdings"
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const itemsPerPage = 5;
 
   // Use React Query hooks - same pattern as HomePage and TransactionExplorerPage
@@ -30,13 +29,6 @@ export const DIDExplorerPage: React.FC = () => {
   ) as any ;
 
   const loading = activeTab === "holdings" ? isLoadingDID : isLoadingFT ; 
-
-  // Helper function to format long addresses
-  const formatAddress = (address: string, length: number = 8): string => {
-    if (!address || address === "N/A") return address;
-    if (address.length <= length * 2) return address;
-    return `${address.slice(0, length)}...${address.slice(-length)}`;
-  };
 
   // Use React Query states - same pattern as other pages
   if (loading) {
@@ -105,12 +97,11 @@ export const DIDExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold mb-2">DID Explorer</h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm text-gray-600">
           <span className="mb-2 sm:mb-0">Details for DID:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={didData.did.did} position="top">
-              <span className="font-mono text-primary-600 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(didData.did.did, 12)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <AutoTruncateAddress
+              address={didData.did.did}
+              className="font-mono text-primary-600"
+            />
             <div className="flex-shrink-0">
               <CopyButton text={didData.did.did} size="sm" />
             </div>
@@ -196,15 +187,11 @@ export const DIDExplorerPage: React.FC = () => {
                   key={token.rbt_id}
                   className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 gap-3"
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Tooltip content={token.rbt_id} position="top">
-                      <p
-                        className="text-sm font-medium truncate cursor-pointer hover:text-primary-600"
-                        onClick={() => navigate(`/token-explorer?token=${token.rbt_id}`)}
-                      >
-                        {formatAddress(token.rbt_id, 12)}
-                      </p>
-                    </Tooltip>
+                  <div className="flex items-center gap-2 min-w-0 flex-1" onClick={() => navigate(`/token-explorer?token=${token.rbt_id}`)}>
+                    <AutoTruncateAddress
+                      address={token.rbt_id}
+                      className="text-sm font-medium cursor-pointer hover:text-primary-600"
+                    />
                     <div className="flex-shrink-0">
                       <CopyButton text={token.rbt_id} size="sm" />
                     </div>
@@ -243,15 +230,11 @@ export const DIDExplorerPage: React.FC = () => {
       >
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium mb-2">{ft.ft_name || "Unnamed Token"}</p>
-          <div className="flex items-center gap-2">
-            <Tooltip content={ft.ft_id} position="top">
-              <p
-                className="text-xs text-gray-500 truncate cursor-pointer hover:text-primary-600"
-                onClick={() => navigate(`/token-explorer?token=${ft.ft_id}`)}
-              >
-                {formatAddress(ft.ft_id, 12)}
-              </p>
-            </Tooltip>
+          <div className="flex items-center gap-2" onClick={() => navigate(`/token-explorer?token=${ft.ft_id}`)}>
+            <AutoTruncateAddress
+              address={ft.ft_id}
+              className="text-xs text-gray-500 cursor-pointer hover:text-primary-600"
+            />
             <div className="flex-shrink-0">
               <CopyButton text={ft.ft_id} size="sm" />
             </div>

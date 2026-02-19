@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
+import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { AutoTruncateAddress } from "@/components/ui/AutoTruncateAddress";
 import {
   ArrowLeft,
   CheckCircle,
@@ -33,6 +34,8 @@ export const TransactionExplorerPage: React.FC = () => {
   const [expandedValidator, setExpandedValidator] = useState<number | null>(
     null
   );
+  const [tokenPage, setTokenPage] = useState(1);
+  const tokensPerPage = 5;
 
   // Generate dummy token data for each validator
   const generateDummyTokens = (validatorIndex: number) => {
@@ -48,13 +51,6 @@ export const TransactionExplorerPage: React.FC = () => {
   const toggleValidator = (index: number) => {
     // If clicking the same validator, collapse it. Otherwise, open the new one and close others
     setExpandedValidator((prev) => (prev === index ? null : index));
-  };
-
-  // Helper function to format addresses
-  const formatAddress = (address: string, length: number = 8): string => {
-    if (!address || address === "N/A") return address;
-    if (address.length <= length * 2) return address;
-    return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
   // Transform data when rawData changes - same pattern as HomePage
@@ -87,8 +83,11 @@ export const TransactionExplorerPage: React.FC = () => {
       id: data.txn_id || "N/A",
       status: "confirmed",
       confirmations: 120,
-      type: mapTxnType(data.txn_type || ""),
-      value: data.amount ? `${data.amount} RBT` : "N/A",
+      asset_type: data.asset_type || "RBT",
+      type: data.asset_type === "FT" ? "FT Transfer" : data.asset_type === "RBT" ? "RBT Transfer" : mapTxnType(data.txn_type || ""),
+      value: data.asset_type === "FT"
+        ? (data.token_count ? `${data.token_count} FT` : "N/A")
+        : (data.amount ? `${data.amount} RBT` : "N/A"),
       valueUSD: "N/A",
       timestamp: data.epoch
         ? new Date(data.epoch * 1000).toUTCString()
@@ -212,7 +211,7 @@ export const TransactionExplorerPage: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-6 sm:space-y-8 p-4 sm:p-6"
+      className="space-y-6 sm:space-y-8 p-4 sm:p-6 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -229,30 +228,16 @@ export const TransactionExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
           Transaction Explorer
         </h1>
-        {/* Mobile Layout: Separate rows */}
-        <div className="block sm:hidden">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Details for Transaction:
-          </div>
-          <div className="flex items-center space-x-2">
-            <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer">
-                {formatAddress(txData.id, 8)}
-              </span>
-            </Tooltip>
-            <CopyButton text={txData.id} size="sm" />
-          </div>
-        </div>
-        {/* Desktop Layout: Same row */}
-        <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          <span>Details for Transaction:</span>
-          <div className="flex items-center space-x-2">
-            <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer">
-                {formatAddress(txData.id, 12)}
-              </span>
-            </Tooltip>
-            <CopyButton text={txData.id} size="sm" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          <span className="mb-2 sm:mb-0">Details for Transaction:</span>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <AutoTruncateAddress
+              address={txData.id}
+              className="font-mono text-primary-600 dark:text-primary-400"
+            />
+            <div className="flex-shrink-0">
+              <CopyButton text={txData.id} size="sm" />
+            </div>
           </div>
         </div>
       </div>
@@ -315,17 +300,13 @@ export const TransactionExplorerPage: React.FC = () => {
           {activeTab === "details" && (
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                <div>
+                <div className="min-w-0">
                   <p className="text-gray-500 dark:text-gray-400">
                     Transaction Hash:
                   </p>
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={txData.id} position="top">
-                      <p className="font-mono text-gray-900 dark:text-white cursor-pointer">
-                        {formatAddress(txData.id, 8)}
-                      </p>
-                    </Tooltip>
-                    <CopyButton text={txData.id} size="sm" />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AutoTruncateAddress address={txData.id} className="font-mono text-gray-900 dark:text-white" />
+                    <div className="flex-shrink-0"><CopyButton text={txData.id} size="sm" /></div>
                   </div>
                 </div>
                 <div>
@@ -353,47 +334,25 @@ export const TransactionExplorerPage: React.FC = () => {
                     {txData.timestamp}
                   </p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-gray-500 dark:text-gray-400">From:</p>
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={txData.from} position="top">
-                      <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer"
-                        onClick={() =>
-                          navigate(`/did-explorer?did=${txData.from}`)
-                        }
-                      >
-                        {formatAddress(txData.from, 8)}
-                      </p>
-                    </Tooltip>
-                    <CopyButton text={txData.from} size="sm" />
+                  <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={() => navigate(`/did-explorer?did=${txData.from}`)}>
+                    <AutoTruncateAddress address={txData.from} className="font-mono text-primary-600 dark:text-primary-400 hover:text-primary-700" />
+                    <div className="flex-shrink-0"><CopyButton text={txData.from} size="sm" /></div>
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-gray-500 dark:text-gray-400">To:</p>
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={txData.to} position="top">
-                      <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer"
-                        onClick={() =>
-                          navigate(`/did-explorer?did=${txData.to}`)
-                        }
-                      >
-                        {formatAddress(txData.to, 8)}
-                      </p>
-                    </Tooltip>
-                    <CopyButton text={txData.to} size="sm" />
+                  <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={() => navigate(`/did-explorer?did=${txData.to}`)}>
+                    <AutoTruncateAddress address={txData.to} className="font-mono text-primary-600 dark:text-primary-400 hover:text-primary-700" />
+                    <div className="flex-shrink-0"><CopyButton text={txData.to} size="sm" /></div>
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-gray-500 dark:text-gray-400">
                     Block Hash:
                   </p>
-                  <Tooltip content={txData.blockId} position="top">
-                    <p className="font-medium text-gray-900 dark:text-white cursor-pointer">
-                      {formatAddress(txData.blockId, 8)}
-                    </p>
-                  </Tooltip>
+                  <AutoTruncateAddress address={txData.blockId} className="font-medium text-gray-900 dark:text-white" />
                 </div>
               </div>
             </div>
@@ -429,17 +388,13 @@ export const TransactionExplorerPage: React.FC = () => {
                     Validator Address:
                   </p>
                  
-                    <p
-                      className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer truncate flex-1"
-                      // onClick={(e) => {
-                      //   e.stopPropagation();
-                      //   navigate(
-                      //     `/did-explorer?did=${validator.validator}`
-                      //   );
-                      // }}
-                    >
-                      {formatAddress(validator.validator, 6)}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <AutoTruncateAddress
+                        address={validator.validator}
+                        className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                        fallbackLength={6}
+                      />
+                    </div>
                   <div
                     className="flex-shrink-0"
                     onClick={(e) => e.stopPropagation()}
@@ -475,18 +430,15 @@ export const TransactionExplorerPage: React.FC = () => {
                       {pledgedTokens.map((pledge: any, tokenIndex: number) => (
                         <div
                           key={pledge.token}
-                          className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                          className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 min-w-0"
                         >
-                     
-                    
-                            <span 
-                              className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 flex-1"
-                            //   onClick={() => 
-                            //     navigate(`/token-explorer?token=${pledge.token}`)
-                            // }
-                            >
-                              {pledge.token}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <AutoTruncateAddress
+                                address={pledge.token}
+                                className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400"
+                                fallbackLength={8}
+                              />
+                            </div>
                           {/* <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                               Amount: {pledge.pledgeAmount}
@@ -536,7 +488,9 @@ export const TransactionExplorerPage: React.FC = () => {
           )}
           {/* Card View for All Resolutions */}
           <div className="space-y-3">
-            {tokenTransfers.map((transfer: any, index: number) => (
+            {tokenTransfers
+              .slice((tokenPage - 1) * tokensPerPage, tokenPage * tokensPerPage)
+              .map((transfer: any, index: number) => (
               <motion.div
                 key={transfer.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -578,40 +532,25 @@ export const TransactionExplorerPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Tooltip content={transfer.tokenId} position="top">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer truncate flex-1">
-                          {formatAddress(transfer.tokenId, 12)}
-                        </div>
-                      </Tooltip>
+                      <AutoTruncateAddress address={transfer.tokenId} className="text-sm font-medium text-gray-900 dark:text-white" />
                       <div className="flex-shrink-0">
                         <CopyButton text={transfer.tokenId} size="sm" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400 mb-1">
-                          From:
-                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-1">From:</p>
                         <div className="flex items-center gap-1.5">
-                         
-                            <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                              {formatAddress(transfer.from, 8)}
-                            </p>
-                         
+                          <AutoTruncateAddress address={transfer.from} className="font-mono text-gray-900 dark:text-white" />
                           <div className="flex-shrink-0">
                             <CopyButton text={transfer.from} size="sm" />
                           </div>
                         </div>
                       </div>
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400 mb-1">
-                          To:
-                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-1">To:</p>
                         <div className="flex items-center gap-1.5">
-                         
-                            <p className="font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                              {formatAddress(transfer.to, 8)}
-                            </p>
+                          <AutoTruncateAddress address={transfer.to} className="font-mono text-gray-900 dark:text-white" />
                           <div className="flex-shrink-0">
                             <CopyButton text={transfer.to} size="sm" />
                           </div>
@@ -644,6 +583,16 @@ export const TransactionExplorerPage: React.FC = () => {
               </motion.div>
             ))}
           </div>
+          {tokenTransfers.length > tokensPerPage && (
+            <Pagination
+              currentPage={tokenPage}
+              totalPages={Math.ceil(tokenTransfers.length / tokensPerPage)}
+              onPageChange={setTokenPage}
+              totalItems={tokenTransfers.length}
+              itemsPerPage={tokensPerPage}
+              className="mt-4"
+            />
+          )}
         </div>
       </Card>
     </motion.div>
