@@ -36,15 +36,22 @@ export const useTokenDetails = (tokenId: string) => {
     queryKey: ['tokenDetails', state.selectedChain, tokenId],
     queryFn: async () => {
       const baseUrl = getBaseUrlForNetwork(state.selectedChain);
-      const response = await fetch(`${baseUrl}/search?id=${tokenId}`);
+      const url = `${baseUrl}/search?id=${tokenId}`;
+      console.log('[useTokenDetails] Fetching:', url);
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch token details');
+        const text = await response.text().catch(() => '');
+        console.error('[useTokenDetails] Error:', response.status, text);
+        throw new Error(`Failed to fetch token details: ${response.status} ${text}`);
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('[useTokenDetails] Response:', data);
+      return data;
     },
     enabled: !!tokenId, // Only run if tokenId exists
+    retry: false, // Don't retry on failure
     staleTime: 0,
     // cacheTime: 0,
     refetchOnMount: 'always',
@@ -70,6 +77,7 @@ export const useTokenChain = (tokenId: string) => {
       return data.TokenChainData;
     },
     enabled: !!tokenId, // Only run if tokenId exists
+    retry: false, // Don't retry on failure - show error immediately so token details are still visible
     staleTime: 0,
     // cacheTime: 0,
     refetchOnMount: 'always',

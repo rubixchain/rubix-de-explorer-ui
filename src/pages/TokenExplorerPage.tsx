@@ -123,8 +123,8 @@ export const TokenExplorerPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const loading = isLoadingToken || isLoadingChain;
-  const error = tokenError || chainError;
+  const loading = isLoadingToken;
+  const error = tokenError;
 
   // Store processed token data
   const tokenData : any  = rawTokenData;
@@ -189,8 +189,16 @@ export const TokenExplorerPage: React.FC = () => {
             Token Not Found
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error ? "An error occurred while fetching token data" : "The requested token could not be found."}
+            {error ? `Error: ${(error as any).message || "An error occurred while fetching token data"}` : "The requested token could not be found."}
           </p>
+          {/* Debug info - remove after fixing */}
+          <div className="text-left bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-6 text-xs font-mono max-w-lg mx-auto">
+            <p>tokenId: "{tokenId}"</p>
+            <p>isLoadingToken: {String(isLoadingToken)}</p>
+            <p>tokenError: {tokenError ? (tokenError as any).message : "null"}</p>
+            <p>tokenData: {tokenData ? JSON.stringify(tokenData).slice(0, 200) : "undefined"}</p>
+            <p>chainError: {chainError ? (chainError as any).message : "null"}</p>
+          </div>
           <button
             onClick={() => navigate("/")}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -248,38 +256,61 @@ export const TokenExplorerPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           {tokenData.type === "RBT" && (
             <>
-              <div>
-                <p className="text-gray-500 dark:text-gray-400 mb-2">RBT ID:</p>
+              <div className="min-w-0">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Token ID:</p>
                 <div className="flex items-center gap-2">
-                  <AutoTruncateAddress address={tokenData.id} className="font-mono text-gray-900 dark:text-white" />
+                  <AutoTruncateAddress address={tokenData.data?.token_id || tokenData.id} className="font-mono text-gray-900 dark:text-white" />
                   <div className="flex-shrink-0">
-                    <CopyButton text={tokenData.id!} size="sm" />
+                    <CopyButton text={tokenData.data?.token_id || tokenData.id} size="sm" />
                   </div>
                 </div>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/did-explorer?did=${tokenData.data.owner_did}`)}>
-                  <AutoTruncateAddress address={tokenData.data.owner_did} className="font-mono text-gray-900 dark:text-white hover:text-primary-600" />
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/did-explorer?did=${tokenData.data?.owner_did}`)}>
+                  <AutoTruncateAddress address={tokenData.data?.owner_did || "N/A"} className="font-mono text-gray-900 dark:text-white hover:text-primary-600" />
                   <div className="flex-shrink-0">
-                    <CopyButton text={tokenData.data.owner_did!} size="sm" />
+                    <CopyButton text={tokenData.data?.owner_did || ""} size="sm" />
                   </div>
+                </div>
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Block Hash:</p>
+                <div className="flex items-center gap-2">
+                  <AutoTruncateAddress address={tokenData.data?.block_hash || "N/A"} className="font-mono text-gray-900 dark:text-white" />
+                  {tokenData.data?.block_hash && (
+                    <div className="flex-shrink-0">
+                      <CopyButton text={tokenData.data.block_hash} size="sm" />
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Block Height:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.data.block_height}
+                  {tokenData.data?.block_height || "N/A"}
                 </p>
               </div>
 
               <div>
-                <p className="text-gray-500 dark:text-gray-400"> Amount </p>
+                <p className="text-gray-500 dark:text-gray-400">Token Value:</p>
                 <p className="font-mono text-gray-900 dark:text-white">
-                  {tokenData.data.token_value} RBT
+                  {tokenData.data?.token_value != null ? `${tokenData.data.token_value} RBT` : "N/A"}
                 </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Status:</p>
+                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                  tokenData.data?.token_status === 1
+                    ? "bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200"
+                    : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                }`}>
+                  {tokenData.data?.token_status === 1 ? "Active" : tokenData.data?.token_status === 0 ? "Inactive" : "Unknown"}
+                </span>
               </div>
             </>
           )}
@@ -423,13 +454,33 @@ export const TokenExplorerPage: React.FC = () => {
         </div>
       </Card>
 
-      {tokenChainData && tokenChainData.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold text-heading dark:text-white mb-6 flex items-center space-x-2">
-            <Activity className="w-5 h-5" />
-            <span>Token Chain History</span>
-          </h3>
+      {/* Token Chain Section */}
+      <Card className="p-6">
+        <h3 className="text-xl font-semibold text-heading dark:text-white mb-6 flex items-center space-x-2">
+          <Activity className="w-5 h-5" />
+          <span>Token Chain History</span>
+        </h3>
 
+        {isLoadingChain && (
+          <div className="animate-pulse space-y-3">
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        )}
+
+        {!isLoadingChain && chainError && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Unable to load token chain history.
+          </p>
+        )}
+
+        {!isLoadingChain && !chainError && (!tokenChainData || tokenChainData.length === 0) && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No token chain history found.
+          </p>
+        )}
+
+        {!isLoadingChain && !chainError && tokenChainData && tokenChainData.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -450,32 +501,29 @@ export const TokenExplorerPage: React.FC = () => {
                     currentPage * itemsPerPage
                   )
                   .map((block: any, index: number) => {
-                    // Determine if this is a genesis block or transaction block
                     const isGenesisBlock =
-                      block.TCGenesisBlockKey &&
-                      Object.keys(block.TCGenesisBlockKey).length > 0;
-                    const hasTransInfo = block.TCTransInfoKey;
-                    const hasEpoch = block.TCEpoch;
+                      block.genesisBlock &&
+                      Object.keys(block.genesisBlock).length > 0;
 
                     return (
                       <motion.div
-                        key={block.TCBlockHashKey || index}
+                        key={block.blockHash || index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         onClick={() => {
-                          const transType = block.TCTransTypeKey;
+                          const transType = block.blockType;
                           if (transType === "02" || transType === 2) {
                             navigate(
-                              `/transaction-explorer?tx=${block.TCTransInfoKey.TITIDKey}`
+                              `/transaction-explorer?tx=${block.transInfo?.txnID}`
                             );
-                          } else if (transType === "08" || transType === 8 || transType === 13 || transType === "13" ) {
+                          } else if (transType === "08" || transType === 8 || transType === 13 || transType === "13") {
                             navigate(
-                              `/burnt-transaction-explorer?tx=${block.TCBlockHashKey}`
+                              `/burnt-transaction-explorer?tx=${block.blockHash}`
                             );
                           } else if (transType === "09" || transType === 9 || transType === "10" || transType === 10) {
                             navigate(
-                              `/sc-transaction-explorer?tx=${block.TCBlockHashKey}`
+                              `/sc-transaction-explorer?tx=${block.blockHash}`
                             );
                           }
                         }}
@@ -488,9 +536,9 @@ export const TokenExplorerPage: React.FC = () => {
                               Block Hash
                             </p>
                             <div className="flex items-center gap-2 min-w-0">
-                              <AutoTruncateAddress address={block.TCBlockHashKey} className="font-mono text-sm text-gray-900 dark:text-white" />
+                              <AutoTruncateAddress address={block.blockHash || "N/A"} className="font-mono text-sm text-gray-900 dark:text-white" />
                               <div className="flex-shrink-0">
-                                <CopyButton text={block.TCBlockHashKey} size="sm" />
+                                <CopyButton text={block.blockHash || ""} size="sm" />
                               </div>
                             </div>
                           </div>
@@ -500,21 +548,21 @@ export const TokenExplorerPage: React.FC = () => {
                             <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
                               Owner DID
                             </p>
-                            <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.TCTokenOwnerKey}`); }}>
-                              <AutoTruncateAddress address={block.TCTokenOwnerKey} className="font-mono text-sm text-gray-900 dark:text-white hover:text-primary-600" />
+                            <div className="flex items-center gap-2 min-w-0 cursor-pointer" onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.tokenOwner}`); }}>
+                              <AutoTruncateAddress address={block.tokenOwner || "N/A"} className="font-mono text-sm text-gray-900 dark:text-white hover:text-primary-600" />
                               <div className="flex-shrink-0">
-                                <CopyButton text={block.TCTokenOwnerKey} size="sm" />
+                                <CopyButton text={block.tokenOwner || ""} size="sm" />
                               </div>
                             </div>
                           </div>
 
-                                <div>
+                          <div>
                             <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
                               Block Type
-                             </p>
+                            </p>
                             <div className="flex items-center space-x-2">
                               <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                {getTransactionTypeLabel(block.TCTransTypeKey)}
+                                {getTransactionTypeLabel(block.blockType)}
                               </span>
                             </div>
                           </div>
@@ -597,8 +645,8 @@ export const TokenExplorerPage: React.FC = () => {
               )}
             </div>
           </motion.div>
-        </Card>
-      )}
+        )}
+      </Card>
     </motion.div>
   );
 };
