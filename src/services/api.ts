@@ -271,10 +271,12 @@ class ApiClient {
               : "Unknown",
             from: txn.sender_did || "N/A",
             to: txn.receiver_did || "N/A",
-            value: `${Number(txn.amount || 0).toLocaleString("en-US", {
-              minimumFractionDigits: 3,
-              maximumFractionDigits: 3,
-            })} ${txn.asset_type || "RBT"}`,
+            value: txn.asset_type === "FT"
+              ? `${txn.token_count || 0} FT`
+              : `${Number(txn.amount || 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 3,
+                  maximumFractionDigits: 3,
+                })} RBT`,
             timestamp: formatTimeAgo(txn.txn_time),
             status: txn.status || "confirmed",
           };

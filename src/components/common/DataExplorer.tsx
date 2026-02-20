@@ -279,7 +279,7 @@ const HoldersListView: React.FC<{
             <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-6">
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
-                <div className="min-w-[180px] md:flex-1 md:min-w-[300px]">Address</div>
+                <div className="flex-1 min-w-0">Address</div>
                 <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 text-right">Balance</div>
               </div>
             </div>
@@ -307,12 +307,23 @@ const HoldersListView: React.FC<{
         </div>
 
         {/* Address Column - Compact on mobile, flexible on tablet/desktop */}
-        <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
-          <div className="flex items-center gap-1.5 w-full min-w-0">
-            <AutoTruncateAddress
-              address={holder.owner_did}
-              className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-            />
+        <div className="flex-1 min-w-0 flex items-center overflow-hidden">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {/* Mobile: truncate address */}
+            <div className="md:hidden min-w-0">
+              <AutoTruncateAddress
+                address={holder.owner_did}
+                className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              />
+            </div>
+            {/* Desktop: show full address */}
+            <div className="hidden md:inline-flex md:items-center md:min-w-0">
+              <Tooltip content={holder.owner_did} position="top">
+                <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors break-all">
+                  {holder.owner_did}
+                </span>
+              </Tooltip>
+            </div>
             <div className="flex-shrink-0">
               <CopyButton text={holder.owner_did} size="sm" />
             </div>
@@ -386,9 +397,9 @@ const TokensListView: React.FC<{
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
-                <div className="flex-1 min-w-[200px]">Token</div>
-                <div className="w-24 md:w-32 lg:w-40 flex-shrink-0">Amount in RBT</div>
-                <div className="flex-1 min-w-[160px]">Owner</div>
+                <div className="w-[160px] md:w-[200px] flex-shrink-0">Token</div>
+                <div className="flex-1 min-w-0">Owner</div>
+                <div className="w-20 md:w-24 flex-shrink-0 text-right">Amount</div>
               </div>
             </div>
 
@@ -412,8 +423,8 @@ const TokensListView: React.FC<{
                     </div>
                   </div>
 
-                  {/* Token Column - Flexible */}
-                  <div className="flex-1 min-w-[200px] flex items-center">
+                  {/* Token Column - Fixed width */}
+                  <div className="w-[160px] md:w-[200px] flex-shrink-0 flex items-center">
                     <div className="flex items-center gap-1.5 w-full min-w-0">
                       <Tooltip content={token.token_id} position="top">
                         <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">
@@ -426,25 +437,35 @@ const TokensListView: React.FC<{
                     </div>
                   </div>
 
-                  {/* Amount Column */}
-                  <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 flex items-center">
-                    <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
-                      {token.token_value} RBT
-                    </span>
-                  </div>
-
                   {/* Owner Column - Flexible */}
-                  <div className="flex-1 min-w-[160px] flex items-center">
-                    <div className="flex items-center gap-1.5 w-full min-w-0">
-                      <Tooltip content={token.owner_did} position="top">
-                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">
-                          {formatAddress(token.owner_did, 8)}
-                        </span>
-                      </Tooltip>
+                  <div className="flex-1 min-w-0 flex items-center overflow-hidden">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {/* Mobile: truncate */}
+                      <div className="md:hidden min-w-0">
+                        <AutoTruncateAddress
+                          address={token.owner_did}
+                          className="text-sm font-mono text-secondary-600 dark:text-secondary-400"
+                        />
+                      </div>
+                      {/* Desktop: full address */}
+                      <div className="hidden md:inline-flex md:items-center md:min-w-0">
+                        <Tooltip content={token.owner_did} position="top">
+                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 break-all">
+                            {token.owner_did}
+                          </span>
+                        </Tooltip>
+                      </div>
                       <div className="flex-shrink-0">
                         <CopyButton text={token.owner_did} size="sm" />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Amount Column */}
+                  <div className="w-20 md:w-24 flex-shrink-0 flex items-center justify-end">
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                      {token.token_value} RBT
+                    </span>
                   </div>
                 </motion.div>
               ))}
@@ -492,8 +513,8 @@ const SCBlocksList: React.FC<{
             <div className="border-b border-outline-200 dark:border-outline-700">
               <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
                 <div className="w-16 md:w-20 flex-shrink-0">SN No</div>
-                <div className="flex-1 min-w-[200px]">Block Id</div>
-                <div className="flex-1 min-w-[200px]">Contract Id</div>
+                <div className="flex-1 min-w-[200px]">Block Hash</div>
+                <div className="flex-1 min-w-[200px]">Token ID</div>
                 <div className="flex-1 min-w-[200px]">Deployer</div>
                 <div className="flex-1 min-w-[200px]">Executor</div>
               </div>
@@ -503,11 +524,11 @@ const SCBlocksList: React.FC<{
             <div className="divide-y divide-outline-200 dark:divide-outline-700">
               {scBlocks.map((tx: any, index: any) => (
                 <motion.div
-                  key={tx.block_id}
+                  key={tx.block_hash || index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => onTransactionClick(tx.block_id)}
+                  onClick={() => onTransactionClick(tx.block_hash)}
                   className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
                 >
                   {/* Serial Number Column */}
@@ -519,40 +540,45 @@ const SCBlocksList: React.FC<{
                     </div>
                   </div>
 
-                  {/* Block Id Column - Flexible */}
-                  <div className="flex-1 min-w-[200px] flex items-center">
-                    <Tooltip content={tx.block_id} position="top">
-                      <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                        {formatAddress(tx.block_id, 8)}
-                      </div>
-                    </Tooltip>
-                  </div>
-
-                  {/* Contract Id Column - Flexible */}
+                  {/* Block Hash Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
                     <div className="flex items-center gap-1.5 w-full min-w-0">
-                      <Tooltip content={tx.contract_id} position="top">
+                      <Tooltip content={tx.block_hash} position="top">
+                        <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
+                          {formatAddress(tx.block_hash, 8)}
+                        </div>
+                      </Tooltip>
+                      <div className="flex-shrink-0">
+                        <CopyButton text={tx.block_hash} size="sm" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Token ID Column - Flexible */}
+                  <div className="flex-1 min-w-[200px] flex items-center">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <Tooltip content={tx.token_id} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                          {formatAddress(tx.contract_id, 8)}
+                          {formatAddress(tx.token_id, 8)}
                         </span>
                       </Tooltip>
                       <div className="flex-shrink-0">
-                        <CopyButton text={tx.contract_id} size="sm" />
+                        <CopyButton text={tx.token_id} size="sm" />
                       </div>
                     </div>
                   </div>
 
                   {/* Deployer Column - Flexible */}
                   <div className="flex-1 min-w-[200px] flex items-center">
-                    {tx.owner_did && tx.owner_did !== "N/A" ? (
+                    {tx.deployer_did && !tx.deployer_did.includes("nil") ? (
                       <div className="flex items-center gap-1.5 w-full min-w-0">
-                        <Tooltip content={tx.owner_did} position="top">
+                        <Tooltip content={tx.deployer_did} position="top">
                           <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                            {formatAddress(tx.owner_did, 8)}
+                            {formatAddress(tx.deployer_did, 8)}
                           </span>
                         </Tooltip>
                         <div className="flex-shrink-0">
-                          <CopyButton text={tx.owner_did} size="sm" />
+                          <CopyButton text={tx.deployer_did} size="sm" />
                         </div>
                       </div>
                     ) : (
