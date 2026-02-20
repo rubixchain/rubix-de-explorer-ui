@@ -12,9 +12,8 @@ import {
   Hash,
   User,
   DollarSign,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTransaction } from "@/hooks/useTransactions";
 
@@ -31,9 +30,6 @@ export const TransactionExplorerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "validators">(
     "details"
   );
-  const [expandedValidator, setExpandedValidator] = useState<number | null>(
-    null
-  );
   const [tokenPage, setTokenPage] = useState(1);
   const tokensPerPage = 5;
 
@@ -46,11 +42,6 @@ export const TransactionExplorerPage: React.FC = () => {
         .toString(36)
         .substr(2, 8)}`,
     }));
-  };
-
-  const toggleValidator = (index: number) => {
-    // If clicking the same validator, collapse it. Otherwise, open the new one and close others
-    setExpandedValidator((prev) => (prev === index ? null : index));
   };
 
   // Transform data when rawData changes - same pattern as HomePage
@@ -79,11 +70,20 @@ export const TransactionExplorerPage: React.FC = () => {
         data.tokens
       );
     }
+    // Extract FT name from the first token key (part before the first '_')
+    const ftName = data.asset_type === "FT" && data.tokens && typeof data.tokens === "object"
+      ? (() => {
+          const firstKey = Object.keys(data.tokens)[0];
+          return firstKey ? firstKey.split("_")[0] : "N/A";
+        })()
+      : null;
+
     const formattedTxData = {
-      id: data.txn_id || "N/A",
+      id: String(data.txn_id || "N/A"),
       status: "confirmed",
       confirmations: 120,
       asset_type: data.asset_type || "RBT",
+      ftName,
       type: data.asset_type === "FT" ? "FT Transfer" : data.asset_type === "RBT" ? "RBT Transfer" : mapTxnType(data.txn_type || ""),
       value: data.asset_type === "FT"
         ? (data.token_count ? `${data.token_count} FT` : "N/A")
@@ -92,9 +92,9 @@ export const TransactionExplorerPage: React.FC = () => {
       timestamp: data.epoch
         ? new Date(data.epoch * 1000).toUTCString()
         : "N/A",
-      blockId: data.block_hash || "N/A",
-      from: data.sender_did || "N/A",
-      to: data.receiver_did || "N/A",
+      blockId: String(data.block_hash || "N/A"),
+      from: String(data.sender_did || "N/A"),
+      to: String(data.receiver_did || "N/A"),
       tokens: data.tokens
         ? Object.entries(data.tokens).map(
             ([tokenId, tokenData]: [string, any]) => ({
@@ -108,15 +108,22 @@ export const TransactionExplorerPage: React.FC = () => {
       validators: data.validator_pledge_map
         ? Object.entries(data.validator_pledge_map).map(
             ([validatorDid, pledgeArray]) => {
-              const pledges = (pledgeArray as any[]).map((entry: any) => ({
-                token: entry["8-1"],
-              }));
+              const pledges = Array.isArray(pledgeArray)
+                ? (pledgeArray as any[]).map((entry: any) => ({
+                    token: String(entry["8-1"] || ""),
+                  }))
+                : [];
               return {
-                validator: validatorDid,
+                validator: String(validatorDid || ""),
                 pledgedTokens: pledges,
               };
             }
           )
+        : data.validators && Array.isArray(data.validators)
+        ? data.validators.map((v: any) => ({
+            validator: String(v?.did || v || ""),
+            pledgedTokens: [],
+          }))
         : [],
     };
 
@@ -315,6 +322,14 @@ export const TransactionExplorerPage: React.FC = () => {
                     {txData.type}
                   </p>
                 </div>
+                {txData.ftName && (
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400">FT Name:</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {txData.ftName}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Amount:</p>
                   <div className="flex items-center space-x-2">
@@ -361,104 +376,45 @@ export const TransactionExplorerPage: React.FC = () => {
   <div className="space-y-3">
     {txData.validators && txData.validators.length > 0 ? (
       txData.validators.map((validator: any, index: number) => {
-        const isExpanded = expandedValidator === index;
-        const pledgedTokens = validator.pledgedTokens || [];
-
         return (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors overflow-hidden"
+            className="p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
           >
-            {/* Validator Header - Clickable to expand/collapse */}
-            <div
-              onClick={() => toggleValidator(index)}
-              className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-bold">
-                    {index + 1}
-                  </span>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                <span className="text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-bold">
+                  {index + 1}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:inline flex-shrink-0">
+                  Validator Address:
+                </p>
+                {/* Mobile: truncated */}
+                <div className="flex-1 min-w-0 overflow-hidden md:hidden">
+                  <AutoTruncateAddress
+                    address={validator.validator}
+                    className="font-mono text-xs text-primary-600 dark:text-primary-400"
+                    fallbackLength={6}
+                  />
                 </div>
-                <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:inline">
-                    Validator Address:
-                  </p>
-                 
-                    <div className="flex-1 min-w-0">
-                      <AutoTruncateAddress
-                        address={validator.validator}
-                        className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
-                        fallbackLength={6}
-                      />
-                    </div>
-                  <div
-                    className="flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <CopyButton text={validator.validator} size="sm" />
-                  </div>
+                {/* Desktop: full address */}
+                <div className="hidden md:inline-flex min-w-0">
+                  <Tooltip content={validator.validator}>
+                    <span className="font-mono text-sm text-primary-600 dark:text-primary-400 break-all">
+                      {validator.validator}
+                    </span>
+                  </Tooltip>
                 </div>
                 <div className="flex-shrink-0">
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  )}
+                  <CopyButton text={validator.validator} size="sm" />
                 </div>
               </div>
             </div>
-
-            {/* Expandable Token List */}
-            {isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
-              >
-                <div className="p-3 sm:p-4">
-                  <h4 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
-                    Pledged Tokens ({pledgedTokens.length})
-                  </h4>
-                  {pledgedTokens.length > 0 ? (
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1 sm:pr-2">
-                      {pledgedTokens.map((pledge: any, tokenIndex: number) => (
-                        <div
-                          key={pledge.token}
-                          className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 min-w-0"
-                        >
-                            <div className="flex-1 min-w-0">
-                              <AutoTruncateAddress
-                                address={pledge.token}
-                                className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400"
-                                fallbackLength={8}
-                              />
-                            </div>
-                          {/* <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                            <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                              Amount: {pledge.pledgeAmount}
-                            </span>
-                            <CopyButton
-                              text={pledge.token}
-                              size="sm"
-                            />
-                          </div> */}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                      No pledged tokens found for this validator.
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            )}
           </motion.div>
         );
       })
