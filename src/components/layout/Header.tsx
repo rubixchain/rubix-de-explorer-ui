@@ -137,18 +137,14 @@ export const Header: React.FC = () => {
               </span>
             </Link>
 
-            {/* Network Switcher - Commented out */}
-            {/* <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleNetworkModal}
-              className="flex px-2.5 py-2 rounded-md hover:bg-gray-100 items-center space-x-1.5 border border-gray-200"
+            <a
+              href="https://explorer.rubix.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors text-xs font-medium text-gray-700"
             >
-              <span className="text-xs font-medium text-gray-700 capitalize">
-                {state.selectedChain}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-            </Button> */}
+              Mainnet
+            </a>
           </div>
 
           {/* Mobile Search Bar */}
@@ -245,18 +241,14 @@ export const Header: React.FC = () => {
             </div>
           </form>
 
-          {/* Network Switcher - Commented out */}
-          {/* <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleNetworkModal}
-            className="flex px-3 lg:px-4 py-2 lg:py-2.5 rounded-md hover:bg-gray-100 items-center space-x-1.5 lg:space-x-2 border border-gray-200 flex-shrink-0"
+          <a
+            href="https://explorer.rubix.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 lg:px-4 py-2 lg:py-2.5 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 whitespace-nowrap flex-shrink-0"
           >
-            <span className="text-sm font-medium text-gray-700 capitalize whitespace-nowrap">
-              {state.selectedChain}
-            </span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          </Button> */}
+            Mainnet
+          </a>
         </div>
       </div>
 
