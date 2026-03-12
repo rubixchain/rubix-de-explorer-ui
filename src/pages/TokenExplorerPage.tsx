@@ -127,8 +127,8 @@ export const TokenExplorerPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const loading = isLoadingToken || isLoadingChain;
-  const error = tokenError || chainError;
+  const loading = isLoadingToken;
+  const error = tokenError;
 
   // Helper function to format long addresses
 
@@ -487,6 +487,33 @@ export const TokenExplorerPage: React.FC = () => {
         </div>
       </Card>
 
+      {/* Token Chain Section */}
+      {console.log('[TokenChain] isLoadingChain:', isLoadingChain, 'chainError:', chainError, 'tokenChainData:', tokenChainData)}
+      {isLoadingChain && (
+        <Card className="p-6">
+          <h3 className="text-xl font-semibold text-heading dark:text-white mb-6 flex items-center space-x-2">
+            <Activity className="w-5 h-5" />
+            <span>Token Chain History</span>
+          </h3>
+          <div className="animate-pulse space-y-3">
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        </Card>
+      )}
+
+      {!isLoadingChain && (chainError || (!tokenChainData || tokenChainData.length === 0)) && (
+        <Card className="p-6">
+          <h3 className="text-xl font-semibold text-heading dark:text-white mb-6 flex items-center space-x-2">
+            <Activity className="w-5 h-5" />
+            <span>Token Chain History</span>
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Unable to load token chain history.
+          </p>
+        </Card>
+      )}
+
       {tokenChainData && tokenChainData.length > 0 && (
         <Card className="p-6">
           <h3 className="text-xl font-semibold text-heading dark:text-white mb-6 flex items-center space-x-2">
@@ -516,30 +543,30 @@ export const TokenExplorerPage: React.FC = () => {
                   .map((block: any, index: number) => {
                     // Determine if this is a genesis block or transaction block
                     const isGenesisBlock =
-                      block.TCGenesisBlockKey &&
-                      Object.keys(block.TCGenesisBlockKey).length > 0;
-                    const hasTransInfo = block.TCTransInfoKey;
+                      block.genesisBlock &&
+                      Object.keys(block.genesisBlock).length > 0;
+                    const hasTransInfo = block.transInfo;
                     const hasEpoch = block.TCEpoch;
 
                     return (
                       <motion.div
-                        key={block.TCBlockHashKey || index}
+                        key={block.blockHash || index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         onClick={() => {
-                          const transType = block.TCTransTypeKey;
+                          const transType = block.blockType;
                           if (transType === "02" || transType === 2) {
                             navigate(
-                              `/transaction-explorer?tx=${block.TCTransInfoKey.TITIDKey}`
+                              `/transaction-explorer?tx=${block.transInfo?.txnID}`
                             );
                           } else if (transType === "08" || transType === 8 || transType === 13 || transType === "13" ) {
                             navigate(
-                              `/burnt-transaction-explorer?tx=${block.TCBlockHashKey}`
+                              `/burnt-transaction-explorer?tx=${block.blockHash}`
                             );
                           } else if (transType === "09" || transType === 9 || transType === "10" || transType === 10) {
                             navigate(
-                              `/sc-transaction-explorer?tx=${block.TCBlockHashKey}`
+                              `/sc-transaction-explorer?tx=${block.blockHash}`
                             );
                           }
                         }}
@@ -552,14 +579,14 @@ export const TokenExplorerPage: React.FC = () => {
                               Block Hash
                             </p>
                             <div className="flex items-center gap-2 min-w-0">
-                              <Tooltip content={block.TCBlockHashKey} position="top">
+                              <Tooltip content={block.blockHash} position="top">
                                 <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                  {formatAddress(block.TCBlockHashKey)}
+                                  {formatAddress(block.blockHash)}
                                 </span>
                               </Tooltip>
                               <div className="flex-shrink-0">
                                 <CopyButton
-                                  text={block.TCBlockHashKey}
+                                  text={block.blockHash}
                                   size="sm"
                                 />
                               </div>
@@ -572,18 +599,18 @@ export const TokenExplorerPage: React.FC = () => {
                               Owner DID
                             </p>
                             <div className="flex items-center gap-2 min-w-0">
-                              <Tooltip content={block.TCTokenOwnerKey} position="top">
+                              <Tooltip content={block.tokenOwner} position="top">
                                 <span className="font-mono text-sm text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/did-explorer?did=${block.TCTokenOwnerKey}`);
+                                        navigate(`/did-explorer?did=${block.tokenOwner}`);
                                       }}>
-                                  {formatAddress(block.TCTokenOwnerKey)}
+                                  {formatAddress(block.tokenOwner)}
                                 </span>
                               </Tooltip>
                               <div className="flex-shrink-0">
                                 <CopyButton
-                                  text={block.TCTokenOwnerKey}
+                                  text={block.tokenOwner}
                                   size="sm"
                                 />
                               </div>
@@ -596,7 +623,7 @@ export const TokenExplorerPage: React.FC = () => {
                              </p>
                             <div className="flex items-center space-x-2">
                               <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
-                                {getTransactionTypeLabel(block.TCTransTypeKey)}
+                                {getTransactionTypeLabel(block.blockType)}
                               </span>
                             </div>
                           </div>

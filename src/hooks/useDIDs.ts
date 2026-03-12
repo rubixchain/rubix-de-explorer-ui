@@ -49,6 +49,20 @@ export const useDIDInfo = (did: string, page: number, limit: number) => {
   });
 };
 
+// Hook for fetching FT holders list (global, filtered by ft_name)
+export const useFTHolders = (params: { ft_name?: string; page: number; limit: number }, enabled: boolean) => {
+  const { state } = useApp();
+
+  return useQuery({
+    queryKey: ['ftHolders', state.selectedChain, params.ft_name, params.page, params.limit],
+    queryFn: () => api.getFTHolders({ ...params, network: state.selectedChain }),
+    enabled: enabled && !!params.ft_name,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+};
+
 // Hook for fetching FT holdings
 export const useFTHoldings = (did: string, page: number, limit: number, enabled: boolean) => {
   const { state } = useApp();

@@ -63,31 +63,18 @@ export const Header: React.FC = () => {
       search(query);
 
       // Auto-detect search type based on query pattern
-      if (query.startsWith('bafy')) {
-        navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
-      } else if (query.startsWith('Qm')) {
+      if (query.includes('_')) {
+        // Contains underscore(s) → token search
         navigate(`/token-explorer?token=${encodeURIComponent(query)}`);
-      } else if (/^\d+$/.test(query)) {
-        // Block number search - route to transaction explorer with block parameter
-        navigate(`/transaction-explorer?block=${encodeURIComponent(query)}`);
+      } else if (query.startsWith('bafy')) {
+        // Starts with 'bafy' → DID search
+        navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
+      } else if (query.startsWith('qem')) {
+        // Starts with 'qem' → smart contract / NFT (asset search)
+        navigate(`/sc-transaction-explorer?tx=${encodeURIComponent(query)}`);
       } else {
-        // For any other query, try to determine the best route
-        // If it looks like a DID (contains 'did' or 'rubix'), route to DID explorer
-        if (query.toLowerCase().includes('did') || query.toLowerCase().includes('rubix')) {
-          navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
-        }
-        // If it looks like a token ID, route to token explorer
-        else if (query.toLowerCase().includes('token') || query.match(/^[A-Z]{2,4}-/)) {
-          navigate(`/token-explorer?token=${encodeURIComponent(query)}`);
-        }
-        // If it looks like a transaction hash, route to transaction explorer
-        else if (query.toLowerCase().includes('tx') || query.length > 20) {
-          navigate(`/transaction-explorer?tx=${encodeURIComponent(query)}`);
-        }
-        // Default fallback - try DID explorer first
-        else {
-          navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
-        }
+        // Everything else → transaction search
+        navigate(`/transaction-explorer?tx=${encodeURIComponent(query)}`);
       }
       searchInputRef.current?.blur();
     }
@@ -138,18 +125,14 @@ export const Header: React.FC = () => {
               </span>
             </Link>
 
-            {/* Network Switcher - Commented out */}
-            {/* <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleNetworkModal}
-              className="flex px-2.5 py-2 rounded-md hover:bg-gray-100 items-center space-x-1.5 border border-gray-200"
+            <a
+              href="https://testnetexplorer.rubix.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-1 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700"
             >
-              <span className="text-xs font-medium text-gray-700 capitalize">
-                {state.selectedChain}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-            </Button> */}
+              Testnet
+            </a>
           </div>
 
           {/* Mobile Search Bar */}
@@ -246,17 +229,14 @@ export const Header: React.FC = () => {
             </div>
           </form>
 
-          {/* Network Switcher - Commented out */}
-          {/* <Button
-            variant="ghost"
-            size="sm"
-            onClick={()=> {navigate.bind('https://testnetexplorer.rubix.net')}}
-            className="flex px-3 lg:px-6 py-2 lg:py-4.5 rounded-md hover:bg-gray-100  space-x-1.5 lg:space-x-2 border border-gray-400 flex-shrink-0"
+          <a
+            href="https://testnetexplorer.rubix.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-8 lg:px-10 py-1.5 lg:py-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 whitespace-nowrap flex-shrink-0"
           >
-            <span className="text-sm font-medium text-gray-700 capitalize whitespace-nowrap">
-              Explore Testnet
-            </span>
-          </Button> */}
+            Testnet
+          </a>
         </div>
       </div>
 

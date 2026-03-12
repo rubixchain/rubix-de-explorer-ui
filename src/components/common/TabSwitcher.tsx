@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Hash, Users, Coins } from 'lucide-react';
 
-export type TabType = 'transactions' | 'holders' | 'tokens' | 'burntblocks' | 'scblocks';
+export type TabType = 'transactions' | 'holders' | 'tokens' | 'scblocks';
 
 interface Tab {
   id: TabType;
@@ -39,12 +39,6 @@ const defaultTabs: Tab[] = [
     // count: 89432,
   },
 
-  {
-    id: 'burntblocks',
-    label: 'Burntblocks',
-    icon: Hash,
-    // count: 45678,
-  },
   {
     id: 'scblocks',
     label: 'SC-Blocks',

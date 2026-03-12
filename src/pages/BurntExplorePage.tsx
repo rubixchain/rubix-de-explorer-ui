@@ -62,7 +62,7 @@ export const BurntTransactionExplorerPage: React.FC = () => {
     const formattedTxData = {
       block_hash: data.block_hash || "N/A",
       status: "confirmed",
-      type: data.txn_type || "",
+      type: "Burnt",
        timestamp: data.epoch
         ? new Date(data.epoch * 1000).toUTCString()
         : "N/A",

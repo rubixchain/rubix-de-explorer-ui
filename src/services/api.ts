@@ -356,6 +356,23 @@ class ApiClient {
     return this.request<Token>(`${API_ENDPOINTS.TOKENS}/${id}`);
   }
 
+  async getFTList(params?: { page?: number; limit?: number; network?: string }) {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
+    try {
+      const response = await fetch(`${baseUrl}/getftlist?${searchParams.toString()}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.json();
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    }
+  }
+
   async getDIDs(params?: { page?: number; limit?: number; network?: string }) {
     const searchParams = new URLSearchParams();
 
@@ -381,6 +398,24 @@ class ApiClient {
 
   async getDID(id: string) {
     return this.request<DID>(`${API_ENDPOINTS.DIDS}/${id}`);
+  }
+
+  async getFTHolders(params?: { ft_name?: string; page?: number; limit?: number; network?: string }) {
+    const searchParams = new URLSearchParams();
+    if (params?.ft_name) searchParams.append("ft_name", params.ft_name);
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
+    try {
+      const response = await fetch(`${baseUrl}/ftholders?${searchParams.toString()}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.json();
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    }
   }
 
   async getValidators(params?: {
@@ -550,8 +585,10 @@ export const api = {
   getBurntTransactions: (params?: any) =>
     apiClient.getBurntTransactions(params),
   getTokens: (params?: any) => apiClient.getTokens(params),
+  getFTList: (params?: any) => apiClient.getFTList(params),
   getToken: (id: string) => apiClient.getToken(id),
   getDIDs: (params?: any) => apiClient.getDIDs(params),
+  getFTHolders: (params?: any) => apiClient.getFTHolders(params),
   getDID: (id: string) => apiClient.getDID(id),
   getValidators: (params?: any) => apiClient.getValidators(params),
   getValidator: (id: string) => apiClient.getValidator(id),

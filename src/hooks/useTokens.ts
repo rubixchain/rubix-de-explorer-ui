@@ -28,6 +28,19 @@ export const useTokens =  (params?: UseTokensParams) => {
   });
 };
 
+// Hook for fetching FT list with minted counts
+export const useFTList = (params?: { page?: number; limit?: number }) => {
+  const { state } = useApp();
+
+  return useQuery({
+    queryKey: ['ftlist', state.selectedChain, params],
+    queryFn: () => api.getFTList({ ...params, network: state.selectedChain }),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+};
+
 // Hook for fetching individual token details
 export const useTokenDetails = (tokenId: string) => {
   const { state } = useApp();
@@ -60,16 +73,22 @@ export const useTokenChain = (tokenId: string) => {
     queryKey: ['tokenChain', state.selectedChain, tokenId],
     queryFn: async () => {
       const baseUrl = getBaseUrlForNetwork(state.selectedChain);
-      const response = await fetch(`${baseUrl}/token-chain?token_id=${tokenId}`);
+      const url = `${baseUrl}/token-chain?token_id=${tokenId}`;
+      console.log('[useTokenChain] Fetching:', url);
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch token chain');
+        const text = await response.text().catch(() => '');
+        console.error('[useTokenChain] Error:', response.status, text);
+        throw new Error(`Failed to fetch token chain: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('[useTokenChain] Response:', data);
       return data.TokenChainData;
     },
     enabled: !!tokenId, // Only run if tokenId exists
+    retry: false,
     staleTime: 0,
     // cacheTime: 0,
     refetchOnMount: 'always',

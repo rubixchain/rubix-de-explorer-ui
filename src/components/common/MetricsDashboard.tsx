@@ -75,9 +75,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
         ) : (
           <>
             {/* Label with info icon */}
-            <div className="flex items-start space-x-2 mb-0 leading-tight">
+            <div className="flex items-start space-x-2 mb-0 leading-tight min-w-0">
               <span
-                className={`font-medium text-gray-700 dark:text-gray-300 ${
+                className={`font-medium text-gray-700 dark:text-gray-300 truncate ${
                   isSmallTitle ? "text-xs" : "text-sm"
                 }`}
               >
@@ -147,9 +147,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
             {/* Large value - Responsive sizing */}
             <div
-              className={`font-bold text-gray-900 dark:text-white ${
+              className={`font-bold text-gray-900 dark:text-white truncate ${
                 isSmallTitle ? "text-lg" : "text-xl"
               }`}
+              title={value}
             >
               {value}
             </div>
