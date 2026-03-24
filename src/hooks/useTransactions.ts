@@ -10,6 +10,18 @@ interface UseTransactionsParams {
   // status?: string;
 }
 
+export const useTransactionsByDID = (did: string, params?: { page?: number; limit?: number }) => {
+  const { state } = useApp();
+  return useQuery({
+    queryKey: ['transactionsByDID', state.selectedChain, did, params],
+    queryFn: () => api.getTransactions({ ...params, did, network: state.selectedChain }),
+    enabled: !!did,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useTransactions = (params?: UseTransactionsParams) => {
   const { state } = useApp();
 

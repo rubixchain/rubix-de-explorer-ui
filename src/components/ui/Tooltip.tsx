@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 interface TooltipProps {
@@ -20,37 +20,65 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const [timeoutId, setTimeoutId] = useState<number | null>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
 
     let top = 0;
     let left = 0;
 
     switch (position) {
       case 'top':
-        top = rect.top + scrollY - 8;
-        left = rect.left + scrollX + rect.width / 2;
+        top = rect.top - 8;
+        left = rect.left + rect.width / 2;
         break;
       case 'bottom':
-        top = rect.bottom + scrollY + 8;
-        left = rect.left + scrollX + rect.width / 2;
+        top = rect.bottom + 8;
+        left = rect.left + rect.width / 2;
         break;
       case 'left':
-        top = rect.top + scrollY + rect.height / 2;
-        left = rect.left + scrollX - 8;
+        top = rect.top + rect.height / 2;
+        left = rect.left - 8;
         break;
       case 'right':
-        top = rect.top + scrollY + rect.height / 2;
-        left = rect.right + scrollX + 8;
+        top = rect.top + rect.height / 2;
+        left = rect.right + 8;
         break;
     }
 
     setCoords({ top, left });
   }, [position]);
+
+  // Clamp tooltip within viewport after it renders (runs before paint)
+  useLayoutEffect(() => {
+    if (!isVisible || !tooltipRef.current) return;
+    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const margin = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let { top, left } = coords;
+
+    if (tooltipRect.right > vw - margin) {
+      left -= tooltipRect.right - (vw - margin);
+    }
+    if (tooltipRect.left < margin) {
+      left += margin - tooltipRect.left;
+    }
+    if (tooltipRect.bottom > vh - margin) {
+      top -= tooltipRect.bottom - (vh - margin);
+    }
+    if (tooltipRect.top < margin) {
+      top += margin - tooltipRect.top;
+    }
+
+    if (top !== coords.top || left !== coords.left) {
+      setCoords({ top, left });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible]);
 
   const showTooltip = () => {
     if (timeoutId) {
@@ -111,7 +139,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   return (
     <div
       ref={triggerRef}
-      className={`relative inline-block ${className}`}
+      className={`relative min-w-0 ${className}`}
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
       onFocus={showTooltip}
@@ -120,15 +148,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {children}
       {isVisible && createPortal(
         <div
+          ref={tooltipRef}
           style={{
-            position: 'absolute',
+            position: 'fixed',
             top: coords.top,
             left: coords.left,
             zIndex: 9999,
             pointerEvents: 'none',
             ...getTransformStyle(),
           }}
-          className="px-3 py-2 text-xs font-mono bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg shadow-lg whitespace-nowrap max-w-xs break-all"
+          className="px-3 py-2 text-xs font-mono bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg shadow-lg max-w-xs break-all"
           role="tooltip"
         >
           {content}
