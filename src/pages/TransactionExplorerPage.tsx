@@ -79,33 +79,29 @@ const formatAddress = (
       : "success";
 
     const formattedTxData = {
-      id: data.txn_id || "N/A",
+      id: data.transaction_id || data.txn_id || "N/A",
       status,
       value: data.amount ? `${data.amount} RBT` : "N/A",
       timestamp: data.epoch
         ? new Date(data.epoch * 1000).toUTCString()
         : "N/A",
-      blockId: data.block_hash || "N/A",
-      from: data.sender_did || "N/A",
-      to: data.receiver_did || "N/A",
+      blockId: data.transaction_id || data.block_hash || "N/A",
+      from: data.initiator || data.sender_did || "N/A",
+      to: data.owner || data.receiver_did || "N/A",
       tokens: data.tokens
         ? Object.entries(data.tokens).map(
             ([tokenId, tokenData]: [string, any]) => ({
               tokenId,
-              type: tokenData.TTTokenTypeKey,
-              blockNumber: tokenData.TTBlockNumberKey,
-              previousBlockId: tokenData.TTPreviousBlockIDKey,
+              type: tokenData?.TTTokenTypeKey,
+              blockNumber: tokenData?.TTBlockNumberKey,
+              previousBlockId: tokenData?.TTPreviousBlockIDKey,
             })
           )
         : [],
-      validators: data.validator_pledge_map
-        ? Object.entries(data.validator_pledge_map).map(
-            ([validatorDid, pledgeArray]) => {
-              return {
-                did: validatorDid,
-              };
-            }
-          )
+      validators: data.quorums
+        ? (Array.isArray(data.quorums) ? data.quorums : Object.keys(data.quorums)).map((did: string) => ({ did }))
+        : data.validator_pledge_map
+        ? Object.keys(data.validator_pledge_map).map((did) => ({ did }))
         : [],
     };
 
@@ -130,13 +126,13 @@ const formatAddress = (
             // For FTs: parse name and creator from tokenId (format: creatorDID_ftName)
             const underscoreIdx = tokenId.lastIndexOf("_");
             const ftName = underscoreIdx !== -1 ? tokenId.slice(underscoreIdx + 1) : tokenId;
-            const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(0, underscoreIdx) : (data.sender_did || "N/A");
+            const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(0, underscoreIdx) : (data.initiator || data.sender_did || "N/A");
             return {
               id: `transfer-${index + 1}`,
               tokenId,
               category,
-              from: data.sender_did || "N/A",
-              to: data.receiver_did || "N/A",
+              from: data.initiator || data.sender_did || "N/A",
+              to: data.owner || data.receiver_did || "N/A",
               amount: data.amount ? data.amount.toString() : "N/A",
               status: "confirmed",
               blockNumber: tokenData?.TTBlockNumberKey ?? "N/A",
@@ -147,7 +143,7 @@ const formatAddress = (
         : [];
 
     // Parse committed tokens
-    const rawCommitted = data.committed_tokens || data.commited_tokens || [];
+    const rawCommitted = data.committedTokens || data.committed_tokens || data.commited_tokens || [];
     const formattedCommitted = Array.isArray(rawCommitted)
       ? rawCommitted.map((ct: any, index: number) => ({
           id: `committed-${index}`,

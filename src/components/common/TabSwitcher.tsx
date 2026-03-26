@@ -38,10 +38,9 @@ const defaultTabs: Tab[] = [
     icon: Coins,
     // count: 89432,
   },
-
   {
     id: 'scblocks',
-    label: 'SC-Blocks',
+    label: 'Smart Contracts',
     icon: Hash,
     // count: 45678,
   },
@@ -84,7 +83,7 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = ({
               `}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-            >
+            > 
               {/* Active underline */}
               {isActive && (
                 <motion.div
@@ -124,3 +123,4 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = ({
 };
 
 export type { TabSwitcherProps };
+

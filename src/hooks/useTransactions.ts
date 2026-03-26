@@ -93,32 +93,6 @@ export const useBurntTxn = (params?: UseTransactionsParams) => {
   });
 };
 
-// Hook for fetching individual burnt transaction by hash
-export const useBurntTransaction = (hash: string) => {
-  const { state } = useApp();
-
-  
-
-  return useQuery({
-    queryKey: ['burntTransaction', state.selectedChain, hash],
-    queryFn: async () => {
-      
-      const baseUrl = state.selectedChain === 'mainnet'
-        ? import.meta.env.VITE_API_BASE_URL_MAINNET
-        : import.meta.env.VITE_API_BASE_URL_TESTNET;
-
-      const response = await fetch(`${baseUrl}/burnttxn-info?hash=${hash}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch burnt transaction data');
-      }
-      return response.json();
-    },
-    enabled: !!hash,
-    staleTime: 0, // Always consider data stale
-    // cacheTime: 0, // Don't cache data
-    refetchOnMount: 'always', // Always refetch on mount
-  });
-};
 
 // Hook for fetching individual smart contract transaction by hash
 export const useSCTransaction = (hash: string) => {

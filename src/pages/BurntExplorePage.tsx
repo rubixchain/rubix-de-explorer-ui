@@ -9,68 +9,49 @@ import {
   Clock,
   XCircle,
   Hash,
-  User,
-  DollarSign,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useBurntTransaction } from "@/hooks/useTransactions";
+import { useTransaction } from "@/hooks/useTransactions";
 
 export const BurntTransactionExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const txId = searchParams.get("tx") || "";
 
-  // Use React Query hook - same pattern as HomePage and other pages
-  const { data: rawData, isLoading, error: queryError } = useBurntTransaction(txId);
+  const { data: rawData, isLoading, error: queryError } = useTransaction(txId);
 
   const [txData, setTxData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"details">("details");
 
-  // Helper function to format long addresses
   const formatAddress = (address: string, length: number = 8): string => {
     if (!address || address === "N/A") return address;
     if (address.length <= length * 2) return address;
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
-  // Transform data when rawData changes - same pattern as other pages
   useEffect(() => {
     if (!rawData) return;
 
-    const data : any = rawData;
-    const mapTxnType = (type: string): string => {
-      switch (type) {
-        case "02":
-          return "Transfer";
-        default:
-          return "Unknown";
-      }
-    };
+    const data: any = rawData;
 
-    // Handle tokens as an object, using only keys
-    const tokenIds =
-      data.tokens && typeof data.tokens === "object"
-        ? Object.keys(data.tokens)
-        : [];
-    if (!Array.isArray(tokenIds)) {
-      console.warn(
-        "Tokens field does not contain valid keys:",
-        data.tokens
-      );
-    }
+    // Support both new API shape {transaction_id, initiator, owner, epoch, tokens}
+    // and legacy shape {block_hash, owner_did, epoch, tokens, child_tokens}
+    const txId = data.transaction_id || data.block_hash || "N/A";
+    const ownerDid = data.owner || data.owner_did || "N/A";
+    const tokens = data.tokens || null;
+    const childTokens = Array.isArray(data.child_tokens) ? data.child_tokens : [];
 
     const formattedTxData = {
-      block_hash: data.block_hash || "N/A",
+      block_hash: txId,
       status: "confirmed",
       type: "Burnt",
-       timestamp: data.epoch
+      timestamp: data.epoch
         ? new Date(data.epoch * 1000).toUTCString()
         : "N/A",
-      owner_did: data.owner_did || "N/A",
-      tokens: data.tokens,
-      child_tokens: Array.isArray(data.child_tokens)
-        ? data.child_tokens
-        : [],
+      owner_did: ownerDid,
+      tokens,
+      child_tokens: childTokens,
+      memo: data.memo,
     };
 
     setTxData(formattedTxData);

@@ -12,9 +12,9 @@ import {
   useSCTxns,
   useTransactions,
 } from "@/hooks/useTransactions";
-import { useDIDs, useFTHolders } from "@/hooks/useDIDs";
+import { useDIDs } from "@/hooks/useDIDs";
 import { Search } from "lucide-react";
-import { useTokens, useFTList } from "@/hooks/useTokens";
+import { useTokens, useFTList, useFTSuggestions, useFTTopHolders, useRBTSuggestions, useRBTInfo, useFTInfo } from "@/hooks/useTokens";
 import { useIsMobile, useFormatAddress } from "@/hooks/useFormatAddress";
 
 
@@ -276,35 +276,40 @@ const HoldersListView: React.FC<{
   const [holderType, setHolderType] = useState<"rbt" | "ft">("rbt");
   const [ftSearchInput, setFtSearchInput] = useState("");
   const [activeFtName, setActiveFtName] = useState("");
+  const [activeCreatorDid, setActiveCreatorDid] = useState("");
   const [ftPage, setFtPage] = useState(1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // RBT holders
+  const { data: ftSuggestions = [] } = useFTSuggestions(ftSearchInput, 10) as { data: Array<{ ft_name: string; creator_did: string }> };
+
+  // RBT holders — API returns []DIDBalance with fields: did, balance, asset_type, token_name, last_update
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
   const { data: rbtData } = useDIDs(paramsTxn) as any;
-  const [holders, setHolders] = useState<any[]>([]);
-  const rbtTotalPages = Math.ceil((rbtData?.holders_response?.count || 0) / itemsPerPage);
+  const holders: any[] = Array.isArray(rbtData) ? rbtData : (rbtData?.holders || []);
+  const rbtTotalPages = Math.ceil((rbtData?.count || holders.length || 0) / itemsPerPage);
 
-  useEffect(() => {
-    if (rbtData?.holders_response?.holders_response) {
-      setHolders(rbtData.holders_response.holders_response);
-    } else {
-      setHolders([]);
-    }
-  }, [rbtData]);
-
-  // FT holders
-  const { data: ftData, isLoading: ftLoading } = useFTHolders(
-    { ft_name: activeFtName, page: ftPage, limit: itemsPerPage },
-    holderType === "ft"
+  // FT top holders (requires both ftName + creatorDID from suggestion selection)
+  const { data: ftData, isLoading: ftLoading } = useFTTopHolders(
+    { ftName: activeFtName, creatorDID: activeCreatorDid, page: ftPage, limit: itemsPerPage },
+    holderType === "ft" && !!activeFtName && !!activeCreatorDid
   ) as any;
 
-  const ftHolders: any[] = ftData?.holders || ftData?.ft_holders || [];
-  const ftTotalPages = Math.ceil((ftData?.count || 0) / itemsPerPage);
+  const ftHolders: any[] = ftData?.holders || [];
+  const ftTotalPages = Math.ceil((ftData?.total_count || 0) / itemsPerPage);
 
   const handleFtSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowSuggestions(false);
     setFtPage(1);
     setActiveFtName(ftSearchInput.trim());
+  };
+
+  const handleSuggestionSelect = (ftName: string, creatorDid: string) => {
+    setFtSearchInput(ftName);
+    setActiveFtName(ftName);
+    setActiveCreatorDid(creatorDid);
+    setFtPage(1);
+    setShowSuggestions(false);
   };
 
   return (
@@ -326,18 +331,36 @@ const HoldersListView: React.FC<{
         ))}
       </div>
 
-      {/* FT name search bar */}
+      {/* FT name search bar with autocomplete */}
       {holderType === "ft" && (
         <form onSubmit={handleFtSearch} className="flex items-center gap-2 max-w-md">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
               value={ftSearchInput}
-              onChange={(e) => setFtSearchInput(e.target.value)}
-              placeholder="Search by FT name (e.g. mytoken_ft)..."
+              onChange={(e) => { setFtSearchInput(e.target.value); setShowSuggestions(true); }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder="Search by FT name..."
               className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {showSuggestions && ftSuggestions.length > 0 && (
+              <ul className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
+                {ftSuggestions.map((s, i) => (
+                  <li
+                    key={`${s.ft_name}-${i}`}
+                    onMouseDown={() => handleSuggestionSelect(s.ft_name, s.creator_did)}
+                    className="flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                  >
+                    <span className="font-medium text-gray-900 dark:text-white">{s.ft_name}</span>
+                    <span className="text-xs text-gray-400 font-mono truncate max-w-[120px] ml-2">
+                      {s.creator_did.slice(0, 10)}…
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <button
             type="submit"
@@ -352,25 +375,25 @@ const HoldersListView: React.FC<{
       {holderType === "rbt" && (
         isMobile ? (
           <div className="space-y-3">
-            {holders.filter((h) => h.owner_did !== '').map((holder, index) => (
+            {holders.filter((h) => h.did !== '').map((holder, index) => (
               <motion.div
-                key={holder.owner_did}
+                key={holder.did || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onHolderClick(holder.owner_did)}
+                onClick={() => onHolderClick(holder.did)}
                 className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
               >
                 <div>
                   <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Address</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(holder.owner_did)}</span>
-                    <CopyButton text={holder.owner_did} size="sm" />
+                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(holder.did)}</span>
+                    <CopyButton text={holder.did} size="sm" />
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Balance</p>
-                  <span className="text-sm font-semibold text-secondary-900 dark:text-white">{holder.token_count}</span>
+                  <span className="text-sm font-semibold text-secondary-900 dark:text-white">{holder.balance}</span>
                 </div>
               </motion.div>
             ))}
@@ -386,23 +409,23 @@ const HoldersListView: React.FC<{
                   </div>
                 </div>
                 <div className="divide-y divide-outline-200 dark:divide-outline-700">
-                  {holders.filter((h) => h.owner_did !== '').map((holder, index) => (
+                  {holders.filter((h) => h.did !== '').map((holder, index) => (
                     <motion.div
-                      key={holder.owner_did}
+                      key={holder.did || index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={() => onHolderClick(holder.owner_did)}
+                      onClick={() => onHolderClick(holder.did)}
                       className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-6"
                     >
                       <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
                         <div className="flex items-center gap-1.5 w-full min-w-0">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">{formatAddress(holder.owner_did)}</div>
-                          <div className="flex-shrink-0"><CopyButton text={holder.owner_did} size="sm" /></div>
+                          <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">{formatAddress(holder.did)}</div>
+                          <div className="flex-shrink-0"><CopyButton text={holder.did} size="sm" /></div>
                         </div>
                       </div>
                       <div className="w-24 md:w-32 lg:w-40 flex-shrink-0 flex items-center justify-end">
-                        <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">{holder.token_count}</div>
+                        <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">{holder.balance}</div>
                       </div>
                     </motion.div>
                   ))}
@@ -422,23 +445,23 @@ const HoldersListView: React.FC<{
           <div className="space-y-3">
             {ftHolders.map((holder: any, index: number) => (
               <motion.div
-                key={holder.owner_did || holder.did || index}
+                key={holder.did || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onHolderClick(holder.owner_did || holder.did)}
+                onClick={() => onHolderClick(holder.did)}
                 className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
               >
                 <div>
                   <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Address</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(holder.owner_did || holder.did)}</span>
-                    <CopyButton text={holder.owner_did || holder.did} size="sm" />
+                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(holder.did)}</span>
+                    <CopyButton text={holder.did} size="sm" />
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">FT Balance</p>
-                  <span className="text-sm font-semibold text-secondary-900 dark:text-white">{holder.ft_count ?? holder.balance ?? holder.token_count ?? "—"}</span>
+                  <span className="text-sm font-semibold text-secondary-900 dark:text-white">{holder.token_count ?? "—"}</span>
                 </div>
               </motion.div>
             ))}
@@ -456,21 +479,21 @@ const HoldersListView: React.FC<{
                 <div className="divide-y divide-outline-200 dark:divide-outline-700">
                   {ftHolders.map((holder: any, index: number) => (
                     <motion.div
-                      key={holder.owner_did || holder.did || index}
+                      key={holder.did || index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={() => onHolderClick(holder.owner_did || holder.did)}
+                      onClick={() => onHolderClick(holder.did)}
                       className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-6"
                     >
                       <div className="min-w-[180px] md:flex-1 md:min-w-[300px] flex items-center">
                         <div className="flex items-center gap-1.5 w-full min-w-0">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">{formatAddress(holder.owner_did || holder.did)}</div>
-                          <div className="flex-shrink-0"><CopyButton text={holder.owner_did || holder.did} size="sm" /></div>
+                          <div className="text-sm font-medium text-secondary-900 dark:text-white font-mono cursor-pointer truncate">{formatAddress(holder.did)}</div>
+                          <div className="flex-shrink-0"><CopyButton text={holder.did} size="sm" /></div>
                         </div>
                       </div>
                       <div className="w-32 md:w-40 flex-shrink-0 flex items-center justify-end">
-                        <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">{holder.ft_count ?? holder.balance ?? holder.token_count ?? "—"}</div>
+                        <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">{holder.token_count ?? "—"}</div>
                       </div>
                     </motion.div>
                   ))}
@@ -524,20 +547,63 @@ const TokensListView: React.FC<{
   const [tokenType, setTokenType] = useState<"rbt" | "ft">("rbt");
   const [ftPage, setFtPage] = useState(1);
 
-  // RBT tokens
+  // RBT search state
+  const [rbtSearchInput, setRbtSearchInput] = useState("");
+  const [activeRbtToken, setActiveRbtToken] = useState("");
+  const [showRbtSuggestions, setShowRbtSuggestions] = useState(false);
+
+  // FT search state
+  const [ftSearchInput, setFtSearchInput] = useState("");
+  const [activeFtName, setActiveFtName] = useState("");
+  const [activeFtCreator, setActiveFtCreator] = useState("");
+  const [showFtSuggestions, setShowFtSuggestions] = useState(false);
+
+  // RBT tokens list
   const rbtParams = { page: currentPage, limit: itemsPerPage };
   const { data: rbtData, isLoading: rbtLoading, error: rbtError } = useTokens(rbtParams) as any;
-  const rbtTokens = rbtData?.tokens || [];
-  const rbtTotalPages = Math.ceil((rbtData?.count || 0) / itemsPerPage);
+  // API returns []Token (flat array) — fields: token_id, token_value, token_status, did, transaction_id
+  const rbtTokens = Array.isArray(rbtData) ? rbtData : (rbtData?.tokens || []);
+  const rbtTotalPages = Math.ceil((rbtData?.count || rbtTokens.length || 0) / itemsPerPage);
 
-  // FT list
+  // FT group list — API returns []FTGroup with fields: ftName, count, creatorDID
   const ftParams = { page: ftPage, limit: itemsPerPage };
   const { data: ftData, isLoading: ftLoading } = useFTList(ftParams) as any;
-  const ftTokens = ftData?.ft_list || ftData?.fts || ftData?.tokens || [];
-  const ftTotalPages = Math.ceil((ftData?.count || 0) / itemsPerPage);
+  const ftTokens = Array.isArray(ftData) ? ftData : (ftData?.ft_list || ftData?.fts || []);
+  const ftTotalPages = Math.ceil((ftData?.count || ftTokens.length || 0) / itemsPerPage);
 
-  if (tokenType === "rbt" && rbtLoading) return <div className="text-sm text-gray-500 py-4">Loading tokens...</div>;
-  if (tokenType === "rbt" && rbtError) return <div className="text-sm text-red-500 py-4">Error loading tokens</div>;
+  // RBT search suggestions
+  const { data: rbtSuggestions = [] } = useRBTSuggestions(rbtSearchInput, 10) as { data: Array<{ token_id: string }> };
+
+  // RBT info for selected token
+  const { data: rbtInfoData, isLoading: rbtInfoLoading } = useRBTInfo(activeRbtToken, !!activeRbtToken);
+
+  // FT search suggestions
+  const { data: ftSuggestions = [] } = useFTSuggestions(ftSearchInput, 10) as { data: Array<{ ft_name: string; creator_did: string }> };
+
+  // FT detail info for selected FT
+  const { data: ftInfoData, isLoading: ftInfoLoading } = useFTInfo(activeFtName, activeFtCreator, !!activeFtName && !!activeFtCreator);
+
+  const handleRbtSuggestionSelect = (tokenId: string) => {
+    setRbtSearchInput(tokenId);
+    setActiveRbtToken(tokenId);
+    setShowRbtSuggestions(false);
+  };
+
+  const handleFtSuggestionSelect = (ftName: string, creatorDid: string) => {
+    setFtSearchInput(ftName);
+    setActiveFtName(ftName);
+    setActiveFtCreator(creatorDid);
+    setShowFtSuggestions(false);
+  };
+
+  const formatEpoch = (epoch: number) => {
+    if (!epoch) return "—";
+    const ts = epoch < 1e12 ? epoch * 1000 : epoch;
+    return new Date(ts).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
+
+  if (tokenType === "rbt" && rbtLoading && !activeRbtToken) return <div className="text-sm text-gray-500 py-4">Loading tokens...</div>;
+  if (tokenType === "rbt" && rbtError && !activeRbtToken) return <div className="text-sm text-red-500 py-4">Error loading tokens</div>;
 
   return (
     <div className="w-full space-y-4">
@@ -557,6 +623,183 @@ const TokensListView: React.FC<{
           </button>
         ))}
       </div>
+
+      {/* RBT search bar */}
+      {tokenType === "rbt" && (
+        <div className="flex items-center gap-2 max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={rbtSearchInput}
+              onChange={(e) => { setRbtSearchInput(e.target.value); setShowRbtSuggestions(true); if (!e.target.value) setActiveRbtToken(""); }}
+              onFocus={() => setShowRbtSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowRbtSuggestions(false), 150)}
+              placeholder="Search by token ID..."
+              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+            {showRbtSuggestions && rbtSuggestions.length > 0 && (
+              <ul className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                {rbtSuggestions.map((s, i) => (
+                  <li
+                    key={`${s.token_id}-${i}`}
+                    onMouseDown={() => handleRbtSuggestionSelect(s.token_id)}
+                    className="px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors font-mono text-gray-900 dark:text-white truncate"
+                  >
+                    {s.token_id}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {activeRbtToken && (
+            <button
+              onClick={() => { setRbtSearchInput(""); setActiveRbtToken(""); }}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* FT search bar */}
+      {tokenType === "ft" && (
+        <div className="flex items-center gap-2 max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={ftSearchInput}
+              onChange={(e) => { setFtSearchInput(e.target.value); setShowFtSuggestions(true); if (!e.target.value) { setActiveFtName(""); setActiveFtCreator(""); } }}
+              onFocus={() => setShowFtSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowFtSuggestions(false), 150)}
+              placeholder="Search by FT name..."
+              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+            {showFtSuggestions && ftSuggestions.length > 0 && (
+              <ul className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                {ftSuggestions.map((s, i) => (
+                  <li
+                    key={`${s.ft_name}-${i}`}
+                    onMouseDown={() => handleFtSuggestionSelect(s.ft_name, s.creator_did)}
+                    className="flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                  >
+                    <span className="font-medium text-gray-900 dark:text-white">{s.ft_name}</span>
+                    <span className="text-xs text-gray-400 font-mono truncate max-w-[120px] ml-2">{s.creator_did.slice(0, 10)}…</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {activeFtName && (
+            <button
+              onClick={() => { setFtSearchInput(""); setActiveFtName(""); setActiveFtCreator(""); }}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* RBT detail card */}
+      {tokenType === "rbt" && activeRbtToken && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-lg p-4 space-y-3"
+          >
+            {rbtInfoLoading ? (
+              <div className="text-sm text-gray-500 dark:text-gray-400">Loading token info...</div>
+            ) : rbtInfoData ? (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">RBT Token</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Token ID</p>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip content={(rbtInfoData as any).token_id} position="top">
+                        <span className="text-sm font-mono font-medium text-secondary-900 dark:text-white truncate">{formatAddress((rbtInfoData as any).token_id)}</span>
+                      </Tooltip>
+                      <CopyButton text={(rbtInfoData as any).token_id} size="sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Owner</p>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip content={(rbtInfoData as any).owner_did} position="top">
+                        <span className="text-sm font-mono text-secondary-700 dark:text-secondary-300 truncate">{formatAddress((rbtInfoData as any).owner_did)}</span>
+                      </Tooltip>
+                      <CopyButton text={(rbtInfoData as any).owner_did} size="sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Value</p>
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">{(rbtInfoData as any).token_value} RBT</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400">No data found for this token.</div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {/* FT detail card */}
+      {tokenType === "ft" && activeFtName && activeFtCreator && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-lg p-4 space-y-3"
+          >
+            {ftInfoLoading ? (
+              <div className="text-sm text-gray-500 dark:text-gray-400">Loading FT info...</div>
+            ) : ftInfoData ? (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">FT Token</span>
+                  <span className="text-sm font-bold text-secondary-900 dark:text-white">{(ftInfoData as any).ft_name}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Creator DID</p>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip content={(ftInfoData as any).creator_did} position="top">
+                        <span className="text-sm font-mono text-secondary-700 dark:text-secondary-300 truncate">{formatAddress((ftInfoData as any).creator_did)}</span>
+                      </Tooltip>
+                      <CopyButton text={(ftInfoData as any).creator_did} size="sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">FT Value</p>
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">{(ftInfoData as any).ft_value ?? "—"}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Total Amount</p>
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">
+                      {typeof (ftInfoData as any).total_amount === "number" ? (ftInfoData as any).total_amount.toLocaleString() : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Created</p>
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">{formatEpoch((ftInfoData as any).created_time)}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400">No data found for this FT.</div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
 
       {tokenType === "rbt" && (
         <>
@@ -585,10 +828,10 @@ const TokensListView: React.FC<{
                   <div>
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Owner</p>
                     <div className="flex items-center gap-1.5">
-                      <Tooltip content={token.owner_did} position="top">
-                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(token.owner_did)}</span>
+                      <Tooltip content={token.did} position="top">
+                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(token.did)}</span>
                       </Tooltip>
-                      <CopyButton text={token.owner_did} size="sm" />
+                      <CopyButton text={token.did} size="sm" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-1">
@@ -632,10 +875,10 @@ const TokensListView: React.FC<{
                         </div>
                         <div className="flex-1 min-w-[160px] flex items-center">
                           <div className="flex items-center gap-1.5 w-full min-w-0">
-                            <Tooltip content={token.owner_did} position="top">
-                              <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(token.owner_did)}</span>
+                            <Tooltip content={token.did} position="top">
+                              <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(token.did)}</span>
                             </Tooltip>
-                            <div className="flex-shrink-0"><CopyButton text={token.owner_did} size="sm" /></div>
+                            <div className="flex-shrink-0"><CopyButton text={token.did} size="sm" /></div>
                           </div>
                         </div>
                       </motion.div>
@@ -650,7 +893,7 @@ const TokensListView: React.FC<{
               currentPage={currentPage}
               totalPages={rbtTotalPages}
               onPageChange={onPageChange}
-              totalItems={rbtData?.count || 0}
+              totalItems={rbtData?.count || rbtTokens.length || 0}
               itemsPerPage={itemsPerPage}
               className="mt-6"
             />
@@ -668,7 +911,7 @@ const TokensListView: React.FC<{
             <div className="space-y-3">
               {ftTokens.map((ft: any, index: number) => (
                 <motion.div
-                  key={ft.ft_name || ft.name || `ft-${index}`}
+                  key={ft.ftName || ft.ft_name || `ft-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -676,14 +919,12 @@ const TokensListView: React.FC<{
                 >
                   <div>
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">FT Name</p>
-                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{ft.ft_name || ft.name || "—"}</span>
+                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{ft.ftName || ft.ft_name || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Minted</p>
                     <span className="text-sm font-semibold text-secondary-900 dark:text-white">
-                      {typeof (ft.minted ?? ft.total_minted ?? ft.count) === "number"
-                        ? (ft.minted ?? ft.total_minted ?? ft.count).toLocaleString()
-                        : ft.minted ?? ft.total_minted ?? ft.count ?? "—"}
+                      {typeof ft.count === "number" ? ft.count.toLocaleString() : ft.count ?? "—"}
                     </span>
                   </div>
                 </motion.div>
@@ -702,20 +943,18 @@ const TokensListView: React.FC<{
                   <div className="divide-y divide-outline-200 dark:divide-outline-700">
                     {ftTokens.map((ft: any, index: number) => (
                       <motion.div
-                        key={ft.ft_name || ft.name || `ft-${index}`}
+                        key={ft.ftName || ft.ft_name || `ft-${index}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors gap-3 md:gap-4"
                       >
                         <div className="flex-1 min-w-[200px] flex items-center">
-                          <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{ft.ft_name || ft.name || "—"}</span>
+                          <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{ft.ftName || ft.ft_name || "—"}</span>
                         </div>
                         <div className="w-28 md:w-36 flex-shrink-0 flex items-center justify-end">
                           <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
-                            {typeof (ft.minted ?? ft.total_minted ?? ft.count) === "number"
-                              ? (ft.minted ?? ft.total_minted ?? ft.count).toLocaleString()
-                              : ft.minted ?? ft.total_minted ?? ft.count ?? "—"}
+                            {typeof ft.count === "number" ? ft.count.toLocaleString() : ft.count ?? "—"}
                           </span>
                         </div>
                       </motion.div>
@@ -752,9 +991,9 @@ const SCBlocksList: React.FC<{
 
   const { data, isLoading, error } = useSCTxns(paramsTxn) as any 
 
-  // Calculate total pages from API response
-  const scBlocks = data?.sc_blocks || [];
-  const totalPages = Math.ceil((data?.count || 0) / itemsPerPage);
+  // Calculate total pages from API response — handle both flat array and wrapped response
+  const scBlocks = Array.isArray(data) ? data : (data?.sc_blocks || []);
+  const totalPages = Math.ceil((data?.count || scBlocks.length || 0) / itemsPerPage);
 
 const formatAddress = (address: string, length: number = 14): string => {
   if (!address || address === "N/A") return address;
