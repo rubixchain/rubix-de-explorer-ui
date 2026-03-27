@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api, getCurrentBaseUrl, getBaseUrlForNetwork } from '@/services/api';
-import { NetworkMetrics } from '@/types';
+import { api, getBaseUrlForNetwork } from '@/services/api';
 import { useApp } from '@/contexts/AppContext';
 
 interface UseDIDsParams {
@@ -34,16 +33,31 @@ export const useDIDInfo = (did: string, page: number, limit: number) => {
     queryFn: async () => {
       const baseUrl = getBaseUrlForNetwork(state.selectedChain);
       const response = await fetch(
-        `${baseUrl}/getdidinfo?did=${did}&page=${page}&limit=${limit}`
+        `${baseUrl}/api/get-did-balance?did=${encodeURIComponent(did)}&page=${page}&limit=${limit}`
       );
-      if (!response.ok) {
-        throw new Error('Failed to fetch DID info');
-      }
-      return response.json();
+      if (!response.ok) throw new Error('Failed to fetch DID info');
+      const raw = await response.json();
+      // API returns: Array<{ did, asset_type, token_name, creator_did, token_value, balance, last_update }>
+      const entries: any[] = Array.isArray(raw) ? raw : (raw?.data ?? []);
+      const rbt  = entries.filter((e: any) => e.asset_type === 'RBT');
+      const ft   = entries.filter((e: any) => e.asset_type === 'FT');
+      const nft  = entries.filter((e: any) => e.asset_type === 'NFT');
+      const sc   = entries.filter((e: any) => e.asset_type === 'SC');
+      return {
+        did: {
+          did,
+          total_rbts: Math.max(0, rbt.reduce((s: number, e: any) => s + (e.balance || 0), 0)),
+          total_fts:  ft.reduce((s: number, e: any) => s + (e.balance || 0), 0),
+          total_nfts: nft.reduce((s: number, e: any) => s + (e.balance || 0), 0),
+          total_scs:  sc.reduce((s: number, e: any) => s + (e.balance || 0), 0),
+        },
+        entries,   // full flat list for the holdings tab
+        rbt, ft, nft, sc,
+        count: entries.length,
+      };
     },
-    enabled: !!did, // Only run if did exists
+    enabled: !!did,
     staleTime: 0,
-    // cacheTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });
@@ -63,6 +77,34 @@ export const useFTHolders = (params: { ft_name?: string; page: number; limit: nu
   });
 };
 
+// Hook for fetching SC tokens deployed/owned by a DID
+export const useSCTokensByDID = (did: string, page: number, limit: number, enabled: boolean) => {
+  const { state } = useApp();
+
+  return useQuery({
+    queryKey: ['scTokensByDID', state.selectedChain, did, page, limit],
+    queryFn: async () => {
+      const baseUrl = getBaseUrlForNetwork(state.selectedChain);
+      try {
+        const response = await fetch(
+          `${baseUrl}/api/get-sc-list?did=${encodeURIComponent(did)}&page=${page}&limit=${limit}`
+        );
+        if (!response.ok) return { tokens: [], count: 0 };
+        const data = await response.json();
+        if (Array.isArray(data)) return { tokens: data, count: data.length };
+        if (Array.isArray(data?.data)) return { tokens: data.data, count: data.count ?? data.data.length };
+        return { tokens: [], count: 0 };
+      } catch {
+        return { tokens: [], count: 0 };
+      }
+    },
+    enabled: enabled && !!did,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+};
+
 // Hook for fetching FT holdings
 export const useFTHoldings = (did: string, page: number, limit: number, enabled: boolean) => {
   const { state } = useApp();
@@ -72,7 +114,7 @@ export const useFTHoldings = (did: string, page: number, limit: number, enabled:
     queryFn: async () => {
       const baseUrl = getBaseUrlForNetwork(state.selectedChain);
       const response = await fetch(
-        `${baseUrl}/ftholdings?did=${did}&page=${page}&limit=${limit}`
+        `${baseUrl}/api/get-ft-holdings?did=${encodeURIComponent(did)}&page=${page}&limit=${limit}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch FT holdings');

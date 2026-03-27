@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { Transaction } from '@/types';
 import { useApp } from '@/contexts/AppContext';
+import { getBaseUrlForNetwork } from '@/services/api';
 
 interface UseTransactionsParams {
   page?: number;
@@ -14,7 +15,15 @@ export const useTransactionsByDID = (did: string, params?: { page?: number; limi
   const { state } = useApp();
   return useQuery({
     queryKey: ['transactionsByDID', state.selectedChain, did, params],
-    queryFn: () => api.getTransactions({ ...params, did, network: state.selectedChain }),
+    queryFn: async () => {
+      const baseUrl = getBaseUrlForNetwork(state.selectedChain);
+      const searchParams = new URLSearchParams({ did });
+      if (params?.page) searchParams.append('page', params.page.toString());
+      if (params?.limit) searchParams.append('limit', params.limit.toString());
+      const response = await fetch(`${baseUrl}/api/get-txns-by-did?${searchParams.toString()}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
     enabled: !!did,
     staleTime: 0,
     refetchOnMount: 'always',

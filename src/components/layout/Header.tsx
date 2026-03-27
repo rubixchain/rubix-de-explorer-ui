@@ -62,6 +62,8 @@ export const Header: React.FC = () => {
         navigate(`/did-explorer?did=${encodeURIComponent(query)}`);
       } else if (query.startsWith('qem')) {
         navigate(`/sc-transaction-explorer?tx=${encodeURIComponent(query)}`);
+      } else if (query.startsWith('Qm')) {
+        navigate(`/token-explorer?token=${encodeURIComponent(query)}`);
       } else {
         navigate(`/transaction-explorer?tx=${encodeURIComponent(query)}`);
       }

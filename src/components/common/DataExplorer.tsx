@@ -6,8 +6,6 @@ import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { TabSwitcher, TabType } from "./TabSwitcher";
-import { TransactionsGraph } from "@/components/charts/TransactionsGraph";
-import { RecentActivityTable } from "./RecentActivityTable";
 import {
   useSCTxns,
   useTransactions,
@@ -22,47 +20,6 @@ import { useIsMobile, useFormatAddress } from "@/hooks/useFormatAddress";
 interface DataExplorerProps {
   className?: string;
 }
-interface Quorum {
-  id: string;
-  name: string;
-  validators: number;
-  threshold: number;
-  status: "active" | "standby" | "inactive";
-  lastActivity: string;
-}
-
-const mockTransactions = [
-  {
-    id: "0x6789...0123",
-    type: "Transfer",
-    from: "0xmmmm...nnnn",
-    to: "0xoooo...pppp",
-    value: "6,200.95 RBT",
-    timestamp: "52 minutes ago",
-    status: "confirmed",
-  },
-];
-
-const mockHolders = [
-  {
-    address:
-      "0x44441234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-    tokenCount: 1,
-    percentage: "0.6%",
-    rank: 20,
-    transactions: 90,
-  },
-];
-
-const mockTokens = [
-  {
-    id: "RBT-001",
-    name: "Rubix Token",
-    symbol: "RBT",
-    valueInRBT: "1,250.50",
-    type: "RBT",
-  },
-];
 
 
 //  const TransactionsListView = () => {
@@ -122,7 +79,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 };
 
   // Fetch transactions for current page
-  const { data, isLoading, error } = useTransactions(paramsTxn) as any 
+  const { data } = useTransactions(paramsTxn) as any;
 
   useEffect(() => {
     if (data?.data?.transactions) {
@@ -351,12 +308,14 @@ const HoldersListView: React.FC<{
                   <li
                     key={`${s.ft_name}-${i}`}
                     onMouseDown={() => handleSuggestionSelect(s.ft_name, s.creator_did)}
-                    className="flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                   >
-                    <span className="font-medium text-gray-900 dark:text-white">{s.ft_name}</span>
-                    <span className="text-xs text-gray-400 font-mono truncate max-w-[120px] ml-2">
-                      {s.creator_did.slice(0, 10)}…
-                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white min-w-0 truncate flex-1">{s.ft_name}</span>
+                    <Tooltip content={s.creator_did} position="top">
+                      <span className="text-xs text-gray-400 font-mono whitespace-nowrap flex-shrink-0 cursor-default">
+                        {s.creator_did.slice(0, 8)}…{s.creator_did.slice(-6)}
+                      </span>
+                    </Tooltip>
                   </li>
                 ))}
               </ul>
@@ -596,12 +555,6 @@ const TokensListView: React.FC<{
     setShowFtSuggestions(false);
   };
 
-  const formatEpoch = (epoch: number) => {
-    if (!epoch) return "—";
-    const ts = epoch < 1e12 ? epoch * 1000 : epoch;
-    return new Date(ts).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-  };
-
   if (tokenType === "rbt" && rbtLoading && !activeRbtToken) return <div className="text-sm text-gray-500 py-4">Loading tokens...</div>;
   if (tokenType === "rbt" && rbtError && !activeRbtToken) return <div className="text-sm text-red-500 py-4">Error loading tokens</div>;
 
@@ -683,10 +636,14 @@ const TokensListView: React.FC<{
                   <li
                     key={`${s.ft_name}-${i}`}
                     onMouseDown={() => handleFtSuggestionSelect(s.ft_name, s.creator_did)}
-                    className="flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                   >
-                    <span className="font-medium text-gray-900 dark:text-white">{s.ft_name}</span>
-                    <span className="text-xs text-gray-400 font-mono truncate max-w-[120px] ml-2">{s.creator_did.slice(0, 10)}…</span>
+                    <span className="font-medium text-gray-900 dark:text-white min-w-0 truncate flex-1">{s.ft_name}</span>
+                    <Tooltip content={s.creator_did} position="top">
+                      <span className="text-xs text-gray-400 font-mono whitespace-nowrap flex-shrink-0 cursor-default">
+                        {s.creator_did.slice(0, 8)}…{s.creator_did.slice(-6)}
+                      </span>
+                    </Tooltip>
                   </li>
                 ))}
               </ul>
@@ -720,25 +677,25 @@ const TokensListView: React.FC<{
                   <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">RBT Token</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Token ID</p>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <Tooltip content={(rbtInfoData as any).token_id} position="top">
-                        <span className="text-sm font-mono font-medium text-secondary-900 dark:text-white truncate">{formatAddress((rbtInfoData as any).token_id)}</span>
+                        <span className="text-sm font-mono font-medium text-secondary-900 dark:text-white truncate block">{formatAddress((rbtInfoData as any).token_id)}</span>
                       </Tooltip>
-                      <CopyButton text={(rbtInfoData as any).token_id} size="sm" />
+                      <div className="flex-shrink-0"><CopyButton text={(rbtInfoData as any).token_id} size="sm" /></div>
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Owner</p>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <Tooltip content={(rbtInfoData as any).owner_did} position="top">
-                        <span className="text-sm font-mono text-secondary-700 dark:text-secondary-300 truncate">{formatAddress((rbtInfoData as any).owner_did)}</span>
+                        <span className="text-sm font-mono text-secondary-700 dark:text-secondary-300 truncate block">{formatAddress((rbtInfoData as any).owner_did)}</span>
                       </Tooltip>
-                      <CopyButton text={(rbtInfoData as any).owner_did} size="sm" />
+                      <div className="flex-shrink-0"><CopyButton text={(rbtInfoData as any).owner_did} size="sm" /></div>
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Value</p>
                     <span className="text-sm font-semibold text-secondary-900 dark:text-white">{(rbtInfoData as any).token_value} RBT</span>
                   </div>
@@ -768,29 +725,27 @@ const TokensListView: React.FC<{
                   <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">FT Token</span>
                   <span className="text-sm font-bold text-secondary-900 dark:text-white">{(ftInfoData as any).ft_name}</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div>
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Creator DID</p>
+                <div className="flex items-start gap-6">
+                  {/* Creator — left, full DID — hidden on mobile */}
+                  <div className="flex-1 min-w-0 hidden sm:block">
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Creator</p>
                     <div className="flex items-center gap-1.5">
-                      <Tooltip content={(ftInfoData as any).creator_did} position="top">
-                        <span className="text-sm font-mono text-secondary-700 dark:text-secondary-300 truncate">{formatAddress((ftInfoData as any).creator_did)}</span>
-                      </Tooltip>
-                      <CopyButton text={(ftInfoData as any).creator_did} size="sm" />
+                      <span className="text-sm font-mono text-secondary-700 dark:text-secondary-300 break-all">{(ftInfoData as any).creator_did}</span>
+                      <div className="flex-shrink-0"><CopyButton text={(ftInfoData as any).creator_did} size="sm" /></div>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">FT Value</p>
-                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">{(ftInfoData as any).ft_value ?? "—"}</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Total Amount</p>
-                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">
-                      {typeof (ftInfoData as any).total_amount === "number" ? (ftInfoData as any).total_amount.toLocaleString() : "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Created</p>
-                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">{formatEpoch((ftInfoData as any).created_time)}</span>
+                  {/* Stats — right, single row */}
+                  <div className="flex items-start gap-6 flex-shrink-0">
+                    <div className="text-right">
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">FT Value</p>
+                      <span className="text-sm font-semibold text-secondary-900 dark:text-white">{(ftInfoData as any).ft_value ?? "—"}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Total Amount</p>
+                      <span className="text-sm font-semibold text-secondary-900 dark:text-white">
+                        {typeof (ftInfoData as any).total_amount === "number" ? (ftInfoData as any).total_amount.toLocaleString() : "—"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </>
@@ -985,185 +940,173 @@ const SCBlocksList: React.FC<{
   currentPage: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
-  onTransactionClick: (transactionId: string) => void;
-}> = ({ currentPage, itemsPerPage, onPageChange, onTransactionClick }) => {
+}> = ({ currentPage, itemsPerPage, onPageChange }) => {
+  const navigate = useNavigate();
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
-
-  const { data, isLoading, error } = useSCTxns(paramsTxn) as any 
-
-  // Calculate total pages from API response — handle both flat array and wrapped response
-  const scBlocks = Array.isArray(data) ? data : (data?.sc_blocks || []);
-  const totalPages = Math.ceil((data?.count || scBlocks.length || 0) / itemsPerPage);
-
-const formatAddress = (address: string, length: number = 14): string => {
-  if (!address || address === "N/A") return address;
-  if (address.length <= length * 2) return address;
-  return `${address.slice(0, length)}...${address.slice(-length)}`;
-};
+  const { data, isLoading } = useSCTxns(paramsTxn) as any;
   const isMobile = useIsMobile();
+
+  // Handle both flat array and wrapped { data: [], count: N } shapes
+  const scList: any[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (data?.sc_blocks || []));
+  const totalPages = Math.ceil((data?.count || scList.length || 0) / itemsPerPage);
+
+  const fmt = (address: string, length = 14): string => {
+    if (!address || address === "N/A") return address || "—";
+    if (address.length <= length * 2) return address;
+    return `${address.slice(0, length)}...${address.slice(-length)}`;
+  };
+
+  if (isLoading) return (
+    <div className="animate-pulse space-y-3">
+      {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-gray-200 dark:bg-gray-700 rounded" />)}
+    </div>
+  );
+
+  if (!scList.length) return (
+    <p className="text-sm text-secondary-500 dark:text-secondary-400 py-4">No smart contracts found.</p>
+  );
+
   return (
     <div className="w-full">
-      {/* Mobile: vertical card list */}
       {isMobile ? (
         <div className="space-y-3">
-          {scBlocks.map((tx: any, index: any) => (
+          {scList.map((sc: any, index: number) => (
             <motion.div
-              key={tx.block_id}
+              key={sc.token_id || index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              onClick={() => onTransactionClick(tx.block_id)}
+              onClick={() => navigate(`/sc-token-explorer?token=${encodeURIComponent(sc.token_id)}`)}
               className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
             >
-              <div>
-                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Block ID</p>
-                <div className="flex items-center gap-1.5">
-                  <Tooltip content={tx.block_id} position="top">
-                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(tx.block_id)}</span>
-                  </Tooltip>
-                </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Token ID</p>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${sc.token_status === 1 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"}`}>
+                  {sc.token_status === 1 ? "Active" : "Inactive"}
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Contract ID</p>
-                <div className="flex items-center gap-1.5">
-                  <Tooltip content={tx.contract_id} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.contract_id)}</span>
-                  </Tooltip>
-                  <CopyButton text={tx.contract_id} size="sm" />
-                </div>
+              <div className="flex items-center gap-1.5">
+                <Tooltip content={sc.token_id} position="top">
+                  <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{fmt(sc.token_id)}</span>
+                </Tooltip>
+                <CopyButton text={sc.token_id} size="sm" />
               </div>
               <div>
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Deployer</p>
                 <div className="flex items-center gap-1.5">
-                  <Tooltip content={tx.owner_did} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{tx.owner_did && tx.owner_did !== "N/A" ? formatAddress(tx.owner_did) : "N/A"}</span>
+                  <Tooltip content={sc.deployer} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.deployer}`); }}>
+                      {fmt(sc.deployer)}
+                    </span>
                   </Tooltip>
-                  {tx.owner_did && tx.owner_did !== "N/A" && <CopyButton text={tx.owner_did} size="sm" />}
+                  {sc.deployer && <CopyButton text={sc.deployer} size="sm" />}
                 </div>
               </div>
               <div>
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Executor</p>
                 <div className="flex items-center gap-1.5">
-                  <Tooltip content={tx.executor_did} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{tx.executor_did && tx.executor_did !== "N/A" ? formatAddress(tx.executor_did) : "N/A"}</span>
+                  <Tooltip content={sc.did} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.did}`); }}>
+                      {fmt(sc.did)}
+                    </span>
                   </Tooltip>
-                  {tx.executor_did && tx.executor_did !== "N/A" && <CopyButton text={tx.executor_did} size="sm" />}
+                  {sc.did && <CopyButton text={sc.did} size="sm" />}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Latest Txn</p>
+                <div className="flex items-center gap-1.5">
+                  <Tooltip content={sc.transaction_id} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/transaction-explorer?tx=${sc.transaction_id}`); }}>
+                      {fmt(sc.transaction_id)}
+                    </span>
+                  </Tooltip>
+                  {sc.transaction_id && <CopyButton text={sc.transaction_id} size="sm" />}
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
       ) : (
-      <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
-        {/* Desktop table */}
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full">
-            {/* Table Header */}
-            <div className="border-b border-outline-200 dark:border-outline-700">
-              <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
-                <div className="flex-1 min-w-[200px]">Block Id</div>
-                <div className="flex-1 min-w-[200px]">Contract Id</div>
-                <div className="flex-1 min-w-[200px]">Deployer</div>
-                <div className="flex-1 min-w-[200px]">Executor</div>
-              </div>
-            </div>
-
-            {/* Table Body */}
-            <div className="divide-y divide-outline-200 dark:divide-outline-700">
-              {scBlocks.map((tx: any, index: any) => (
-                <motion.div
-                  key={tx.block_id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => onTransactionClick(tx.block_id)}
-                  className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
-                >
-                  {/* Serial Number Column */}
-                  {/* <div className="w-16 md:w-20 flex-shrink-0 flex items-center">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary-600 dark:text-primary-400 text-xs font-semibold">
-                        {(currentPage - 1) * itemsPerPage + index + 1}
-                      </span>
-                    </div>
-                  </div> */}
-
-                  {/* Block Id Column - Flexible */}
-                  <div className="flex-1 min-w-[200px] flex items-center">
-                    <Tooltip content={tx.block_id} position="top">
-                      <div className="text-sm font-medium text-secondary-900 dark:text-white cursor-pointer truncate">
-                        {formatAddress(tx.block_id)}
-                      </div>
-                    </Tooltip>
-                  </div>
-
-                  {/* Contract Id Column - Flexible */}
-                  <div className="flex-1 min-w-[200px] flex items-center">
-                    <div className="flex items-center gap-1.5 w-full min-w-0">
-                      <Tooltip content={tx.contract_id} position="top">
-                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                          {formatAddress(tx.contract_id)}
-                        </span>
-                      </Tooltip>
-                      <div className="flex-shrink-0">
-                        <CopyButton text={tx.contract_id} size="sm" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Deployer Column - Flexible */}
-                  <div className="flex-1 min-w-[200px] flex items-center">
-                    {tx.owner_did && tx.owner_did !== "N/A" ? (
-                      <div className="flex items-center gap-1.5 w-full min-w-0">
-                        <Tooltip content={tx.owner_did} position="top">
-                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                            {formatAddress(tx.owner_did)}
-                          </span>
-                        </Tooltip>
-                        <div className="flex-shrink-0">
-                          <CopyButton text={tx.owner_did} size="sm" />
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400">
-                        N/A
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Executor Column - Flexible */}
-                  <div className="flex-1 min-w-[200px] flex items-center">
-                    {tx.executor_did && tx.executor_did !== "N/A" ? (
-                      <div className="flex items-center gap-1.5 w-full min-w-0">
-                        <Tooltip content={tx.executor_did} position="top">
-                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer truncate">
-                            {formatAddress(tx.executor_did)}
-                          </span>
-                        </Tooltip>
-                        <div className="flex-shrink-0">
-                          <CopyButton text={tx.executor_did} size="sm" />
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400">
-                        N/A
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+        <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+          {/* Header */}
+          <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
+            <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-4">
+              <div className="flex-1 min-w-0">Token ID</div>
+              <div className="flex-1 min-w-0">Deployer</div>
+              <div className="flex-1 min-w-0">Executor</div>
+              <div className="flex-1 min-w-0">Latest Txn</div>
+              <div className="w-20 flex-shrink-0">Status</div>
             </div>
           </div>
+          {/* Rows */}
+          <div className="divide-y divide-outline-200 dark:divide-outline-700">
+            {scList.map((sc: any, index: number) => (
+              <motion.div
+                key={sc.token_id || index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => navigate(`/sc-token-explorer?token=${encodeURIComponent(sc.token_id)}`)}
+                className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-4"
+              >
+                {/* Token ID */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Tooltip content={sc.token_id} position="top">
+                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate block">{fmt(sc.token_id)}</span>
+                  </Tooltip>
+                  <div className="flex-shrink-0"><CopyButton text={sc.token_id} size="sm" /></div>
+                </div>
+                {/* Deployer */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Tooltip content={sc.deployer} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.deployer}`); }}>
+                      {fmt(sc.deployer)}
+                    </span>
+                  </Tooltip>
+                  {sc.deployer && <div className="flex-shrink-0"><CopyButton text={sc.deployer} size="sm" /></div>}
+                </div>
+                {/* Owner */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Tooltip content={sc.did} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.did}`); }}>
+                      {fmt(sc.did)}
+                    </span>
+                  </Tooltip>
+                  {sc.did && <div className="flex-shrink-0"><CopyButton text={sc.did} size="sm" /></div>}
+                </div>
+                {/* Latest Txn */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Tooltip content={sc.transaction_id} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/transaction-explorer?tx=${sc.transaction_id}`); }}>
+                      {fmt(sc.transaction_id)}
+                    </span>
+                  </Tooltip>
+                  {sc.transaction_id && <div className="flex-shrink-0"><CopyButton text={sc.transaction_id} size="sm" /></div>}
+                </div>
+                {/* Status */}
+                <div className="w-20 flex-shrink-0 flex items-center">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${sc.token_status === 1 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"}`}>
+                    {sc.token_status === 1 ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
       )}
 
-      {/* Pagination */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={onPageChange}
-        totalItems={data?.count || 0}
+        totalItems={data?.count || scList.length}
         itemsPerPage={itemsPerPage}
         className="mt-6"
       />
@@ -1181,21 +1124,7 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>(
     () => (sessionStorage.getItem("dataExplorerTab") as TabType) || "transactions"
   );
-  const isMobile = useIsMobile();
 
-
-const formatAddress = (
-  address: string,
-  desktopLength = 20,
-  mobileLength = 8
-): string => {
-  if (!address || address === "N/A") return address;
-
-  const length = isMobile ? mobileLength : desktopLength;
-  if (address.length <= length * 2) return address;
-
-  return `${address.slice(0, length)}...${address.slice(-length)}`;
-};
 
 
 
@@ -1210,13 +1139,6 @@ const formatAddress = (
 
   const handleTransactionClick = (transactionId: string) => {
     navigate(`/transaction-explorer?tx=${encodeURIComponent(transactionId)}`);
-  };
-
-  //have to create another route for this
-  const handleSCTransactionClick = (transactionId: string) => {
-    navigate(
-      `/sc-transaction-explorer?tx=${encodeURIComponent(transactionId)}`
-    );
   };
 
   const handleHolderClick = (holderAddress: string) => {
@@ -1285,7 +1207,6 @@ const formatAddress = (
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
-            onTransactionClick={handleSCTransactionClick} // need to add the page for the burnt block and sc block
           />
         );
       default:

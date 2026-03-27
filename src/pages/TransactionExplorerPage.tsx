@@ -9,7 +9,6 @@ import {
   Clock,
   XCircle,
   Hash,
-  User,
   DollarSign,
   Lock,
 } from "lucide-react";
@@ -26,7 +25,7 @@ export const TransactionExplorerPage: React.FC = () => {
 
   const [txData, setTxData] = useState<any>(null);
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"details" | "validators" | "committed">(
+  const [activeTab, setActiveTab] = useState<"details" | "committed">(
     "details"
   );
   const [activeAssetTab, setActiveAssetTab] = useState<"rbt" | "ft" | "nft" | "sc">("rbt");
@@ -49,16 +48,17 @@ export const TransactionExplorerPage: React.FC = () => {
 const isMobile = useIsMobile();
 
 const formatAddress = (
-  address: string,
+  address: any,
   desktopLength = 50,
   mobileLength = 8
 ): string => {
-  if (!address || address === "N/A") return address;
+  const addr = typeof address === "string" ? address : String(address ?? "");
+  if (!addr || addr === "N/A") return addr;
 
   const length = isMobile ? mobileLength : desktopLength;
-  if (address.length <= length * 2) return address;
+  if (addr.length <= length * 2) return addr;
 
-  return `${address.slice(0, length)}...${address.slice(-length)}`;
+  return `${addr.slice(0, length)}...${addr.slice(-length)}`;
 };
 
   // Transform data when rawData changes - same pattern as HomePage
@@ -67,17 +67,43 @@ const formatAddress = (
 
     
     const data : any  = rawData;
-    // Handle tokens as an object, using only keys
-    const tokenIds =
-      data.tokens && typeof data.tokens === "object"
-        ? Object.keys(data.tokens)
-        : [];
+    // New API: tokens = { "rbt": ["id1","id2"], "ft": ["id3"] }  (values are arrays)
+    // Old API: tokens = { "tokenId": { TTTokenTypeKey, TTBlockNumberKey, ... } } (values are objects)
+    // Build a flat list of { tokenId, category } from whichever shape we get
+    interface TokenEntry { tokenId: string; category: string; tokenData: any }
+    const tokenEntries: TokenEntry[] = [];
+
+    if (data.tokens && typeof data.tokens === "object" && !Array.isArray(data.tokens)) {
+      for (const [key, value] of Object.entries(data.tokens as Record<string, any>)) {
+        console.log("Processing token entry:", { key, value });
+        if (Array.isArray(value)) {
+          // New format: key is the category, value is array of token objects or strings
+          const cat = key.toLowerCase();
+          for (const id of value) {
+            if (id == null) continue;
+            const tokenId = typeof id === "string" ? id : (id.tokenId || id.token_id || String(id));
+            const tokenData = typeof id === "object" ? id : null;
+            tokenEntries.push({ tokenId, category: cat, tokenData });
+            console.log("Added token entry:", { tokenId, category: cat, tokenData });
+          }
+        } else {
+          // Old format: key is the token ID, value is token metadata object
+          tokenEntries.push({ tokenId: String(key), category: "", tokenData: value });
+        }
+      }
+    } else if (Array.isArray(data.tokens)) {
+      // Fallback: plain string array
+      for (const id of data.tokens) {
+        if (id != null) tokenEntries.push({ tokenId: String(id), category: "", tokenData: null });
+      }
+    }
+
 
     const rawStatus = (data.status || "").toString().toLowerCase();
     const status = rawStatus === "failed" || rawStatus === "false" || rawStatus === "0"
       ? "failed"
       : "success";
-
+      console.log("Raw data:", tokenEntries, data);
     const formattedTxData = {
       id: data.transaction_id || data.txn_id || "N/A",
       status,
@@ -88,45 +114,48 @@ const formatAddress = (
       blockId: data.transaction_id || data.block_hash || "N/A",
       from: data.initiator || data.sender_did || "N/A",
       to: data.owner || data.receiver_did || "N/A",
-      tokens: data.tokens
-        ? Object.entries(data.tokens).map(
-            ([tokenId, tokenData]: [string, any]) => ({
-              tokenId,
-              type: tokenData?.TTTokenTypeKey,
-              blockNumber: tokenData?.TTBlockNumberKey,
-              previousBlockId: tokenData?.TTPreviousBlockIDKey,
-            })
-          )
-        : [],
-      validators: data.quorums
-        ? (Array.isArray(data.quorums) ? data.quorums : Object.keys(data.quorums)).map((did: string) => ({ did }))
-        : data.validator_pledge_map
-        ? Object.keys(data.validator_pledge_map).map((did) => ({ did }))
-        : [],
+      tokens: tokenEntries.map(({ tokenId, tokenData }) => ({
+        tokenId,
+        type: tokenData?.TTTokenTypeKey,
+        blockNumber: tokenData?.TTBlockNumberKey,
+        previousBlockId: tokenData?.TTPreviousBlockIDKey,
+      })),
+      validators: (() => {
+        const raw = data.quorums || data.validator_pledge_map;
+        if (!raw) return [];
+        const items: any[] = Array.isArray(raw) ? raw : Object.keys(raw);
+        return items.map((q: any) => ({
+          did: typeof q === "string" ? q : (q?.did || q?.DID || String(q)),
+        }));
+      })(),
     };
 
     // Determine category for a token based on type value and tokenId pattern
-    const getTokenCategory = (tokenId: string, type: any): "rbt" | "ft" | "nft" | "sc" => {
+    const getTokenCategory = (tokenId: any, type: any): "rbt" | "ft" | "nft" | "sc" => {
+      const id = String(tokenId || "");
       const typeStr = String(type || "").toLowerCase();
       if (typeStr === "ft" || typeStr === "3") return "ft";
       if (typeStr === "nft" || typeStr === "4") return "nft";
       if (typeStr === "sc" || typeStr === "5") return "sc";
       // Fall back to pattern matching on tokenId
-      if (tokenId.includes("_")) return "ft";
-      if (tokenId.startsWith("qem")) return "sc";
+      if (id.includes("_")) return "ft";
+      if (id.startsWith("qem")) return "sc";
       return "rbt";
     };
 
     // Map token IDs to tokenTransfers structure with category
     const formattedTokenTransfers =
-      tokenIds.length > 0
-        ? tokenIds.map((tokenId: string, index: number) => {
-            const tokenData = data.tokens?.[tokenId];
-            const category = getTokenCategory(tokenId, tokenData?.TTTokenTypeKey);
+      tokenEntries.length > 0
+        ? tokenEntries.map(({ tokenId: rawTokenId, category: rawCategory, tokenData }, index: number) => {
+            const tokenId = String(rawTokenId || "");
+            // Use pre-resolved category from the object key, fall back to pattern matching
+            const category = rawCategory
+            console.log("category resolved for token:", { tokenId, rawCategory, tokenData, category });
             // For FTs: parse name and creator from tokenId (format: creatorDID_ftName)
             const underscoreIdx = tokenId.lastIndexOf("_");
-            const ftName = underscoreIdx !== -1 ? tokenId.slice(underscoreIdx + 1) : tokenId;
-            const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(0, underscoreIdx) : (data.initiator || data.sender_did || "N/A");
+            const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(underscoreIdx + 1) : tokenId;
+            const ftName = underscoreIdx !== -1 ? tokenId.slice(0, underscoreIdx) : (data.initiator || data.sender_did || "N/A");
+            console.log("return token transfer entry:", { tokenId, category, ftName, ftCreatorDid, tokenData });
             return {
               id: `transfer-${index + 1}`,
               tokenId,
@@ -135,7 +164,8 @@ const formatAddress = (
               to: data.owner || data.receiver_did || "N/A",
               amount: data.amount ? data.amount.toString() : "N/A",
               status: "confirmed",
-              blockNumber: tokenData?.TTBlockNumberKey ?? "N/A",
+              blockNumber: tokenData?.TTBlockNumberKey ?? tokenData?.previousTransactionID ?? "N/A",
+              previousTransactionID: tokenData?.previousTransactionID || null,
               ftName,
               ftCreatorDid,
             };
@@ -167,18 +197,21 @@ const formatAddress = (
     // Auto-select first non-empty asset tab
     const allTabs = ["rbt", "ft", "nft", "sc"] as const;
     const firstNonEmpty = allTabs.find((tab) => {
-      const getCategory = (tokenId: string, type: any): string => {
+      const getCategory = (tokenId: any, type: any): string => {
+        const id = String(tokenId || "");
         const typeStr = String(type || "").toLowerCase();
         if (typeStr === "ft" || typeStr === "3") return "ft";
         if (typeStr === "nft" || typeStr === "4") return "nft";
         if (typeStr === "sc" || typeStr === "5") return "sc";
-        if (tokenId.includes("_")) return "ft";
-        if (tokenId.startsWith("qem")) return "sc";
+        if (id.includes("_")) return "ft";
+        if (id.startsWith("qem")) return "sc";
         return "rbt";
       };
-      const count = tokenIds.filter((id: string) => {
-        const tokenData = data.tokens?.[id];
-        return getCategory(id, tokenData?.TTTokenTypeKey) === tab;
+      const count = tokenEntries.filter(({ tokenId, category: rawCategory, tokenData }) => {
+        const resolved = rawCategory
+          ? getCategory(tokenId, rawCategory)
+          : getCategory(tokenId, tokenData?.TTTokenTypeKey);
+        return resolved === tab;
       }).length;
       return count > 0;
     });
@@ -326,28 +359,6 @@ const formatAddress = (
             )}
           </button>
           <button
-            onClick={() => setActiveTab("validators")}
-            className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-              activeTab === "validators"
-                ? "text-primary-600 dark:text-primary-400"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
-          >
-            <User className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Validator Information</span>
-              <span className="sm:hidden">Validators</span>
-            </span>
-            {activeTab === "validators" && (
-              <motion.div
-                layoutId="activeTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400"
-                initial={false}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-            )}
-          </button>
-          <button
             onClick={() => setActiveTab("committed")}
             className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
               activeTab === "committed"
@@ -420,13 +431,13 @@ const formatAddress = (
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Initiator:</p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 min-w-0">
                     <Tooltip content={txData.to} position="top">
                       <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer"
+                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate hover:text-primary-700 dark:hover:text-primary-300"
                         onClick={() => navigate(`/did-explorer?did=${txData.to}`)}
                       >
-                        {formatAddress(txData.to)}
+                        {formatAddress(txData.to, 16, 8)}
                       </p>
                     </Tooltip>
                     <CopyButton text={txData.to} size="sm" />
@@ -434,13 +445,13 @@ const formatAddress = (
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">Owner:</p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 min-w-0">
                     <Tooltip content={txData.from} position="top">
                       <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer"
+                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate hover:text-primary-700 dark:hover:text-primary-300"
                         onClick={() => navigate(`/did-explorer?did=${txData.from}`)}
                       >
-                        {formatAddress(txData.from)}
+                        {formatAddress(txData.from, 16, 8)}
                       </p>
                     </Tooltip>
                     <CopyButton text={txData.from} size="sm" />
@@ -449,49 +460,6 @@ const formatAddress = (
               </div>
             </div>
           )}
-{activeTab === "validators" && (
-  <div className="space-y-3">
-    {txData.validators && txData.validators.length > 0 ? (
-      txData.validators.map((validator: any, index: number) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className="p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
-        >
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-              <span className="text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-bold">
-                {index + 1}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden sm:inline">
-                Validator DID:
-              </p>
-              <Tooltip content={validator.did} position="top">
-                <p
-                  className="font-mono text-xs sm:text-sm text-primary-600 dark:text-primary-400 truncate flex-1 cursor-pointer"
-                  onClick={() => navigate(`/did-explorer?did=${validator.did}`)}
-                >
-                  {formatAddress(validator.did)}
-                </p>
-              </Tooltip>
-              <div className="flex-shrink-0">
-                <CopyButton text={validator.did} size="sm" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      ))
-    ) : (
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        No validators found for this transaction.
-      </p>
-    )}
-  </div>
-)}
 {activeTab === "committed" && (
   committedTokens.length === 0 ? (
     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -504,7 +472,7 @@ const formatAddress = (
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
             <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
-            <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Owner DID</th>
+            {/* <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Owner DID</th> */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -534,7 +502,7 @@ const formatAddress = (
                   <CopyButton text={ct.tokenId} size="sm" />
                 </div>
               </td>
-              <td className="py-3">
+              {/* <td className="py-3">
                 <div className="flex items-center gap-1.5">
                   <Tooltip content={ct.ownerDid} position="top">
                     <span
@@ -546,7 +514,7 @@ const formatAddress = (
                   </Tooltip>
                   <CopyButton text={ct.ownerDid} size="sm" />
                 </div>
-              </td>
+              </td> */}
             </motion.tr>
           ))}
         </tbody>
@@ -643,7 +611,8 @@ const formatAddress = (
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
                         <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">RBT ID</th>
-                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
+                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
+                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -659,8 +628,8 @@ const formatAddress = (
                             <div className="flex items-center gap-1.5">
                               <Tooltip content={transfer.tokenId} position="top">
                                 <span
-                                  className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer"
-                                  onClick={() => navigate(`/token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                                  className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
+                                  onClick={() => navigate(`/rbt-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
                                 >
                                   {formatAddress(transfer.tokenId)}
                                 </span>
@@ -668,10 +637,27 @@ const formatAddress = (
                               <CopyButton text={transfer.tokenId} size="sm" />
                             </div>
                           </td>
-                          <td className="py-3">
+                          <td className="py-3 pr-4">
                             <span className="font-medium text-gray-900 dark:text-white text-xs">
                               1 RBT
                             </span>
+                          </td>
+                          <td className="py-3">
+                            {transfer.previousTransactionID ? (
+                              <div className="flex items-center gap-1.5">
+                                <Tooltip content={transfer.previousTransactionID} position="top">
+                                  <span
+                                    className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                    onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                  >
+                                    {formatAddress(transfer.previousTransactionID)}
+                                  </span>
+                                </Tooltip>
+                                <CopyButton text={transfer.previousTransactionID} size="sm" />
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                            )}
                           </td>
                         </motion.tr>
                       ))}
@@ -688,9 +674,9 @@ const formatAddress = (
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">FT Name</th>
+                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">FT ID</th>
                         <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Creator</th>
-                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -704,8 +690,8 @@ const formatAddress = (
                         >
                           <td className="py-3 pr-4">
                             <span
-                              className="font-medium text-primary-600 dark:text-primary-400 cursor-pointer hover:underline text-xs"
-                              onClick={() => navigate(`/token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                              className="font-medium text-gray-900 dark:text-white cursor-pointer hover:underline text-xs"
+                              onClick={() => navigate(`/ft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
                             >
                               {transfer.ftName}
                             </span>
@@ -714,7 +700,7 @@ const formatAddress = (
                             <div className="flex items-center gap-1.5">
                               <Tooltip content={transfer.ftCreatorDid} position="top">
                                 <span
-                                  className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer"
+                                  className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
                                   onClick={() => navigate(`/did-explorer?did=${encodeURIComponent(transfer.ftCreatorDid)}`)}
                                 >
                                   {formatAddress(transfer.ftCreatorDid)}
@@ -724,9 +710,21 @@ const formatAddress = (
                             </div>
                           </td>
                           <td className="py-3">
-                            <span className="font-medium text-gray-900 dark:text-white text-xs">
-                              {transfer.amount}
-                            </span>
+                            {transfer.previousTransactionID ? (
+                              <div className="flex items-center gap-1.5">
+                                <Tooltip content={transfer.previousTransactionID} position="top">
+                                  <span
+                                    className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                    onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                  >
+                                    {formatAddress(transfer.previousTransactionID)}
+                                  </span>
+                                </Tooltip>
+                                <CopyButton text={transfer.previousTransactionID} size="sm" />
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                            )}
                           </td>
                         </motion.tr>
                       ))}
@@ -738,32 +736,61 @@ const formatAddress = (
 
             // NFT / SC tab: generic token ID list
             return (
-              <div className="space-y-3">
-                {filtered.map((transfer: any, index: number) => (
-                  <motion.div
-                    key={transfer.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() =>
-                      activeAssetTab === "sc"
-                        ? navigate(`/sc-transaction-explorer?tx=${encodeURIComponent(transfer.tokenId)}`)
-                        : navigate(`/token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)
-                    }
-                    className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Tooltip content={transfer.tokenId} position="top">
-                        <span className="text-sm font-medium font-mono text-gray-900 dark:text-white cursor-pointer truncate">
-                          {formatAddress(transfer.tokenId)}
-                        </span>
-                      </Tooltip>
-                      <div className="flex-shrink-0">
-                        <CopyButton text={transfer.tokenId} size="sm" />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
+                      <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {filtered.map((transfer: any, index: number) => (
+                      <motion.tr
+                        key={transfer.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.04 }}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                      >
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-1.5">
+                            <Tooltip content={transfer.tokenId} position="top">
+                              <span
+                                className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
+                                onClick={() =>
+                                  activeAssetTab === "sc"
+                                    ? navigate(`/sc-token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)
+                                    : navigate(`/nft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)
+                                }
+                              >
+                                {formatAddress(transfer.tokenId)}
+                              </span>
+                            </Tooltip>
+                            <CopyButton text={transfer.tokenId} size="sm" />
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          {transfer.previousTransactionID ? (
+                            <div className="flex items-center gap-1.5">
+                              <Tooltip content={transfer.previousTransactionID} position="top">
+                                <span
+                                  className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                  onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                >
+                                  {formatAddress(transfer.previousTransactionID)}
+                                </span>
+                              </Tooltip>
+                              <CopyButton text={transfer.previousTransactionID} size="sm" />
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                          )}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             );
           })()}

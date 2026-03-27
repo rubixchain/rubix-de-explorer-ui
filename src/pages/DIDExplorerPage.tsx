@@ -34,27 +34,50 @@ export const DIDExplorerPage: React.FC = () => {
 
   const isMobile = useIsMobile();
 
-  const [activeTab, setActiveTab] = useState<"holdings" | "ftholdings" | "transactions">(
-    "holdings"
+  const [activeTab, setActiveTab] = useState<"ftholdings" | "transactions">(
+    "ftholdings"
   );
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: didData, isLoading: isLoadingDID, error: didError } =
+  const { data: didData, error: didError } =
     useDIDInfo(did, currentPage, itemsPerPage) as any;
 
   const { data: ftData, isLoading: isLoadingFT, error: ftError } =
-    useFTHoldings(
-      did,
-      currentPage,
-      itemsPerPage,
-      activeTab === "ftholdings"
-    ) as any;
+    useFTHoldings(did, currentPage, itemsPerPage, activeTab === "ftholdings") as any;
 
-  const { data: txnData, isLoading: isLoadingTxn } =
+const { data: txnData, isLoading: isLoadingTxn } =
     useTransactionsByDID(did, { page: currentPage, limit: itemsPerPage }) as any;
 
-  const loading = activeTab === "holdings" ? isLoadingDID : activeTab === "ftholdings" ? isLoadingFT : false;
+  const relativeTime = (epoch: number): string => {
+    const diffSec = Math.floor(Date.now() / 1000) - epoch;
+    if (diffSec < 60) return "just now";
+    if (diffSec < 3600) { const m = Math.floor(diffSec / 60); return `${m} ${m === 1 ? "minute" : "minutes"} ago`; }
+    if (diffSec < 86400) { const h = Math.floor(diffSec / 3600); return `${h} ${h === 1 ? "hour" : "hours"} ago`; }
+    if (diffSec < 2592000) { const d = Math.floor(diffSec / 86400); return `${d} ${d === 1 ? "day" : "days"} ago`; }
+    if (diffSec < 31536000) { const mo = Math.floor(diffSec / 2592000); return `${mo} ${mo === 1 ? "month" : "months"} ago`; }
+    const y = Math.floor(diffSec / 31536000); return `${y} ${y === 1 ? "year" : "years"} ago`;
+  };
+
+  // Normalize new /api/get-txns-by-did response → shape expected by the UI
+  const rawTxns: any[] = Array.isArray(txnData) ? txnData : (txnData?.data ?? []);
+  const transactions = rawTxns.map((tx: any) => {
+    const count = [
+      ...(tx.tokens?.rbt ?? []),
+      ...(tx.tokens?.ft ?? []),
+      ...(tx.tokens?.nft ?? []),
+      ...(tx.tokens?.smartContract ?? []),
+    ].length;
+    return {
+      id: tx.transaction_id,
+      from: tx.initiator,
+      to: tx.owner,
+      timestamp: tx.epoch ? relativeTime(tx.epoch) : tx.created_at ?? "—",
+      value: `${count} ${count === 1 ? "token" : "tokens"}`,
+    };
+  });
+
+  const loading = activeTab === "ftholdings" ? isLoadingFT : false;
 
   /* -----------------------------------------
      Helper: Responsive Address Formatter
@@ -92,7 +115,7 @@ export const DIDExplorerPage: React.FC = () => {
   /* -----------------------------------------
      Error State
   ------------------------------------------ */
-  if (didError || ftError || !didData) {
+  if (didError || !didData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -109,13 +132,9 @@ export const DIDExplorerPage: React.FC = () => {
   }
 
   const totalPages =
-    activeTab === "holdings"
-      ? Math.ceil((didData?.count || 0) / itemsPerPage)
-      : activeTab === "ftholdings"
-      ? Math.ceil((ftData?.length || 0) / itemsPerPage)
-      : Math.ceil((txnData?.data?.count || 0) / itemsPerPage);
-
-  const transactions = txnData?.data?.transactions || [];
+    activeTab === "ftholdings"
+      ? Math.ceil((didData?.ft?.length || 0) / itemsPerPage)
+      : Math.ceil((rawTxns.length === itemsPerPage ? currentPage * itemsPerPage + 1 : rawTxns.length + (currentPage - 1) * itemsPerPage) / itemsPerPage);
 
   return (
     <motion.div
@@ -145,15 +164,16 @@ export const DIDExplorerPage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          ["Total RBTs", didData.did.total_rbts],
-          ["Total FTs", didData.did.total_fts],
-          ["Total NFTs", didData.did.total_nfts],
+          ["RBT Balance", didData.did.total_rbts],
+          ["FT Balance",  didData.did.total_fts],
+          ["NFTs",        didData.did.total_nfts],
+          ["SC Deployed",   didData.did.total_scs],
         ].map(([label, value]) => (
           <Card key={label} className="p-4">
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <p className="text-xl font-bold">{value}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+            <p className="text-xl font-bold text-heading dark:text-white">{value ?? 0}</p>
           </Card>
         ))}
       </div>
@@ -162,23 +182,22 @@ export const DIDExplorerPage: React.FC = () => {
       <Card className="p-4">
         {/* Tab Nav */}
         <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
-          {(["holdings", "ftholdings", "transactions"] as const).map((tab) => (
+          {([
+            { key: "ftholdings",   label: "FT Holdings",    icon: <Coins className="w-4 h-4" /> },
+            { key: "transactions", label: "Transactions",   icon: <ArrowRightLeft className="w-4 h-4" /> },
+          ] as const).map(({ key, label, icon }) => (
             <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
+              key={key}
+              onClick={() => { setActiveTab(key); setCurrentPage(1); }}
               className={`relative flex items-center gap-1.5 pb-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab
+                activeTab === key
                   ? "text-primary-600 dark:text-primary-400"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              {tab === "transactions" ? (
-                <ArrowRightLeft className="w-4 h-4" />
-              ) : (
-                <Coins className="w-4 h-4" />
-              )}
-              {tab === "holdings" ? "Token Holdings" : tab === "ftholdings" ? "FT Holdings" : "Transactions"}
-              {activeTab === tab && (
+              {icon}
+              {label}
+              {activeTab === key && (
                 <motion.div
                   layoutId="didActiveTab"
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400"
@@ -190,40 +209,36 @@ export const DIDExplorerPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Holdings tab */}
-        {activeTab !== "transactions" && (
+        {/* FT Holdings tab */}
+        {activeTab === "ftholdings" && (
           <>
-            {(activeTab === "holdings" ? didData.rbts : ftData)?.map((item: any) => {
-              const id = item.rbt_id || item.ft_id;
-              return (
-                <div
-                  key={id}
-                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 mb-2"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Tooltip content={id}>
-                      <p
-                        className="truncate text-sm font-mono cursor-pointer hover:text-primary-600"
-                        onClick={() => navigate(`/token-explorer?token=${id}`)}
-                      >
-                        {formatAddress(id)}
-                      </p>
-                    </Tooltip>
-                    <CopyButton text={id} size="sm" />
+            {(!didData.ft || didData.ft.length === 0) ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-4">No FT holdings found.</p>
+            ) : (
+              <div className="space-y-2">
+                {didData.ft.map((entry: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 flex-shrink-0">FT</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{entry.token_name || "—"}</span>
+                      {entry.creator_did && (
+                        <Tooltip content={entry.creator_did}>
+                          <span
+                            className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate cursor-pointer hover:text-primary-600 hidden sm:block"
+                            onClick={() => navigate(`/did-explorer?did=${entry.creator_did}`)}
+                          >
+                            {formatAddress(entry.creator_did, 12, 6)}
+                          </span>
+                        </Tooltip>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap flex-shrink-0">
+                      {entry.balance ?? 0}
+                    </span>
                   </div>
-                  <p className="font-semibold text-sm whitespace-nowrap">
-                    {item.token_value || 0} {item.rbt_id ? "RBT" : "FT"}
-                  </p>
-                </div>
-              );
-            })}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={activeTab === "holdings" ? didData?.count || 0 : ftData?.length || 0}
-              itemsPerPage={itemsPerPage}
-            />
+                ))}
+              </div>
+            )}
           </>
         )}
 
@@ -345,7 +360,7 @@ export const DIDExplorerPage: React.FC = () => {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
-              totalItems={txnData?.data?.count || 0}
+              totalItems={rawTxns.length + (currentPage - 1) * itemsPerPage}
               itemsPerPage={itemsPerPage}
               className="mt-6"
             />

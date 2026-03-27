@@ -130,10 +130,19 @@ export const TokenExplorerPage: React.FC = () => {
   const loading = isLoadingToken;
   const error = tokenError;
 
-  // Helper function to format long addresses
-
   // Store processed token data
   const tokenData : any  = rawTokenData;
+  const d: any = tokenData?.data ?? tokenData;
+
+  // Redirect to the appropriate dedicated explorer page based on token_type
+  const tokenType = d?.token_type;
+  useEffect(() => {
+    if (!tokenId || isLoadingToken || !d) return;
+    if (tokenType === 1) navigate(`/rbt-explorer?token=${encodeURIComponent(tokenId)}`, { replace: true });
+    else if (tokenType === 2) navigate(`/ft-explorer?token=${encodeURIComponent(tokenId)}`, { replace: true });
+    else if (tokenType === 3) navigate(`/nft-explorer?token=${encodeURIComponent(tokenId)}`, { replace: true });
+    else if (tokenType === 4) navigate(`/sc-token-explorer?token=${encodeURIComponent(tokenId)}`, { replace: true });
+  }, [tokenType, tokenId, isLoadingToken, d]);
 
   function getTransactionTypeLabel(type: string): string {
   switch (type) {

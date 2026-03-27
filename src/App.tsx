@@ -7,6 +7,10 @@ import { HomePage } from '@/pages/HomePage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { DIDExplorerPage } from '@/pages/DIDExplorerPage';
 import { TokenExplorerPage } from '@/pages/TokenExplorerPage';
+import { RBTExplorerPage } from '@/pages/RBTExplorerPage';
+import { FTExplorerPage } from '@/pages/FTExplorerPage';
+import { NFTExplorerPage } from '@/pages/NFTExplorerPage';
+import { SCTokenExplorerPage } from '@/pages/SCTokenExplorerPage';
 import { TransactionExplorerPage } from '@/pages/TransactionExplorerPage';
 import { SCTransactionExplorerPage } from './pages/SCTransactionsExplorerPage';
 import { BurntTransactionExplorerPage } from './pages/BurntExplorePage';
@@ -22,6 +26,10 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/did-explorer" element={<DIDExplorerPage />} />
             <Route path="/token-explorer" element={<TokenExplorerPage />} />
+            <Route path="/rbt-explorer" element={<RBTExplorerPage />} />
+            <Route path="/ft-explorer" element={<FTExplorerPage />} />
+            <Route path="/nft-explorer" element={<NFTExplorerPage />} />
+            <Route path="/sc-token-explorer" element={<SCTokenExplorerPage />} />
             <Route path="/transaction-explorer" element={<TransactionExplorerPage />} />
             <Route path="/sc-transaction-explorer" element={<SCTransactionExplorerPage />} />
             <Route path="/burnt-transaction-explorer" element={<BurntTransactionExplorerPage />} />

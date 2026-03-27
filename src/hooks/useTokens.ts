@@ -63,24 +63,25 @@ export const useTokenDetails = (tokenId: string) => {
   });
 };
 
-// Token chain history (sequential block history for a token)
+// Token chain history via transaction info list
 export const useTokenChain = (tokenId: string) => {
   const { state } = useApp();
   return useQuery({
     queryKey: ['tokenChain', state.selectedChain, tokenId],
     queryFn: async () => {
       const baseUrl = getBaseUrlForNetwork(state.selectedChain);
-      const url = `${baseUrl}/token-chain?token_id=${tokenId}`;
-      console.log('[useTokenChain] Fetching:', url);
+      const url = `${baseUrl}/api/get-transaction-info-list?tokenID=${encodeURIComponent(tokenId)}`;
       const response = await fetch(url);
       if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        console.error('[useTokenChain] Error:', response.status, text);
         throw new Error(`Failed to fetch token chain: ${response.status}`);
       }
       const data = await response.json();
-      console.log('[useTokenChain] Response:', data);
-      return data.TokenChainData;
+      // Handle both array response and wrapped response
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.TokenChainData)) return data.TokenChainData;
+      if (Array.isArray(data?.transactions)) return data.transactions;
+      if (Array.isArray(data?.data)) return data.data;
+      return [];
     },
     enabled: !!tokenId,
     retry: false,
