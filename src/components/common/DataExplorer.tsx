@@ -88,8 +88,8 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
     }
   }, [data]);
 
-  // Compute total pages from totalCount returned by API
-  const totalPages = Math.ceil((data?.data?.count || 0) / itemsPerPage);
+  // Use total_pages from API response directly
+  const totalPages = data?.data?.totalPages ?? Math.ceil((data?.data?.count || 0) / itemsPerPage);
 
   return (
     <div className="w-full">
@@ -115,7 +115,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                 </div>
               </div>
               <div>
-                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Initiator</p>
+                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">From</p>
                 <div className="flex items-center gap-1.5">
                   <Tooltip content={tx.from} position="top">
                     <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.from)}</span>
@@ -124,7 +124,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                 </div>
               </div>
               <div>
-                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Owner</p>
+                <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">To</p>
                 <div className="flex items-center gap-1.5">
                   <Tooltip content={tx.to} position="top">
                     <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.to)}</span>
@@ -137,7 +137,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                   {tx.timestamp}
                 </span>
                 <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
-                  {tx.value}
+                  {tx.amount != null ? `${tx.amount} RBT` : "—"}
                 </span>
               </div>
             </motion.div>
@@ -151,10 +151,10 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
               <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700 min-w-[1000px]">
                 <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
                   <div className="flex-1 min-w-[200px]">Transaction</div>
-                  <div className="flex-1 min-w-[200px]">Initiator</div>
-                  <div className="flex-1 min-w-[200px]">Owner</div>
+                  <div className="flex-1 min-w-[200px]">From</div>
+                  <div className="flex-1 min-w-[200px]">To</div>
                   <div className="w-32 md:w-40 flex-shrink-0">Time</div>
-                  <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount</div>
+                  <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount (RBT)</div>
                 </div>
               </div>
               <div className="divide-y divide-outline-200 dark:divide-outline-700 min-w-[1000px]">
@@ -197,7 +197,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                       </span>
                     </div>
                     <div className="w-28 md:w-32 flex-shrink-0 text-right flex items-center justify-end">
-                      <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">{tx.value}</div>
+                      <div className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">{tx.amount != null ? `${tx.amount} RBT` : "—"}</div>
                     </div>
                   </motion.div>
                 ))}
@@ -242,8 +242,8 @@ const HoldersListView: React.FC<{
   // RBT holders — API returns []DIDBalance with fields: did, balance, asset_type, token_name, last_update
   const paramsTxn = { page: currentPage, limit: itemsPerPage };
   const { data: rbtData } = useDIDs(paramsTxn) as any;
-  const holders: any[] = Array.isArray(rbtData) ? rbtData : (rbtData?.holders || []);
-  const rbtTotalPages = Math.ceil((rbtData?.count || holders.length || 0) / itemsPerPage);
+  const holders: any[] = Array.isArray(rbtData) ? rbtData : (rbtData?.data || rbtData?.holders || []);
+  const rbtTotalPages = rbtData?.total_pages ?? Math.ceil((rbtData?.total || rbtData?.count || holders.length || 0) / itemsPerPage);
 
   // FT top holders (requires both ftName + creatorDID from suggestion selection)
   const { data: ftData, isLoading: ftLoading } = useFTTopHolders(
@@ -520,15 +520,14 @@ const TokensListView: React.FC<{
   // RBT tokens list
   const rbtParams = { page: currentPage, limit: itemsPerPage };
   const { data: rbtData, isLoading: rbtLoading, error: rbtError } = useTokens(rbtParams) as any;
-  // API returns []Token (flat array) — fields: token_id, token_value, token_status, did, transaction_id
-  const rbtTokens = Array.isArray(rbtData) ? rbtData : (rbtData?.tokens || []);
-  const rbtTotalPages = Math.ceil((rbtData?.count || rbtTokens.length || 0) / itemsPerPage);
+  const rbtTokens = Array.isArray(rbtData) ? rbtData : (rbtData?.data || rbtData?.tokens || []);
+  const rbtTotalPages = rbtData?.total_pages ?? Math.ceil((rbtData?.total || rbtData?.count || rbtTokens.length || 0) / itemsPerPage);
 
-  // FT group list — API returns []FTGroup with fields: ftName, count, creatorDID
+  // FT group list — API returns { data: []FTGroup, total, total_pages }
   const ftParams = { page: ftPage, limit: itemsPerPage };
   const { data: ftData, isLoading: ftLoading } = useFTList(ftParams) as any;
-  const ftTokens = Array.isArray(ftData) ? ftData : (ftData?.ft_list || ftData?.fts || []);
-  const ftTotalPages = Math.ceil((ftData?.count || ftTokens.length || 0) / itemsPerPage);
+  const ftTokens = Array.isArray(ftData) ? ftData : (ftData?.data || ftData?.ft_list || ftData?.fts || []);
+  const ftTotalPages = ftData?.total_pages ?? Math.ceil((ftData?.total || ftData?.count || ftTokens.length || 0) / itemsPerPage);
 
   // RBT search suggestions
   const { data: rbtSuggestions = [] } = useRBTSuggestions(rbtSearchInput, 10) as { data: Array<{ token_id: string }> };
@@ -781,7 +780,7 @@ const TokensListView: React.FC<{
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Owner</p>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Executor</p>
                     <div className="flex items-center gap-1.5">
                       <Tooltip content={token.did} position="top">
                         <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(token.did)}</span>
@@ -848,7 +847,7 @@ const TokensListView: React.FC<{
               currentPage={currentPage}
               totalPages={rbtTotalPages}
               onPageChange={onPageChange}
-              totalItems={rbtData?.count || rbtTokens.length || 0}
+              totalItems={rbtData?.total || rbtData?.count || rbtTokens.length || 0}
               itemsPerPage={itemsPerPage}
               className="mt-6"
             />
@@ -924,7 +923,7 @@ const TokensListView: React.FC<{
               currentPage={ftPage}
               totalPages={ftTotalPages}
               onPageChange={setFtPage}
-              totalItems={ftData?.count || 0}
+              totalItems={ftData?.total || ftData?.count || 0}
               itemsPerPage={itemsPerPage}
               className="mt-6"
             />
@@ -946,9 +945,9 @@ const SCBlocksList: React.FC<{
   const { data, isLoading } = useSCTxns(paramsTxn) as any;
   const isMobile = useIsMobile();
 
-  // Handle both flat array and wrapped { data: [], count: N } shapes
+  // Handle both flat array and wrapped { data: [], total_pages, total } shapes
   const scList: any[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (data?.sc_blocks || []));
-  const totalPages = Math.ceil((data?.count || scList.length || 0) / itemsPerPage);
+  const totalPages = data?.total_pages ?? Math.ceil((data?.total || data?.count || scList.length || 0) / itemsPerPage);
 
   const fmt = (address: string, length = 14): string => {
     if (!address || address === "N/A") return address || "—";
@@ -1035,11 +1034,11 @@ const SCBlocksList: React.FC<{
           {/* Header */}
           <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
             <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-4">
-              <div className="flex-1 min-w-0">Token ID</div>
-              <div className="flex-1 min-w-0">Deployer</div>
-              <div className="flex-1 min-w-0">Executor</div>
+              <div className="flex-1 min-w-0">SC ID</div>
               <div className="flex-1 min-w-0">Latest Txn</div>
-              <div className="w-20 flex-shrink-0">Status</div>
+              <div className="flex-1 min-w-0">Executor</div>
+              <div className="flex-1 min-w-0">Deployer</div>
+              {/* <div className="w-20 flex-shrink-0">Status</div> */}
             </div>
           </div>
           {/* Rows */}
@@ -1060,26 +1059,6 @@ const SCBlocksList: React.FC<{
                   </Tooltip>
                   <div className="flex-shrink-0"><CopyButton text={sc.token_id} size="sm" /></div>
                 </div>
-                {/* Deployer */}
-                <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                  <Tooltip content={sc.deployer} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.deployer}`); }}>
-                      {fmt(sc.deployer)}
-                    </span>
-                  </Tooltip>
-                  {sc.deployer && <div className="flex-shrink-0"><CopyButton text={sc.deployer} size="sm" /></div>}
-                </div>
-                {/* Owner */}
-                <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                  <Tooltip content={sc.did} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.did}`); }}>
-                      {fmt(sc.did)}
-                    </span>
-                  </Tooltip>
-                  {sc.did && <div className="flex-shrink-0"><CopyButton text={sc.did} size="sm" /></div>}
-                </div>
                 {/* Latest Txn */}
                 <div className="flex-1 min-w-0 flex items-center gap-1.5">
                   <Tooltip content={sc.transaction_id} position="top">
@@ -1090,12 +1069,35 @@ const SCBlocksList: React.FC<{
                   </Tooltip>
                   {sc.transaction_id && <div className="flex-shrink-0"><CopyButton text={sc.transaction_id} size="sm" /></div>}
                 </div>
+
+                      {/* Owner */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Tooltip content={sc.did} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.did}`); }}>
+                      {fmt(sc.did)}
+                    </span>
+                  </Tooltip>
+                  {sc.did && <div className="flex-shrink-0"><CopyButton text={sc.did} size="sm" /></div>}
+                </div>
+                {/* Deployer */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Tooltip content={sc.deployer} position="top">
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.deployer}`); }}>
+                      {fmt(sc.deployer)}
+                    </span>
+                  </Tooltip>
+                  {sc.deployer && <div className="flex-shrink-0"><CopyButton text={sc.deployer} size="sm" /></div>}
+                </div>
+          
+
                 {/* Status */}
-                <div className="w-20 flex-shrink-0 flex items-center">
+                {/* <div className="w-20 flex-shrink-0 flex items-center">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${sc.token_status === 1 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"}`}>
                     {sc.token_status === 1 ? "Active" : "Inactive"}
                   </span>
-                </div>
+                </div> */}
               </motion.div>
             ))}
           </div>

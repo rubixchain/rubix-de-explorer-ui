@@ -11,6 +11,9 @@ import {
   Hash,
   DollarSign,
   Lock,
+  Users,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTransaction } from "@/hooks/useTransactions";
@@ -25,11 +28,13 @@ export const TransactionExplorerPage: React.FC = () => {
 
   const [txData, setTxData] = useState<any>(null);
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"details" | "committed">(
+  const [activeTab, setActiveTab] = useState<"details" | "committed" | "quorums">(
     "details"
   );
   const [activeAssetTab, setActiveAssetTab] = useState<"rbt" | "ft" | "nft" | "sc">("rbt");
   const [committedTokens, setCommittedTokens] = useState<any[]>([]);
+  const [quorums, setQuorums] = useState<any[]>([]);
+  const [expandedQuorums, setExpandedQuorums] = useState<Set<number>>(new Set());
   const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -78,7 +83,8 @@ const formatAddress = (
         console.log("Processing token entry:", { key, value });
         if (Array.isArray(value)) {
           // New format: key is the category, value is array of token objects or strings
-          const cat = key.toLowerCase();
+          const keyLower = key.toLowerCase();
+          const cat = keyLower === "smartcontract" ? "sc" : keyLower;
           for (const id of value) {
             if (id == null) continue;
             const tokenId = typeof id === "string" ? id : (id.tokenId || id.token_id || String(id));
@@ -156,6 +162,8 @@ const formatAddress = (
             const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(underscoreIdx + 1) : tokenId;
             const ftName = underscoreIdx !== -1 ? tokenId.slice(0, underscoreIdx) : (data.initiator || data.sender_did || "N/A");
             console.log("return token transfer entry:", { tokenId, category, ftName, ftCreatorDid, tokenData });
+            const scFunction = tokenData?.function || tokenData?.method || tokenData?.contract_function || tokenData?.functionName || null;
+            const scParams = tokenData?.params || tokenData?.parameters || tokenData?.contract_params || tokenData?.args || null;
             return {
               id: `transfer-${index + 1}`,
               tokenId,
@@ -168,6 +176,8 @@ const formatAddress = (
               previousTransactionID: tokenData?.previousTransactionID || null,
               ftName,
               ftCreatorDid,
+              scFunction,
+              scParams,
             };
           })
         : [];
@@ -190,9 +200,19 @@ const formatAddress = (
         }))
       : [];
 
+    // Parse quorums
+    const rawQuorums = data.quorums || [];
+    const formattedQuorums = Array.isArray(rawQuorums)
+      ? rawQuorums.map((q: any) => ({
+          did: q.did || q.DID || "N/A",
+          tokens: Array.isArray(q.tokens) ? q.tokens.map((t: any) => t.tokenId || t.token_id || String(t)) : [],
+        }))
+      : [];
+
     setTxData(formattedTxData);
     setTokenTransfers(formattedTokenTransfers);
     setCommittedTokens(formattedCommitted);
+    setQuorums(formattedQuorums);
 
     // Auto-select first non-empty asset tab
     const allTabs = ["rbt", "ft", "nft", "sc"] as const;
@@ -380,6 +400,25 @@ const formatAddress = (
               />
             )}
           </button>
+          <button
+            onClick={() => setActiveTab("quorums")}
+            className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+              activeTab === "quorums"
+                ? "text-primary-600 dark:text-primary-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            <Users className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm">Quorums</span>
+            {activeTab === "quorums" && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400"
+                initial={false}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            )}
+          </button>
         </div>
         {/* Tab Content */}
         <motion.div
@@ -430,7 +469,7 @@ const formatAddress = (
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Initiator:</p>
+                  <p className="text-gray-500 dark:text-gray-400">From:</p>
                   <div className="flex items-center space-x-2 min-w-0">
                     <Tooltip content={txData.to} position="top">
                       <p
@@ -444,7 +483,7 @@ const formatAddress = (
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Owner:</p>
+                  <p className="text-gray-500 dark:text-gray-400">To:</p>
                   <div className="flex items-center space-x-2 min-w-0">
                     <Tooltip content={txData.from} position="top">
                       <p
@@ -522,6 +561,85 @@ const formatAddress = (
     </div>
   )
 )}
+        {activeTab === "quorums" && (
+          quorums.length === 0 ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              No quorums in this transaction.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {quorums.map((q: any, index: number) => {
+                const isExpanded = expandedQuorums.has(index);
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                  >
+                    {/* Quorum row */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <Tooltip content={q.did} position="top">
+                          <span
+                            className="font-mono text-sm text-primary-600 dark:text-primary-400 cursor-pointer hover:underline truncate"
+                            onClick={() => navigate(`/did-explorer?did=${q.did}`)}
+                          >
+                            {formatAddress(q.did, 20, 8)}
+                          </span>
+                        </Tooltip>
+                        <CopyButton text={q.did} size="sm" />
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
+                        {q.tokens.length} token{q.tokens.length !== 1 ? "s" : ""} staked
+                      </span>
+                      <button
+                        onClick={() => {
+                          setExpandedQuorums((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(index)) next.delete(index);
+                            else next.add(index);
+                            return next;
+                          });
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex-shrink-0"
+                      >
+                        {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        <span>Staked Tokens</span>
+                      </button>
+                    </div>
+                    {/* Expanded token list */}
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="divide-y divide-gray-100 dark:divide-gray-800"
+                      >
+                        {q.tokens.map((tokenId: string, tIdx: number) => (
+                          <div key={tIdx} className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-gray-900">
+                            <span className="w-5 text-xs text-gray-400 dark:text-gray-500 font-mono">{tIdx + 1}.</span>
+                            <Tooltip content={tokenId} position="top">
+                              <span
+                                className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                onClick={() => navigate(`/token-explorer?token=${encodeURIComponent(tokenId)}`)}
+                              >
+                                {tokenId}
+                              </span>
+                            </Tooltip>
+                            <CopyButton text={tokenId} size="sm" />
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )
+        )}
         </motion.div>
       </Card>
 
@@ -734,14 +852,72 @@ const formatAddress = (
               );
             }
 
-            // NFT / SC tab: generic token ID list
+            // SC tab: Token ID + Change (function + params)
+            if (activeAssetTab === "sc") {
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
+                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Change</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {filtered.map((transfer: any, index: number) => (
+                        <motion.tr
+                          key={transfer.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.04 }}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-1.5">
+                              <Tooltip content={transfer.tokenId} position="top">
+                                <span
+                                  className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
+                                  onClick={() => navigate(`/sc-token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                                >
+                                  {formatAddress(transfer.tokenId)}
+                                </span>
+                              </Tooltip>
+                              <CopyButton text={transfer.tokenId} size="sm" />
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            {transfer.scFunction ? (
+                              <div className="space-y-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white">
+                                  {transfer.scFunction}()
+                                </span>
+                                {transfer.scParams && (
+                                  <Tooltip content={typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)} position="top">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate max-w-[240px] cursor-default">
+                                      {typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)}
+                                    </p>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                            )}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            }
+
+            // NFT tab: generic token ID list
             return (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
-                      <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
+                      <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -758,34 +934,13 @@ const formatAddress = (
                             <Tooltip content={transfer.tokenId} position="top">
                               <span
                                 className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
-                                onClick={() =>
-                                  activeAssetTab === "sc"
-                                    ? navigate(`/sc-token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)
-                                    : navigate(`/nft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)
-                                }
+                                onClick={() => navigate(`/nft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
                               >
                                 {formatAddress(transfer.tokenId)}
                               </span>
                             </Tooltip>
                             <CopyButton text={transfer.tokenId} size="sm" />
                           </div>
-                        </td>
-                        <td className="py-3">
-                          {transfer.previousTransactionID ? (
-                            <div className="flex items-center gap-1.5">
-                              <Tooltip content={transfer.previousTransactionID} position="top">
-                                <span
-                                  className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
-                                  onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
-                                >
-                                  {formatAddress(transfer.previousTransactionID)}
-                                </span>
-                              </Tooltip>
-                              <CopyButton text={transfer.previousTransactionID} size="sm" />
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
-                          )}
                         </td>
                       </motion.tr>
                     ))}

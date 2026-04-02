@@ -89,11 +89,11 @@ export const useSCTokensByDID = (did: string, page: number, limit: number, enabl
         const response = await fetch(
           `${baseUrl}/api/get-sc-list?did=${encodeURIComponent(did)}&page=${page}&limit=${limit}`
         );
-        if (!response.ok) return { tokens: [], count: 0 };
+        if (!response.ok) return { tokens: [], count: 0, totalPages: 1 };
         const data = await response.json();
-        if (Array.isArray(data)) return { tokens: data, count: data.length };
-        if (Array.isArray(data?.data)) return { tokens: data.data, count: data.count ?? data.data.length };
-        return { tokens: [], count: 0 };
+        if (Array.isArray(data)) return { tokens: data, count: data.length, totalPages: 1 };
+        if (Array.isArray(data?.data)) return { tokens: data.data, count: data.total ?? data.count ?? data.data.length, totalPages: data.total_pages ?? 1 };
+        return { tokens: [], count: 0, totalPages: 1 };
       } catch {
         return { tokens: [], count: 0 };
       }

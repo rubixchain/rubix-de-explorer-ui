@@ -238,7 +238,7 @@ export const RBTExplorerPage: React.FC = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Initiator</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">From</p>
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={block.initiator} position="top">
                           <span
@@ -250,7 +250,7 @@ export const RBTExplorerPage: React.FC = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Owner</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">To</p>
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={block.owner} position="top">
                           <span
@@ -275,8 +275,8 @@ export const RBTExplorerPage: React.FC = () => {
               <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
                 <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
                   <div className="flex-1 min-w-0">Transaction</div>
-                  <div className="flex-1 min-w-0">Initiator</div>
-                  <div className="flex-1 min-w-0">Owner</div>
+                  <div className="flex-1 min-w-0">From</div>
+                  <div className="flex-1 min-w-0">To</div>
                   <div className="w-32 flex-shrink-0">Time</div>
                 </div>
               </div>

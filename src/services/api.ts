@@ -207,9 +207,11 @@ class ApiClient {
 
       const txnResp = await response.json();
 
-      // New API returns an array; old API returns { transactions_response: [], count: N }
+      // API formats: { data: [], total, total_pages } | array | { transactions_response: [], count }
       const txnArray = Array.isArray(txnResp)
         ? txnResp
+        : Array.isArray(txnResp.data)
+        ? txnResp.data
         : (txnResp.transactions_response || []);
 
       const frontendTransactions = txnArray.map((txn: any) => {
@@ -242,6 +244,7 @@ class ApiClient {
           from,
           to,
           value,
+          amount: txn.amount,
           timestamp: formatTimeAgo(epoch),
           status: txn.status || "confirmed",
           memo: txn.memo,
@@ -252,7 +255,8 @@ class ApiClient {
         success: true,
         data: {
           transactions: frontendTransactions,
-          count: txnResp.count || txnResp.all_transaction_count || frontendTransactions.length,
+          count: txnResp.total || txnResp.count || txnResp.all_transaction_count || frontendTransactions.length,
+          totalPages: txnResp.total_pages,
         },
       };
     } catch (error) {

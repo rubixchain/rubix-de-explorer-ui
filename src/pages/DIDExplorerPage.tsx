@@ -12,6 +12,7 @@ import { useTransactionsByDID } from "@/hooks/useTransactions";
 /* -----------------------------------------
    Hook: Detect Mobile Screen
 ------------------------------------------ */
+
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -27,6 +28,7 @@ const useIsMobile = () => {
   return isMobile;
 };
 
+
 export const DIDExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -37,17 +39,17 @@ export const DIDExplorerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"ftholdings" | "transactions">(
     "ftholdings"
   );
-  const [currentPage, setCurrentPage] = useState(1);
+  const [ftPage, setFtPage] = useState(1);
+  const [txnPage, setTxnPage] = useState(1);
   const itemsPerPage = 10;
 
   const { data: didData, error: didError } =
-    useDIDInfo(did, currentPage, itemsPerPage) as any;
+    useDIDInfo(did, 1, 100) as any;
 
-  const { data: ftData, isLoading: isLoadingFT, error: ftError } =
-    useFTHoldings(did, currentPage, itemsPerPage, activeTab === "ftholdings") as any;
+  useFTHoldings(did, ftPage, itemsPerPage, activeTab === "ftholdings");
 
-const { data: txnData, isLoading: isLoadingTxn } =
-    useTransactionsByDID(did, { page: currentPage, limit: itemsPerPage }) as any;
+  const { data: txnData, isLoading: isLoadingTxn } =
+    useTransactionsByDID(did, { page: txnPage, limit: itemsPerPage }) as any;
 
   const relativeTime = (epoch: number): string => {
     const diffSec = Math.floor(Date.now() / 1000) - epoch;
@@ -77,8 +79,6 @@ const { data: txnData, isLoading: isLoadingTxn } =
     };
   });
 
-  const loading = activeTab === "ftholdings" ? isLoadingFT : false;
-
   /* -----------------------------------------
      Helper: Responsive Address Formatter
   ------------------------------------------ */
@@ -94,23 +94,6 @@ const { data: txnData, isLoading: isLoadingTxn } =
 
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
-
-  /* -----------------------------------------
-     Loading State
-  ------------------------------------------ */
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-8 animate-pulse">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6" />
-          <div className="space-y-4">
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   /* -----------------------------------------
      Error State
@@ -131,10 +114,11 @@ const { data: txnData, isLoading: isLoadingTxn } =
     );
   }
 
-  const totalPages =
-    activeTab === "ftholdings"
-      ? Math.ceil((didData?.ft?.length || 0) / itemsPerPage)
-      : Math.ceil((rawTxns.length === itemsPerPage ? currentPage * itemsPerPage + 1 : rawTxns.length + (currentPage - 1) * itemsPerPage) / itemsPerPage);
+  const ftEntries: any[] = didData?.ft ?? [];
+  const ftTotalPages = Math.max(1, Math.ceil(ftEntries.length / itemsPerPage));
+  const pagedFt = ftEntries.slice((ftPage - 1) * itemsPerPage, ftPage * itemsPerPage);
+
+  const txnTotalPages = rawTxns.length === itemsPerPage ? txnPage + 1 : txnPage;
 
   return (
     <motion.div
@@ -188,7 +172,7 @@ const { data: txnData, isLoading: isLoadingTxn } =
           ] as const).map(({ key, label, icon }) => (
             <button
               key={key}
-              onClick={() => { setActiveTab(key); setCurrentPage(1); }}
+              onClick={() => { setActiveTab(key); setFtPage(1); setTxnPage(1); }}
               className={`relative flex items-center gap-1.5 pb-3 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === key
                   ? "text-primary-600 dark:text-primary-400"
@@ -212,11 +196,11 @@ const { data: txnData, isLoading: isLoadingTxn } =
         {/* FT Holdings tab */}
         {activeTab === "ftholdings" && (
           <>
-            {(!didData.ft || didData.ft.length === 0) ? (
+            {ftEntries.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 py-4">No FT holdings found.</p>
             ) : (
               <div className="space-y-2">
-                {didData.ft.map((entry: any, i: number) => (
+                {pagedFt.map((entry: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 flex-shrink-0">FT</span>
@@ -238,6 +222,16 @@ const { data: txnData, isLoading: isLoadingTxn } =
                   </div>
                 ))}
               </div>
+            )}
+            {ftTotalPages > 1 && (
+              <Pagination
+                currentPage={ftPage}
+                totalPages={ftTotalPages}
+                onPageChange={setFtPage}
+                totalItems={ftEntries.length}
+                itemsPerPage={itemsPerPage}
+                className="mt-4"
+              />
             )}
           </>
         )}
@@ -271,7 +265,7 @@ const { data: txnData, isLoading: isLoadingTxn } =
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Initiator</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">From</p>
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={tx.from} position="top">
                           <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.from)}</span>
@@ -280,7 +274,7 @@ const { data: txnData, isLoading: isLoadingTxn } =
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Owner</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">To</p>
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={tx.to} position="top">
                           <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.to)}</span>
@@ -303,8 +297,8 @@ const { data: txnData, isLoading: isLoadingTxn } =
                 <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
                   <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
                     <div className="flex-1 min-w-0">Transaction</div>
-                    <div className="flex-1 min-w-0">Initiator</div>
-                    <div className="flex-1 min-w-0">Owner</div>
+                    <div className="flex-1 min-w-0">From</div>
+                    <div className="flex-1 min-w-0">To</div>
                     <div className="w-32 flex-shrink-0">Time</div>
                     <div className="w-24 flex-shrink-0 text-right">Amount</div>
                   </div>
@@ -357,10 +351,10 @@ const { data: txnData, isLoading: isLoadingTxn } =
               </div>
             )}
             <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={rawTxns.length + (currentPage - 1) * itemsPerPage}
+              currentPage={txnPage}
+              totalPages={txnTotalPages}
+              onPageChange={setTxnPage}
+              totalItems={rawTxns.length + (txnPage - 1) * itemsPerPage}
               itemsPerPage={itemsPerPage}
               className="mt-6"
             />
