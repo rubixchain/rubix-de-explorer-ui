@@ -217,7 +217,10 @@ class ApiClient {
       const frontendTransactions = txnArray.map((txn: any) => {
         const id = txn.transaction_id || txn.txn_hash;
         const from = txn.initiator || txn.sender_did || "N/A";
-        const to = txn.owner || txn.receiver_did || "N/A";
+        const firstTokenId = txn.tokens && typeof txn.tokens === "object"
+          ? (Object.values(txn.tokens).filter(Array.isArray).flat() as any[])[0]?.tokenId || null
+          : null;
+        const to = txn.owner || txn.receiver_did || firstTokenId || "N/A";
         const epoch = txn.epoch || txn.txn_time;
         const txnType = txn.txn_type
           ? txn.txn_type.charAt(0).toUpperCase() + txn.txn_type.slice(1)

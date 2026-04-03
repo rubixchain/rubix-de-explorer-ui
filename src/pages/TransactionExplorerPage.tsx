@@ -81,6 +81,7 @@ const formatAddress = (
     if (data.tokens && typeof data.tokens === "object" && !Array.isArray(data.tokens)) {
       for (const [key, value] of Object.entries(data.tokens as Record<string, any>)) {
         console.log("Processing token entry:", { key, value });
+        if (value === null || value === undefined) continue; // skip null/empty token categories
         if (Array.isArray(value)) {
           // New format: key is the category, value is array of token objects or strings
           const keyLower = key.toLowerCase();
@@ -119,7 +120,8 @@ const formatAddress = (
         : "N/A",
       blockId: data.transaction_id || data.block_hash || "N/A",
       from: data.initiator || data.sender_did || "N/A",
-      to: data.owner || data.receiver_did || "N/A",
+      to: data.owner || data.receiver_did || tokenEntries[0]?.tokenId || "N/A",
+      toIsDID: !!(data.owner || data.receiver_did),
       tokens: tokenEntries.map(({ tokenId, tokenData }) => ({
         tokenId,
         type: tokenData?.TTTokenTypeKey,
@@ -468,22 +470,9 @@ const formatAddress = (
                     {txData.timestamp}
                   </p>
                 </div>
+ 
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">From:</p>
-                  <div className="flex items-center space-x-2 min-w-0">
-                    <Tooltip content={txData.to} position="top">
-                      <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate hover:text-primary-700 dark:hover:text-primary-300"
-                        onClick={() => navigate(`/did-explorer?did=${txData.to}`)}
-                      >
-                        {formatAddress(txData.to, 16, 8)}
-                      </p>
-                    </Tooltip>
-                    <CopyButton text={txData.to} size="sm" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400">To:</p>
                   <div className="flex items-center space-x-2 min-w-0">
                     <Tooltip content={txData.from} position="top">
                       <p
@@ -494,6 +483,23 @@ const formatAddress = (
                       </p>
                     </Tooltip>
                     <CopyButton text={txData.from} size="sm" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">To:</p>
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <Tooltip content={txData.to} position="top">
+                      <p
+                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate hover:text-primary-700 dark:hover:text-primary-300"
+                        onClick={() => txData.toIsDID
+                          ? navigate(`/did-explorer?did=${txData.to}`)
+                          : navigate(`/token-explorer?token=${encodeURIComponent(txData.to)}`)
+                        }
+                      >
+                        {txData.toIsDID ? formatAddress(txData.to, 16, 8) : txData.to}
+                      </p>
+                    </Tooltip>
+                    <CopyButton text={txData.to} size="sm" />
                   </div>
                 </div>
               </div>

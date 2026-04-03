@@ -5,9 +5,10 @@ import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useFormatAddress, useIsMobile } from "@/hooks/useFormatAddress";
-import { ArrowLeft, Activity } from "lucide-react";
+import { ArrowLeft, Activity, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTokenDetails, useTokenChain } from "@/hooks/useTokens";
+
 
 function formatRelativeTime(epoch: number): string {
   const now = Date.now();
@@ -36,6 +37,7 @@ export const SCTokenExplorerPage: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [scDataModal, setScDataModal] = useState<string | null>(null);
 
   const { data: rawTokenData, isLoading, error } = useTokenDetails(tokenId);
   const { data: tokenChainData, isLoading: isLoadingChain } = useTokenChain(tokenId);
@@ -278,6 +280,21 @@ export const SCTokenExplorerPage: React.FC = () => {
                         <CopyButton text={block.owner} size="sm" />
                       </div>
                     </div>
+                    <div>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Data</p>
+                      {(() => {
+                        const scRaw = block.tokens?.smartContract?.[0]?.data;
+                        if (!scRaw) return <span className="text-sm text-secondary-400 dark:text-secondary-500">—</span>;
+                        return (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setScDataModal(scRaw); }}
+                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-secondary-100 dark:bg-secondary-800 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-700 transition-colors"
+                          >
+                            Show Data
+                          </button>
+                        );
+                      })()}
+                    </div>
                     <div className="pt-1">
                       <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200 whitespace-nowrap">
                         {block.epoch ? formatRelativeTime(block.epoch) : "N/A"}
@@ -291,8 +308,8 @@ export const SCTokenExplorerPage: React.FC = () => {
               <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
                 <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
                   <div className="flex-1 min-w-0">Transaction</div>
-                  <div className="flex-1 min-w-0">From</div>
                   <div className="flex-1 min-w-0">Executor</div>
+                  <div className="flex-1 min-w-0">Data</div>
                   <div className="w-32 flex-shrink-0">Time</div>
                 </div>
               </div>
@@ -328,15 +345,18 @@ export const SCTokenExplorerPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex-1 min-w-0 flex items-center">
-                        <div className="flex items-center gap-1.5 min-w-0 w-full">
-                          <Tooltip content={block.owner} position="top">
-                            <span
-                              className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
-                              onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.owner}`); }}
-                            >{formatAddress(block.owner)}</span>
-                          </Tooltip>
-                          <div className="flex-shrink-0"><CopyButton text={block.owner} size="sm" /></div>
-                        </div>
+                        {(() => {
+                          const scRaw = block.tokens?.smartContract?.[0]?.data;
+                          if (!scRaw) return <span className="text-sm text-secondary-400 dark:text-secondary-500">—</span>;
+                          return (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setScDataModal(scRaw); }}
+                              className="px-2.5 py-1 text-xs font-medium rounded-md bg-secondary-100 dark:bg-secondary-800 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-700 transition-colors"
+                            >
+                              Show Data
+                            </button>
+                          );
+                        })()}
                       </div>
                       <div className="w-32 flex-shrink-0 flex items-center">
                         <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200">
@@ -360,6 +380,31 @@ export const SCTokenExplorerPage: React.FC = () => {
             />
           )}
         </Card>
+      )}
+
+      {/* SC Data Modal */}
+      {scDataModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setScDataModal(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-secondary-900 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">SC Data</h3>
+              <button onClick={() => setScDataModal(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-auto p-5">
+              <pre className="text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-all">
+                {(() => { try { return JSON.stringify(JSON.parse(scDataModal), null, 2); } catch { return scDataModal; } })()}
+              </pre>
+            </div>
+          </motion.div>
+        </div>
       )}
     </motion.div>
   );

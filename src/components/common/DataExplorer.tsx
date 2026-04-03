@@ -986,9 +986,9 @@ const SCBlocksList: React.FC<{
               </div>
               <div className="flex items-center gap-1.5">
                 <Tooltip content={sc.token_id} position="top">
-                  <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{fmt(sc.token_id)}</span>
+                  <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{fmt(sc.token_id, 8)}</span>
                 </Tooltip>
-                <CopyButton text={sc.token_id} size="sm" />
+                <CopyButton text= {sc.token_id} size="sm" />
               </div>
               <div>
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Deployer</p>
@@ -996,7 +996,7 @@ const SCBlocksList: React.FC<{
                   <Tooltip content={sc.deployer} position="top">
                     <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
                       onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.deployer}`); }}>
-                      {fmt(sc.deployer)}
+                      {fmt(sc.deployer, 8)}
                     </span>
                   </Tooltip>
                   {sc.deployer && <CopyButton text={sc.deployer} size="sm" />}
@@ -1008,7 +1008,7 @@ const SCBlocksList: React.FC<{
                   <Tooltip content={sc.did} position="top">
                     <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
                       onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${sc.did}`); }}>
-                      {fmt(sc.did)}
+                      {fmt(sc.did, 8)}
                     </span>
                   </Tooltip>
                   {sc.did && <CopyButton text={sc.did} size="sm" />}
@@ -1020,7 +1020,7 @@ const SCBlocksList: React.FC<{
                   <Tooltip content={sc.transaction_id} position="top">
                     <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
                       onClick={(e) => { e.stopPropagation(); navigate(`/transaction-explorer?tx=${sc.transaction_id}`); }}>
-                      {fmt(sc.transaction_id)}
+                      {fmt(sc.transaction_id, 8)}
                     </span>
                   </Tooltip>
                   {sc.transaction_id && <CopyButton text={sc.transaction_id} size="sm" />}
