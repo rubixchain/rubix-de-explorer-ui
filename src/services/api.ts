@@ -249,7 +249,7 @@ class ApiClient {
           value,
           amount: txn.amount,
           timestamp: formatTimeAgo(epoch),
-          status: txn.status || "confirmed",
+          status: txn.status === true || txn.status === "true" ? "success" : txn.status === false || txn.status === "false" ? "failed" : "success",
           memo: txn.memo,
         };
       });

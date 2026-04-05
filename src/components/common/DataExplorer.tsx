@@ -133,9 +133,18 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                 </div>
               </div>
               <div className="flex items-center justify-between pt-1">
-                <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200 whitespace-nowrap">
-                  {tx.timestamp}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200 whitespace-nowrap">
+                    {tx.timestamp}
+                  </span>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${
+                    tx.status === "success"
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  }`}>
+                    {tx.status === "success" ? "Success" : "Failed"}
+                  </span>
+                </div>
                 <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
                   {tx.amount != null ? `${tx.amount} RBT` : "—"}
                 </span>
@@ -154,6 +163,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                   <div className="flex-1 min-w-[200px]">From</div>
                   <div className="flex-1 min-w-[200px]">To</div>
                   <div className="w-32 md:w-40 flex-shrink-0">Time</div>
+                  <div className="w-24 flex-shrink-0 text-center">Status</div>
                   <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount (RBT)</div>
                 </div>
               </div>
@@ -194,6 +204,15 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     <div className="w-32 md:w-40 flex-shrink-0 flex items-center">
                       <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-tertiary-100 text-tertiary-800 dark:bg-tertiary-900 dark:text-tertiary-200">
                         {tx.timestamp}
+                      </span>
+                    </div>
+                    <div className="w-24 flex-shrink-0 flex items-center justify-center">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${
+                        tx.status === "success"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      }`}>
+                        {tx.status === "success" ? "Success" : "Failed"}
                       </span>
                     </div>
                     <div className="w-28 md:w-32 flex-shrink-0 text-right flex items-center justify-end">
@@ -1225,16 +1244,16 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({
 
   return (
     <Card className={`${className}`}>
-      <div className="p-6 w-full">
+      <div className="p-2 pt-0 w-full">
         {/* Header with Tab Switcher */}
         <div className="mb-6">
           <div className="mb-4">
-            <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
+            {/* <h2 className="text-2xl font-bold text-secondary-900 dark:text-white">
               Rubix Explorer
-            </h2>
-            <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">
+            </h2> */}
+            {/* <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">
               {`Viewing ${activeTab} data`}
-            </p>
+            </p> */}
           </div>
 
           <TabSwitcher

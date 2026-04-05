@@ -31,7 +31,7 @@ export const TransactionExplorerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "committed" | "quorums">(
     "details"
   );
-  const [activeAssetTab, setActiveAssetTab] = useState<"rbt" | "ft" | "nft" | "sc">("rbt");
+  const [activeAssetTab, setActiveAssetTab] = useState<"rbt" | "ft" | "nft" | "sc" | null>(null);
   const [committedTokens, setCommittedTokens] = useState<any[]>([]);
   const [quorums, setQuorums] = useState<any[]>([]);
   const [expandedQuorums, setExpandedQuorums] = useState<Set<number>>(new Set());
@@ -157,8 +157,7 @@ const formatAddress = (
         ? tokenEntries.map(({ tokenId: rawTokenId, category: rawCategory, tokenData }, index: number) => {
             const tokenId = String(rawTokenId || "");
             // Use pre-resolved category from the object key, fall back to pattern matching
-            const category = rawCategory
-            console.log("category resolved for token:", { tokenId, rawCategory, tokenData, category });
+            const category = rawCategory || getTokenCategory(tokenId, tokenData?.TTTokenTypeKey);
             // For FTs: parse name and creator from tokenId (format: creatorDID_ftName)
             const underscoreIdx = tokenId.lastIndexOf("_");
             const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(underscoreIdx + 1) : tokenId;
@@ -216,28 +215,13 @@ const formatAddress = (
     setCommittedTokens(formattedCommitted);
     setQuorums(formattedQuorums);
 
-    // Auto-select first non-empty asset tab
+    // Auto-select the asset tab with the most tokens (using already-resolved categories)
     const allTabs = ["rbt", "ft", "nft", "sc"] as const;
-    const firstNonEmpty = allTabs.find((tab) => {
-      const getCategory = (tokenId: any, type: any): string => {
-        const id = String(tokenId || "");
-        const typeStr = String(type || "").toLowerCase();
-        if (typeStr === "ft" || typeStr === "3") return "ft";
-        if (typeStr === "nft" || typeStr === "4") return "nft";
-        if (typeStr === "sc" || typeStr === "5") return "sc";
-        if (id.includes("_")) return "ft";
-        if (id.startsWith("qem")) return "sc";
-        return "rbt";
-      };
-      const count = tokenEntries.filter(({ tokenId, category: rawCategory, tokenData }) => {
-        const resolved = rawCategory
-          ? getCategory(tokenId, rawCategory)
-          : getCategory(tokenId, tokenData?.TTTokenTypeKey);
-        return resolved === tab;
-      }).length;
-      return count > 0;
-    });
-    if (firstNonEmpty) setActiveAssetTab(firstNonEmpty);
+    const tabCounts = Object.fromEntries(
+      allTabs.map((tab) => [tab, formattedTokenTransfers.filter((t) => t.category === tab).length])
+    ) as Record<string, number>;
+    const dominant = allTabs.reduce((a, b) => (tabCounts[b] > tabCounts[a] ? b : a));
+    setActiveAssetTab(tabCounts[dominant] > 0 ? dominant : "rbt");
 
   }, [rawData]);
 
@@ -665,10 +649,7 @@ const formatAddress = (
           const counts = Object.fromEntries(
             allTabs.map((tab) => [tab, tokenTransfers.filter((t) => t.category === tab).length])
           );
-          const sortedTabs = [
-            ...allTabs.filter((tab) => counts[tab] > 0),
-            ...allTabs.filter((tab) => counts[tab] === 0),
-          ];
+          const sortedTabs = [...allTabs].sort((a, b) => counts[b] - counts[a]);
           return (
             <div className="flex space-x-1 sm:space-x-2 border-b border-gray-200 dark:border-gray-700 mb-4 sm:mb-6 overflow-x-auto">
               {sortedTabs.map((tab) => {
@@ -718,11 +699,11 @@ const formatAddress = (
           transition={{ duration: 0.2 }}
         >
           {(() => {
-            const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
+const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
             if (filtered.length === 0) {
               return (
                 <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-                  No {activeAssetTab.toUpperCase()} assets in this transaction.
+                  No {activeAssetTab?.toUpperCase()} assets in this transaction.
                 </p>
               );
             }

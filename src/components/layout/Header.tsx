@@ -24,14 +24,10 @@ const NetworkToggle: React.FC<{
         Mainnet
       </button>
       <button
-        onClick={() => onChange('testnet')}
-        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-          !isMainnet
-            ? 'bg-white text-gray-900 shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
-        }`}
+        disabled
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-gray-400 cursor-not-allowed opacity-50"
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${!isMainnet ? 'bg-blue-500' : 'bg-gray-400'}`} />
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
         Testnet
       </button>
     </div>

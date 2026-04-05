@@ -31,7 +31,7 @@ export const RBTExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tokenId = searchParams.get("token") || "";
-  const formatAddress = useFormatAddress(20, 8);
+  const formatAddress = useFormatAddress(16, 8);
 
   const { data: rawTokenData, isLoading: isLoadingToken, error: tokenError } = useTokenDetails(tokenId);
   const { data: tokenChainData, isLoading: isLoadingChain, error: chainError } = useTokenChain(tokenId);
@@ -232,7 +232,7 @@ export const RBTExplorerPage: React.FC = () => {
                       <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Transaction</p>
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={block.transaction_id} position="top">
-                          <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(block.transaction_id)}</span>
+                          <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{formatAddress(block.transaction_id)}</span>
                         </Tooltip>
                         <CopyButton text={block.transaction_id} size="sm" />
                       </div>
@@ -242,7 +242,7 @@ export const RBTExplorerPage: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={block.initiator} position="top">
                           <span
-                            className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
+                            className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer hover:text-primary-600"
                             onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.initiator}`); }}
                           >{formatAddress(block.initiator)}</span>
                         </Tooltip>
@@ -254,7 +254,7 @@ export const RBTExplorerPage: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <Tooltip content={block.owner} position="top">
                           <span
-                            className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
+                            className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer hover:text-primary-600"
                             onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.owner}`); }}
                           >{formatAddress(block.owner)}</span>
                         </Tooltip>
@@ -296,7 +296,7 @@ export const RBTExplorerPage: React.FC = () => {
                       <div className="flex-1 min-w-0 flex items-center">
                         <div className="flex items-center gap-1.5 min-w-0 w-full">
                           <Tooltip content={block.transaction_id} position="top">
-                            <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate block">{formatAddress(block.transaction_id)}</span>
+                            <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{formatAddress(block.transaction_id)}</span>
                           </Tooltip>
                           <div className="flex-shrink-0"><CopyButton text={block.transaction_id} size="sm" /></div>
                         </div>
@@ -305,7 +305,7 @@ export const RBTExplorerPage: React.FC = () => {
                         <div className="flex items-center gap-1.5 min-w-0 w-full">
                           <Tooltip content={block.initiator} position="top">
                             <span
-                              className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                              className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer hover:text-primary-600"
                               onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.initiator}`); }}
                             >{formatAddress(block.initiator)}</span>
                           </Tooltip>
@@ -316,7 +316,7 @@ export const RBTExplorerPage: React.FC = () => {
                         <div className="flex items-center gap-1.5 min-w-0 w-full">
                           <Tooltip content={block.owner} position="top">
                             <span
-                              className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate block cursor-pointer hover:text-primary-600"
+                              className="text-sm font-mono text-secondary-600 dark:text-secondary-400 cursor-pointer hover:text-primary-600"
                               onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${block.owner}`); }}
                             >{formatAddress(block.owner)}</span>
                           </Tooltip>

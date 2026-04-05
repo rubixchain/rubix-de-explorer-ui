@@ -37,7 +37,7 @@ export const DIDExplorerPage: React.FC = () => {
   const isMobile = useIsMobile();
 
   const [activeTab, setActiveTab] = useState<"ftholdings" | "transactions">(
-    "ftholdings"
+    "transactions"
   );
   const [ftPage, setFtPage] = useState(1);
   const [txnPage, setTxnPage] = useState(1);
@@ -64,18 +64,12 @@ export const DIDExplorerPage: React.FC = () => {
   // Normalize new /api/get-txns-by-did response → shape expected by the UI
   const rawTxns: any[] = Array.isArray(txnData) ? txnData : (txnData?.data ?? []);
   const transactions = rawTxns.map((tx: any) => {
-    const count = [
-      ...(tx.tokens?.rbt ?? []),
-      ...(tx.tokens?.ft ?? []),
-      ...(tx.tokens?.nft ?? []),
-      ...(tx.tokens?.smartContract ?? []),
-    ].length;
     return {
       id: tx.transaction_id,
       from: tx.initiator,
       to: tx.owner,
       timestamp: tx.epoch ? relativeTime(tx.epoch) : tx.created_at ?? "—",
-      value: `${count} ${count === 1 ? "token" : "tokens"}`,
+      value: tx.amount != null ? `${tx.amount} RBT` : "—",
     };
   });
 
@@ -167,8 +161,8 @@ export const DIDExplorerPage: React.FC = () => {
         {/* Tab Nav */}
         <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
           {([
-            { key: "ftholdings",   label: "FT Holdings",    icon: <Coins className="w-4 h-4" /> },
             { key: "transactions", label: "Transactions",   icon: <ArrowRightLeft className="w-4 h-4" /> },
+            { key: "ftholdings",   label: "FT Holdings",    icon: <Coins className="w-4 h-4" /> },
           ] as const).map(({ key, label, icon }) => (
             <button
               key={key}

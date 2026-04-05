@@ -589,7 +589,7 @@ export const TokenExplorerPage: React.FC = () => {
                             </p>
                             <div className="flex items-center gap-2 min-w-0">
                               <Tooltip content={block.blockHash} position="top">
-                                <span className="font-mono text-sm text-gray-900 dark:text-white truncate">
+                                <span className="font-mono text-sm text-gray-900 dark:text-white">
                                   {formatAddress(block.blockHash)}
                                 </span>
                               </Tooltip>
@@ -609,7 +609,7 @@ export const TokenExplorerPage: React.FC = () => {
                             </p>
                             <div className="flex items-center gap-2 min-w-0">
                               <Tooltip content={block.tokenOwner} position="top">
-                                <span className="font-mono text-sm text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
+                                <span className="font-mono text-sm text-gray-900 dark:text-white cursor-pointer hover:text-primary-600"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(`/did-explorer?did=${block.tokenOwner}`);
