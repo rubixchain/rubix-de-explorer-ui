@@ -201,19 +201,18 @@ function getAllConnected(txId, forwardMap, reverseMap) {
   return visited;
 }
 
-// Returns Map<id, depth> using longest-path from txId through forwardMap.
-// Longest path ensures a node gets colored by its deepest position in the
-// ancestor chain, not the shortest shortcut edge to it.
+// Returns Map<id, depth> using shortest-path BFS from txId through forwardMap.
+// Shortest path means a direct parent is always depth 1, even if it's also
+// reachable via a longer chain through other ancestors.
 function getAncestorDepths(txId, forwardMap) {
   const depths = new Map([[txId, 0]]);
   const queue = [[txId, 0]];
   while (queue.length) {
     const [id, depth] = queue.shift();
     (forwardMap[id] || []).forEach(aid => {
-      const next = depth + 1;
-      if (next > (depths.get(aid) ?? -1)) {
-        depths.set(aid, next);
-        queue.push([aid, next]);
+      if (!depths.has(aid)) {
+        depths.set(aid, depth + 1);
+        queue.push([aid, depth + 1]);
       }
     });
   }
@@ -305,6 +304,21 @@ function PanJoystick({ onPan, isDark }) {
 }
 
 
+// ─── Colors ───────────────────────────────────────────────────────────────────
+const LEVEL_COLORS = [
+  "#22d3ee", // 0 cyan
+  "#818cf8", // 1 indigo
+  "#34d399", // 2 emerald
+  "#fb923c", // 3 orange
+  "#f472b6", // 4 pink
+  "#2d2d2d", // 5 blackish (and beyond)
+];
+
+function hexAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 // ─── Edges ────────────────────────────────────────────────────────────────────
 function getEdgePoints(f, t) {
   const fcx = f.x + NODE_W / 2, fcy = f.y + NODE_H / 2;
@@ -326,10 +340,13 @@ function getEdgePoints(f, t) {
   };
 }
 
+const NEUTRAL_EDGE_COLOR = "#94a3b8";
+
 function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform }) {
   return (
     <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", overflow: "visible" }}>
       <defs>
+        {/* Single black arrowhead marker for all edges */}
         <marker id="arr" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
           <path d="M0,1 L10,6 L0,11 L3,6 Z" fill="#000000" opacity={0.95} />
         </marker>
@@ -340,7 +357,6 @@ function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform
         {edges.map((e, i) => {
           const f = positions[e.from], t = positions[e.to]; if (!f || !t) return null;
           const { fx, fy, tx: tx2, ty: ty2 } = getEdgePoints(f, t);
-          const mx = (fx + tx2) / 2, my = (fy + ty2) / 2;
           const dx = tx2 - fx, dy = ty2 - fy;
           const len = Math.sqrt(dx * dx + dy * dy);
           const curve = Math.min(len * 0.25, 40);
@@ -351,13 +367,18 @@ function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform
           const isHoverEdge = hoveredAncestors?.has(e.from) && hoveredAncestors?.has(e.to);
           const isSelectEdge = ancestorIds?.has(e.from) && ancestorIds?.has(e.to);
           const isGlowing = isHoverEdge || isSelectEdge;
+          // Color based on target (destination) block depth
+          const targetDepth = ancestorIds?.get(e.to);
+          const hasColor = targetDepth !== undefined;
+          const colorIdx = hasColor ? Math.min(targetDepth, LEVEL_COLORS.length - 1) : -1;
+          const edgeCol = hasColor ? LEVEL_COLORS[colorIdx] : NEUTRAL_EDGE_COLOR;
           return (
             <path key={i}
               d={`M${fx},${fy} C${cx1},${cy1} ${cx2},${cy2} ${tx2},${ty2}`}
-              fill="none" stroke="#4ade80"
+              fill="none" stroke={edgeCol}
               strokeWidth={isGlowing ? 1.4 : 0.9}
               strokeDasharray={isGlowing ? "none" : "5 4"}
-              opacity={isGlowing ? 0.9 : 0.28}
+              opacity={isGlowing ? 0.9 : (hasColor ? 0.6 : 0.28)}
               markerEnd="url(#arr)"
               filter={isHoverEdge ? "url(#glow-strong)" : isSelectEdge ? "url(#glow)" : "none"}
             />
@@ -430,20 +451,6 @@ function timeAgo(ts) {
 }
 
 // ─── Card Node ────────────────────────────────────────────────────────────────
-const LEVEL_COLORS = [
-  "#22d3ee", // 0 cyan
-  "#818cf8", // 1 indigo
-  "#34d399", // 2 emerald
-  "#fb923c", // 3 orange
-  "#f472b6", // 4 pink
-  "#2d2d2d", // 5 blackish (and beyond)
-];
-
-function hexAlpha(hex, a) {
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
 function TxNode({ tx, x, y, selected, isAncestor, dimmed, ancestorDepth, onSelect, th }) {
   const isActive = selected;
   const hasDepth = ancestorDepth !== undefined;
@@ -471,8 +478,8 @@ function TxNode({ tx, x, y, selected, isAncestor, dimmed, ancestorDepth, onSelec
         borderRadius: 8, cursor: "pointer", overflow: "hidden",
         boxShadow,
         opacity: dimmed ? 0.18 : 1,
-        transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s, transform 0.15s, opacity 0.2s",
-        transform: isActive ? "scale(1.04)" : "scale(1)",
+        transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s, transform 0.2s, opacity 0.2s",
+        transform: isActive ? "scale(1.07)" : isAncestor ? "scale(1.03)" : "scale(1)",
         userSelect: "none", zIndex: isActive ? 20 : isAncestor ? 10 : 1,
       }}>
       {accentCol && (
@@ -573,8 +580,7 @@ function DetailPanel({ tx, onClose, th }) {
                       <div style={{ minWidth: 0 }}>
                         <div style={{ color: th.t1, fontSize: 11, fontWeight: 700, fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{tok.tokenId || "—"}</div>
                       </div>
-                    </div>
-                  </div>
+                    </div>                  </div>
                 );
               })}
             </div>
@@ -703,9 +709,6 @@ export default function DAGVisualizer() {
     return () => window.removeEventListener("keydown", h);
   }, []);
 
-  const resetView = useCallback(() => {
-    setTransform({ x: viewSize.w / 2, y: 96, scale: 0.9 });
-  }, [viewSize.w]);
 
   const { positions, edges } = useMemo(
     () => computeLayout(visibleTxns, apiEdges, viewSize.w),
@@ -917,10 +920,6 @@ export default function DAGVisualizer() {
       <div style={{ position: "fixed", bottom: 28, left: 28, zIndex: 90, display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
         {/* Pan joystick */}
         <PanJoystick isDark={isDark} onPan={(dx, dy) => setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }))} />
-        {/* Home button */}
-        <button onClick={resetView} aria-label="Reset view" style={{ width: 36, height: 36, borderRadius: 999, border: "none", cursor: "pointer", background: isDark ? "#1e3a5f" : "#fde68a", boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.5)" : "0 4px 16px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", outline: "none" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? "#c4d9f8" : "#b45309"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </button>
         {/* Zoom pill (vertical) */}
         <div style={{ width: 36, height: 72, borderRadius: 999, background: isDark ? "#1e3a5f" : "#fde68a", boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.5)" : "0 4px 16px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
           {/* Plus */}

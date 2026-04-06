@@ -112,21 +112,6 @@ export const RBTExplorerPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Token ID */}
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 mb-2">Token ID:</p>
-            <div className="flex items-center gap-2">
-              <Tooltip content={d?.token_id || tokenId} position="top">
-                <p className="font-mono text-gray-900 dark:text-white truncate">
-                  {formatAddress(d?.token_id || tokenId)}
-                </p>
-              </Tooltip>
-              <div className="flex-shrink-0">
-                <CopyButton text={d?.token_id || tokenId} size="sm" />
-              </div>
-            </div>
-          </div>
-
           {/* Owner DID */}
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>

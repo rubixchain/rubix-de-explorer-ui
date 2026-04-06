@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { Pagination } from "@/components/ui/Pagination";
 import {
   ArrowLeft,
   CheckCircle,
@@ -32,9 +33,13 @@ export const TransactionExplorerPage: React.FC = () => {
     "details"
   );
   const [activeAssetTab, setActiveAssetTab] = useState<"rbt" | "ft" | "nft" | "sc" | null>(null);
+  const [assetPage, setAssetPage] = useState(1);
+  const ASSET_PAGE_SIZE = 10;
   const [committedTokens, setCommittedTokens] = useState<any[]>([]);
   const [quorums, setQuorums] = useState<any[]>([]);
   const [expandedQuorums, setExpandedQuorums] = useState<Set<number>>(new Set());
+  const [quorumTokenPages, setQuorumTokenPages] = useState<Record<number, number>>({});
+  const QUORUM_TOKEN_PAGE_SIZE = 10;
   const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -224,6 +229,11 @@ const formatAddress = (
     setActiveAssetTab(tabCounts[dominant] > 0 ? dominant : "rbt");
 
   }, [rawData]);
+
+  // Reset to page 1 whenever the active asset tab changes
+  useEffect(() => {
+    setAssetPage(1);
+  }, [activeAssetTab]);
 
   // Use React Query states - same pattern as HomePage
   if (isLoading) {
@@ -588,8 +598,12 @@ const formatAddress = (
                         onClick={() => {
                           setExpandedQuorums((prev) => {
                             const next = new Set(prev);
-                            if (next.has(index)) next.delete(index);
-                            else next.add(index);
+                            if (next.has(index)) {
+                              next.delete(index);
+                              setQuorumTokenPages(p => { const n = { ...p }; delete n[index]; return n; });
+                            } else {
+                              next.add(index);
+                            }
                             return next;
                           });
                         }}
@@ -600,30 +614,45 @@ const formatAddress = (
                       </button>
                     </div>
                     {/* Expanded token list */}
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="divide-y divide-gray-100 dark:divide-gray-800"
-                      >
-                        {q.tokens.map((tokenId: string, tIdx: number) => (
-                          <div key={tIdx} className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-gray-900">
-                            <span className="w-5 text-xs text-gray-400 dark:text-gray-500 font-mono">{tIdx + 1}.</span>
-                            <Tooltip content={tokenId} position="top">
-                              <span
-                                className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
-                                onClick={() => navigate(`/token-explorer?token=${encodeURIComponent(tokenId)}`)}
-                              >
-                                {tokenId}
-                              </span>
-                            </Tooltip>
-                            <CopyButton text={tokenId} size="sm" />
+                    {isExpanded && (() => {
+                      const qPage = quorumTokenPages[index] ?? 1;
+                      const qTotalPages = Math.ceil(q.tokens.length / QUORUM_TOKEN_PAGE_SIZE);
+                      const qPagedTokens = q.tokens.slice((qPage - 1) * QUORUM_TOKEN_PAGE_SIZE, qPage * QUORUM_TOKEN_PAGE_SIZE);
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {qPagedTokens.map((tokenId: string, tIdx: number) => (
+                              <div key={tIdx} className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-gray-900">
+                                <span className="w-5 text-xs text-gray-400 dark:text-gray-500 font-mono">{(qPage - 1) * QUORUM_TOKEN_PAGE_SIZE + tIdx + 1}.</span>
+                                <Tooltip content={tokenId} position="top">
+                                  <span
+                                    className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                    onClick={() => navigate(`/token-explorer?token=${encodeURIComponent(tokenId)}`)}
+                                  >
+                                    {tokenId}
+                                  </span>
+                                </Tooltip>
+                                <CopyButton text={tokenId} size="sm" />
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </motion.div>
-                    )}
+                          <div className="px-6 py-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+                            <Pagination
+                              currentPage={qPage}
+                              totalPages={qTotalPages}
+                              onPageChange={(p) => setQuorumTokenPages(prev => ({ ...prev, [index]: p }))}
+                              totalItems={q.tokens.length}
+                              itemsPerPage={QUORUM_TOKEN_PAGE_SIZE}
+                            />
+                          </div>
+                        </motion.div>
+                      );
+                    })()}
                   </motion.div>
                 );
               })}
@@ -699,7 +728,20 @@ const formatAddress = (
           transition={{ duration: 0.2 }}
         >
           {(() => {
-const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
+            const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
+            const totalPages = Math.ceil(filtered.length / ASSET_PAGE_SIZE);
+            const paginated = filtered.slice((assetPage - 1) * ASSET_PAGE_SIZE, assetPage * ASSET_PAGE_SIZE);
+            const paginationBar = (
+              <Pagination
+                currentPage={assetPage}
+                totalPages={totalPages}
+                onPageChange={setAssetPage}
+                totalItems={filtered.length}
+                itemsPerPage={ASSET_PAGE_SIZE}
+                className="mt-4"
+              />
+            );
+
             if (filtered.length === 0) {
               return (
                 <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
@@ -708,150 +750,215 @@ const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
               );
             }
 
-            // RBT tab: show RBT ID and Value
+            // RBT tab
             if (activeAssetTab === "rbt") {
               return (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">RBT ID</th>
-                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
-                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {filtered.map((transfer: any, index: number) => (
-                        <motion.tr
-                          key={transfer.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.04 }}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                        >
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-1.5">
-                              <Tooltip content={transfer.tokenId} position="top">
-                                <span
-                                  className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
-                                  onClick={() => navigate(`/rbt-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
-                                >
-                                  {formatAddress(transfer.tokenId)}
-                                </span>
-                              </Tooltip>
-                              <CopyButton text={transfer.tokenId} size="sm" />
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4">
-                            <span className="font-medium text-gray-900 dark:text-white text-xs">
-                              1 RBT
-                            </span>
-                          </td>
-                          <td className="py-3">
-                            {transfer.previousTransactionID ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">RBT ID</th>
+                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
+                          <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {paginated.map((transfer: any, index: number) => (
+                          <motion.tr
+                            key={transfer.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.04 }}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          >
+                            <td className="py-3 pr-4">
                               <div className="flex items-center gap-1.5">
-                                <Tooltip content={transfer.previousTransactionID} position="top">
+                                <Tooltip content={transfer.tokenId} position="top">
                                   <span
-                                    className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
-                                    onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                    className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
+                                    onClick={() => navigate(`/rbt-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
                                   >
-                                    {formatAddress(transfer.previousTransactionID)}
+                                    {formatAddress(transfer.tokenId)}
                                   </span>
                                 </Tooltip>
-                                <CopyButton text={transfer.previousTransactionID} size="sm" />
+                                <CopyButton text={transfer.tokenId} size="sm" />
                               </div>
-                            ) : (
-                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
-                            )}
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            </td>
+                            <td className="py-3 pr-4">
+                              <span className="font-medium text-gray-900 dark:text-white text-xs">1 RBT</span>
+                            </td>
+                            <td className="py-3">
+                              {transfer.previousTransactionID ? (
+                                <div className="flex items-center gap-1.5">
+                                  <Tooltip content={transfer.previousTransactionID} position="top">
+                                    <span
+                                      className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                      onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                    >
+                                      {formatAddress(transfer.previousTransactionID)}
+                                    </span>
+                                  </Tooltip>
+                                  <CopyButton text={transfer.previousTransactionID} size="sm" />
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                              )}
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {paginationBar}
+                </>
               );
             }
 
-            // FT tab: show FT Name, Creator DID, Amount
+            // FT tab
             if (activeAssetTab === "ft") {
               return (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">FT ID</th>
-                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Creator</th>
-                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {filtered.map((transfer: any, index: number) => (
-                        <motion.tr
-                          key={transfer.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.04 }}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                        >
-                          <td className="py-3 pr-4">
-                            <span
-                              className="font-medium text-gray-900 dark:text-white cursor-pointer hover:underline text-xs"
-                              onClick={() => navigate(`/ft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
-                            >
-                              {transfer.ftName}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-1.5">
-                              <Tooltip content={transfer.ftCreatorDid} position="top">
-                                <span
-                                  className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
-                                  onClick={() => navigate(`/did-explorer?did=${encodeURIComponent(transfer.ftCreatorDid)}`)}
-                                >
-                                  {formatAddress(transfer.ftCreatorDid)}
-                                </span>
-                              </Tooltip>
-                              <CopyButton text={transfer.ftCreatorDid} size="sm" />
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            {transfer.previousTransactionID ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">FT ID</th>
+                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Creator</th>
+                          <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {paginated.map((transfer: any, index: number) => (
+                          <motion.tr
+                            key={transfer.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.04 }}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          >
+                            <td className="py-3 pr-4">
+                              <span
+                                className="font-medium text-gray-900 dark:text-white cursor-pointer hover:underline text-xs"
+                                onClick={() => navigate(`/ft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                              >
+                                {transfer.ftName}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4">
                               <div className="flex items-center gap-1.5">
-                                <Tooltip content={transfer.previousTransactionID} position="top">
+                                <Tooltip content={transfer.ftCreatorDid} position="top">
                                   <span
-                                    className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
-                                    onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                    className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
+                                    onClick={() => navigate(`/did-explorer?did=${encodeURIComponent(transfer.ftCreatorDid)}`)}
                                   >
-                                    {formatAddress(transfer.previousTransactionID)}
+                                    {formatAddress(transfer.ftCreatorDid)}
                                   </span>
                                 </Tooltip>
-                                <CopyButton text={transfer.previousTransactionID} size="sm" />
+                                <CopyButton text={transfer.ftCreatorDid} size="sm" />
                               </div>
-                            ) : (
-                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
-                            )}
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            </td>
+                            <td className="py-3">
+                              {transfer.previousTransactionID ? (
+                                <div className="flex items-center gap-1.5">
+                                  <Tooltip content={transfer.previousTransactionID} position="top">
+                                    <span
+                                      className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                                      onClick={() => navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`)}
+                                    >
+                                      {formatAddress(transfer.previousTransactionID)}
+                                    </span>
+                                  </Tooltip>
+                                  <CopyButton text={transfer.previousTransactionID} size="sm" />
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                              )}
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {paginationBar}
+                </>
               );
             }
 
-            // SC tab: Token ID + Change (function + params)
+            // SC tab
             if (activeAssetTab === "sc") {
               return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
+                          <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Change</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {paginated.map((transfer: any, index: number) => (
+                          <motion.tr
+                            key={transfer.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.04 }}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          >
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-1.5">
+                                <Tooltip content={transfer.tokenId} position="top">
+                                  <span
+                                    className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
+                                    onClick={() => navigate(`/sc-token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                                  >
+                                    {formatAddress(transfer.tokenId)}
+                                  </span>
+                                </Tooltip>
+                                <CopyButton text={transfer.tokenId} size="sm" />
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              {transfer.scFunction ? (
+                                <div className="space-y-1">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white">
+                                    {transfer.scFunction}()
+                                  </span>
+                                  {transfer.scParams && (
+                                    <Tooltip content={typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)} position="top">
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate max-w-[240px] cursor-default">
+                                        {typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)}
+                                      </p>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                              )}
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {paginationBar}
+                </>
+              );
+            }
+
+            // NFT tab (fallback)
+            return (
+              <>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
-                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Change</th>
+                        <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {filtered.map((transfer: any, index: number) => (
+                      {paginated.map((transfer: any, index: number) => (
                         <motion.tr
                           key={transfer.id}
                           initial={{ opacity: 0, y: 10 }}
@@ -864,7 +971,7 @@ const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
                               <Tooltip content={transfer.tokenId} position="top">
                                 <span
                                   className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
-                                  onClick={() => navigate(`/sc-token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                                  onClick={() => navigate(`/nft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
                                 >
                                   {formatAddress(transfer.tokenId)}
                                 </span>
@@ -872,68 +979,13 @@ const filtered = tokenTransfers.filter((t) => t.category === activeAssetTab);
                               <CopyButton text={transfer.tokenId} size="sm" />
                             </div>
                           </td>
-                          <td className="py-3">
-                            {transfer.scFunction ? (
-                              <div className="space-y-1">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white">
-                                  {transfer.scFunction}()
-                                </span>
-                                {transfer.scParams && (
-                                  <Tooltip content={typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)} position="top">
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate max-w-[240px] cursor-default">
-                                      {typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)}
-                                    </p>
-                                  </Tooltip>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
-                            )}
-                          </td>
                         </motion.tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              );
-            }
-
-            // NFT tab: generic token ID list
-            return (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {filtered.map((transfer: any, index: number) => (
-                      <motion.tr
-                        key={transfer.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.04 }}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                      >
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-1.5">
-                            <Tooltip content={transfer.tokenId} position="top">
-                              <span
-                                className="font-mono text-xs text-gray-900 dark:text-white cursor-pointer hover:underline"
-                                onClick={() => navigate(`/nft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
-                              >
-                                {formatAddress(transfer.tokenId)}
-                              </span>
-                            </Tooltip>
-                            <CopyButton text={transfer.tokenId} size="sm" />
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                {paginationBar}
+              </>
             );
           })()}
         </motion.div>

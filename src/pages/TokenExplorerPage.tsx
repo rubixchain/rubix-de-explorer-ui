@@ -240,19 +240,6 @@ export const TokenExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-heading dark:text-white mb-2">
           Token Explorer
         </h1>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          <span className="mb-2 sm:mb-0">Details for Token:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={tokenData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(tokenData.id)}
-              </span>
-            </Tooltip>
-            <div className="flex-shrink-0">
-              <CopyButton text={tokenData.id} size="sm" />
-            </div>
-          </div>
-        </div>
       </div>
 
      
