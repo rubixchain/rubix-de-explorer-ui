@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useSearch } from '@/hooks/useSearch';
@@ -37,6 +37,8 @@ const NetworkToggle: React.FC<{
 export const Header: React.FC = () => {
   const { state, setSearchQuery, setSelectedChain } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDAGPage = location.pathname === '/dag';
   const { search, isLoading } = useSearch();
   const [searchQuery, setSearchQueryState] = React.useState('');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -100,7 +102,15 @@ export const Header: React.FC = () => {
                 Rubix Explorer
               </span>
             </Link>
-            <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate(isDAGPage ? '/' : '/dag')}
+                className="px-4 py-1.5 rounded-full text-xs bg-yellow-400 text-white border border-yellow-500 hover:bg-black-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
+              >
+                {isDAGPage ? 'Explorer' : 'DAG'}
+              </button>
+              <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} />
+            </div>
           </div>
 
           {/* Mobile Search */}
@@ -193,8 +203,16 @@ export const Header: React.FC = () => {
             </div>
           </form>
 
-          {/* Network Toggle */}
-          <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} className="flex-shrink-0" />
+          {/* DAG + Network Toggle */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <button
+              onClick={() => navigate(isDAGPage ? '/' : '/dag')}
+              className="px-4 py-1.5 rounded-full text-xs font-semibold bg-yellow-400 text-white border hover:bg-yellow-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
+            >
+              {isDAGPage ? 'Explorer' : 'CHAIN-MAP'}
+            </button>
+            <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} />
+          </div>
         </div>
       </div>
     </header>

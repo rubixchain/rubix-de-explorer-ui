@@ -14,6 +14,7 @@ import { SCTokenExplorerPage } from '@/pages/SCTokenExplorerPage';
 import { TransactionExplorerPage } from '@/pages/TransactionExplorerPage';
 import { SCTransactionExplorerPage } from './pages/SCTransactionsExplorerPage';
 import { BurntTransactionExplorerPage } from './pages/BurntExplorePage';
+import { DAGPage } from '@/pages/DAGPage';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="/transaction-explorer" element={<TransactionExplorerPage />} />
             <Route path="/sc-transaction-explorer" element={<SCTransactionExplorerPage />} />
             <Route path="/burnt-transaction-explorer" element={<BurntTransactionExplorerPage />} />
+            <Route path="/dag" element={<DAGPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
