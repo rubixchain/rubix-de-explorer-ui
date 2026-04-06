@@ -18,7 +18,7 @@ const ZOOM_L1 = 0.55;
 const ZOOM_L2 = 0.85;
 
 // ─── API ──────────────────────────────────────────────────────────────────────
-const API_BASE = "https://testnetexplorer.rubix.net/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL_MAINNET ;
 
 // tokens field is {ft:[...], nft:[...], rbt:[...], smartContract:[...]}
 // committedTokens field is a flat array of token objects
