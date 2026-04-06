@@ -788,7 +788,7 @@ export default function DAGVisualizer() {
       {fetchError && !loading && (
         <div style={{ position: "absolute", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(3,10,26,0.7)", backdropFilter: "blur(4px)" }}>
           <div style={{ color: "#f87171", fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", fontSize: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 14, marginBottom: 6 }}>FAILED TO LOAD</div>
+            <div style={{ fontSize: 14, marginBottom: 6 }}>NOTHING TO SHOW</div>
             <div style={{ opacity: 0.7 }}>{fetchError}</div>
           </div>
         </div>
