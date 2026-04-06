@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Search, X, Copy, Check } from "lucide-react";
+import { Search, X, Copy, Check, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const NODE_W = 172;
@@ -151,7 +151,7 @@ function computeLayout(txns, apiEdges, viewW = 1440) {
       const baseX = (t - 0.5) * SCATTER_X;
       const jitterX = (rng() - 0.5) * (SCATTER_X / Math.max(count, 1)) * 1.1;
       const jitterY = (rng() - 0.5) * SCATTER_NUDGE * 2;
-      positions[tx.id] = { x: baseX + jitterX - NODE_W / 2, y: visY + jitterY };
+      positions[tx.id] = { x: baseX + jitterX - NODE_W / 2, y: visY + jitterY, layer: li };
     });
   });
 
@@ -199,6 +199,25 @@ function getAllConnected(txId, forwardMap, reverseMap) {
     (reverseMap[id] || []).forEach(did => queue.push(did));
   }
   return visited;
+}
+
+// Returns Map<id, depth> using longest-path from txId through forwardMap.
+// Longest path ensures a node gets colored by its deepest position in the
+// ancestor chain, not the shortest shortcut edge to it.
+function getAncestorDepths(txId, forwardMap) {
+  const depths = new Map([[txId, 0]]);
+  const queue = [[txId, 0]];
+  while (queue.length) {
+    const [id, depth] = queue.shift();
+    (forwardMap[id] || []).forEach(aid => {
+      const next = depth + 1;
+      if (next > (depths.get(aid) ?? -1)) {
+        depths.set(aid, next);
+        queue.push([aid, next]);
+      }
+    });
+  }
+  return depths;
 }
 
 // ─── Pan Joystick ─────────────────────────────────────────────────────────────
@@ -287,12 +306,32 @@ function PanJoystick({ onPan, isDark }) {
 
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
+function getEdgePoints(f, t) {
+  const fcx = f.x + NODE_W / 2, fcy = f.y + NODE_H / 2;
+  const tcx = t.x + NODE_W / 2, tcy = t.y + NODE_H / 2;
+  const dx = tcx - fcx, dy = tcy - fcy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist === 0) return { fx: fcx, fy: fcy + NODE_H / 2, tx: tcx, ty: tcy - NODE_H / 2 };
+  const nx = dx / dist, ny = dy / dist;
+  const hw = NODE_W / 2, hh = NODE_H / 2;
+  const tSrcX = nx !== 0 ? hw / Math.abs(nx) : Infinity;
+  const tSrcY = ny !== 0 ? hh / Math.abs(ny) : Infinity;
+  const tSrc = Math.min(tSrcX, tSrcY);
+  const tDstX = nx !== 0 ? hw / Math.abs(nx) : Infinity;
+  const tDstY = ny !== 0 ? hh / Math.abs(ny) : Infinity;
+  const tDst = Math.min(tDstX, tDstY);
+  return {
+    fx: fcx + nx * tSrc, fy: fcy + ny * tSrc,
+    tx: tcx - nx * tDst, ty: tcy - ny * tDst,
+  };
+}
+
 function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform }) {
   return (
     <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", overflow: "visible" }}>
       <defs>
-        <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M0 0 L8 4 L0 8z" fill="#4ade80" opacity={0.75} />
+        <marker id="arr" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+          <path d="M0,1 L10,6 L0,11 L3,6 Z" fill="#000000" opacity={0.95} />
         </marker>
         <filter id="glow"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
         <filter id="glow-strong"><feGaussianBlur stdDeviation="8" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
@@ -300,20 +339,25 @@ function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform
       <g transform={`translate(${transform.x},${transform.y}) scale(${transform.scale})`}>
         {edges.map((e, i) => {
           const f = positions[e.from], t = positions[e.to]; if (!f || !t) return null;
-          const fx = f.x + NODE_W / 2, fy = f.y + NODE_H;
-          const tx2 = t.x + NODE_W / 2, ty2 = t.y;
-          const cy = (fy + ty2) / 2;
-          const perp = (tx2 - fx) * 0.15;
+          const { fx, fy, tx: tx2, ty: ty2 } = getEdgePoints(f, t);
+          const mx = (fx + tx2) / 2, my = (fy + ty2) / 2;
+          const dx = tx2 - fx, dy = ty2 - fy;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const curve = Math.min(len * 0.25, 40);
+          const cx1 = fx + dx * 0.25 - dy / len * curve;
+          const cy1 = fy + dy * 0.25 + dx / len * curve;
+          const cx2 = tx2 - dx * 0.25 - dy / len * curve;
+          const cy2 = ty2 - dy * 0.25 + dx / len * curve;
           const isHoverEdge = hoveredAncestors?.has(e.from) && hoveredAncestors?.has(e.to);
           const isSelectEdge = ancestorIds?.has(e.from) && ancestorIds?.has(e.to);
           const isGlowing = isHoverEdge || isSelectEdge;
           return (
             <path key={i}
-              d={`M${fx},${fy} C${fx + perp},${cy} ${tx2 - perp},${cy} ${tx2},${ty2}`}
+              d={`M${fx},${fy} C${cx1},${cy1} ${cx2},${cy2} ${tx2},${ty2}`}
               fill="none" stroke="#4ade80"
-              strokeWidth={isGlowing ? 1.2 : 0.8}
+              strokeWidth={isGlowing ? 1.4 : 0.9}
               strokeDasharray={isGlowing ? "none" : "5 4"}
-              opacity={isGlowing ? 0.85 : 0.22}
+              opacity={isGlowing ? 0.9 : 0.28}
               markerEnd="url(#arr)"
               filter={isHoverEdge ? "url(#glow-strong)" : isSelectEdge ? "url(#glow)" : "none"}
             />
@@ -386,17 +430,34 @@ function timeAgo(ts) {
 }
 
 // ─── Card Node ────────────────────────────────────────────────────────────────
-function TxNode({ tx, x, y, selected, isAncestor, dimmed, onSelect, th }) {
+const LEVEL_COLORS = [
+  "#22d3ee", // 0 cyan
+  "#818cf8", // 1 indigo
+  "#34d399", // 2 emerald
+  "#fb923c", // 3 orange
+  "#f472b6", // 4 pink
+  "#2d2d2d", // 5 blackish (and beyond)
+];
+
+function hexAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function TxNode({ tx, x, y, selected, isAncestor, dimmed, ancestorDepth, onSelect, th }) {
   const isActive = selected;
-  const borderCol = isActive
-    ? "#22d3ee"
-    : isAncestor
-    ? "rgba(167,139,250,0.55)"
-    : th.border;
-  const glowShadow = isActive
-    ? `0 0 0 1.5px rgba(34,211,238,0.5), 0 0 28px rgba(34,211,238,0.2)`
-    : isAncestor
-    ? `0 0 0 1px rgba(167,139,250,0.4), 0 0 14px rgba(167,139,250,0.18)`
+  const hasDepth = ancestorDepth !== undefined;
+  // Color only when selected or is an ancestor of selected
+  const accentCol = hasDepth ? LEVEL_COLORS[Math.min(ancestorDepth, LEVEL_COLORS.length - 1)] : null;
+
+  const borderCol = accentCol ? (isActive ? accentCol : hexAlpha(accentCol, 0.6)) : th.border;
+  const bgGradient = accentCol
+    ? `linear-gradient(135deg, ${hexAlpha(accentCol, isActive ? 0.15 : 0.08)} 0%, ${th.bgCard} 100%)`
+    : th.bgCard;
+  const boxShadow = accentCol
+    ? (isActive
+        ? `0 0 0 1.5px ${hexAlpha(accentCol, 0.45)}, 0 0 28px ${hexAlpha(accentCol, 0.22)}`
+        : `0 0 0 1px ${hexAlpha(accentCol, 0.3)}, 0 0 14px ${hexAlpha(accentCol, 0.15)}`)
     : `0 2px 10px rgba(0,0,0,0.15)`;
 
   return (
@@ -404,35 +465,28 @@ function TxNode({ tx, x, y, selected, isAncestor, dimmed, onSelect, th }) {
       onClick={e => { e.stopPropagation(); onSelect(tx.id); }}
       style={{
         position: "absolute", left: x, top: y, width: NODE_W, height: NODE_H,
-        background: isActive
-          ? `linear-gradient(135deg, rgba(34,211,238,0.06) 0%, ${th.bgCard} 100%)`
-          : isAncestor
-          ? `linear-gradient(135deg, rgba(167,139,250,0.07) 0%, ${th.bgCard} 100%)`
-          : th.bgCard,
-        border: `2px solid ${borderCol}`, borderTop: `2px solid ${sc(tx.status)}`,
+        background: bgGradient,
+        border: `1.5px solid ${borderCol}`,
+        borderTop: accentCol ? `2.5px solid ${accentCol}` : `1.5px solid ${th.border}`,
         borderRadius: 8, cursor: "pointer", overflow: "hidden",
-        boxShadow: glowShadow,
+        boxShadow,
         opacity: dimmed ? 0.18 : 1,
-        transition: "box-shadow 0.2s, border-color 0.2s, transform 0.15s, opacity 0.2s",
+        transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s, transform 0.15s, opacity 0.2s",
         transform: isActive ? "scale(1.04)" : "scale(1)",
         userSelect: "none", zIndex: isActive ? 20 : isAncestor ? 10 : 1,
       }}>
-      {(isActive || isAncestor) && (
+      {accentCol && (
         <div style={{
           position: "absolute", inset: 0,
-          background: isActive
-            ? "radial-gradient(ellipse at 50% 0%, rgba(34,211,238,0.07) 0%, transparent 70%)"
-            : "radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.07) 0%, transparent 70%)",
+          background: `radial-gradient(ellipse at 50% 0%, ${hexAlpha(accentCol, 0.1)} 0%, transparent 70%)`,
           pointerEvents: "none",
         }} />
       )}
       <div style={{ padding: "8px 10px 7px", position: "relative", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-        {/* Truncated txn ID */}
-        <div style={{ color: isActive ? "#22d3ee" : th.t1, fontSize: 11, fontWeight: 700, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", textShadow: isActive ? "0 0 14px rgba(34,211,238,0.5)" : "none", letterSpacing: "0.5px" }}>
+        <div style={{ color: accentCol ? (isActive ? accentCol : th.t1) : th.t1, fontSize: 11, fontWeight: 700, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", textShadow: (isActive && accentCol) ? `0 0 14px ${hexAlpha(accentCol, 0.5)}` : "none", letterSpacing: "0.5px" }}>
           {tx.id ? `${tx.id.slice(0, 8)}......${tx.id.slice(-8)}` : "—"}
         </div>
-        {/* Time at bottom */}
-        <div style={{ color: "#22d3ee", fontSize: 10, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", textShadow: "0 0 8px rgba(34,211,238,0.6)" }}>
+        <div style={{ color: accentCol ?? th.t4, fontSize: 10, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", opacity: 0.85 }}>
           {timeAgo(tx.timestamp)}
         </div>
       </div>
@@ -441,6 +495,14 @@ function TxNode({ tx, x, y, selected, isAncestor, dimmed, onSelect, th }) {
 }
 
 const TOKEN_PAGE_SIZE = 4;
+
+const TOKEN_STYLES = {
+  RBT:     { bg: "rgba(139,92,246,0.08)",  border: "#8b5cf6", color: "#8b5cf6" },
+  FT:      { bg: "rgba(16,185,129,0.08)",  border: "#10b981", color: "#10b981" },
+  NFT:     { bg: "rgba(236,72,153,0.08)",  border: "#ec4899", color: "#ec4899" },
+  SC:      { bg: "rgba(249,115,22,0.08)",  border: "#f97316", color: "#f97316" },
+  default: { bg: "rgba(148,163,184,0.08)", border: "#94a3b8", color: "#94a3b8" },
+};
 
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 function DetailPanel({ tx, onClose, th }) {
@@ -451,61 +513,96 @@ function DetailPanel({ tx, onClose, th }) {
   const totalPages = Math.ceil(tx.tokens.length / TOKEN_PAGE_SIZE);
   const pagedTokens = tx.tokens.slice(tokenPage * TOKEN_PAGE_SIZE, (tokenPage + 1) * TOKEN_PAGE_SIZE);
 
+  const S = { fontFamily: "'Heebo', 'Inter', system-ui, sans-serif" };
+  const labelStyle = { ...S, color: th.t4, fontSize: 9, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 };
+
   return (
-    <div style={{ position: "absolute", right: 20, top: 88, width: 270, maxHeight: "calc(100vh - 100px)", background: th.bgPanel, border: `1px solid ${th.border}`, borderRadius: 12, padding: 18, backdropFilter: "blur(20px)", overflowY: "auto", zIndex: 100, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", boxShadow: "0 8px 40px rgba(0,0,0,0.2)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-        <div style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-          <div style={{ color: th.t4, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>Transaction ID</div>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 4 }}>
-            <div style={{ color: th.t1, fontSize: 11, fontWeight: 700, wordBreak: "break-all", flex: 1 }}>{tx.id}</div>
+    <div style={{ position: "absolute", right: 20, top: 88, width: 300, maxHeight: "calc(100vh - 100px)", background: th.bgPanel, border: `1px solid ${th.border}`, borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", zIndex: 100, ...S, boxShadow: "0 12px 40px rgba(0,0,0,0.22)", backdropFilter: "blur(20px)" }}>
+
+      {/* Scrollable body */}
+      <div style={{ overflowY: "auto", flex: 1 }}>
+
+        {/* Transaction Hash */}
+        <div style={{ padding: "16px 18px", borderBottom: `1px solid ${th.border}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={labelStyle}>Transaction Hash</div>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: th.t3, cursor: "pointer", padding: 4, display: "flex", borderRadius: 6 }}>
+              <X style={{ width: 15, height: 15 }} />
+            </button>
+          </div>
+          <div style={{ background: th.bgItem, borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
+            <code style={{ fontSize: 11, fontFamily: "monospace", color: th.t1, wordBreak: "break-all", flex: 1, lineHeight: 1.6 }}>{tx.id}</code>
             <CopyBtn value={tx.id} />
           </div>
         </div>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: th.t3, cursor: "pointer", fontSize: 20, padding: 0, flexShrink: 0 }}>×</button>
-      </div>
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-        <AddrField label="Initiator" value={tx.initiator} color="#22d3ee" th={th} />
-        <AddrField label="Owner" value={tx.owner} color="#a78bfa" th={th} />
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
-        <div style={{ color: th.t4, fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}>
-          Tokens ({tx.tokens.length})
+        {/* Initiator + Owner */}
+        <div style={{ padding: "12px 18px", borderBottom: `1px solid ${th.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
+          {[{ label: "Initiator", value: tx.initiator }, { label: "Owner", value: tx.owner }].map(({ label, value }) => (
+            <div key={label}>
+              <div style={{ ...labelStyle, marginBottom: 5 }}>{label}</div>
+              <div style={{ background: th.bgItem, borderRadius: 8, padding: "7px 10px", display: "flex", alignItems: "center", gap: 6, border: `1px solid ${th.border}` }}>
+                <span style={{ fontFamily: "monospace", fontSize: 11, color: th.t1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value || "—"}</span>
+                {value && value !== "N/A" && <CopyBtn value={value} />}
+              </div>
+            </div>
+          ))}
         </div>
-        {totalPages > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <button
-              onClick={() => setTokenPage(p => Math.max(0, p - 1))}
-              disabled={tokenPage === 0}
-              style={{ background: "none", border: `1px solid ${th.border}`, borderRadius: 4, color: tokenPage === 0 ? th.t4 : "#22d3ee", cursor: tokenPage === 0 ? "default" : "pointer", padding: "1px 7px", fontSize: 12, lineHeight: 1.4 }}>
-              ‹
-            </button>
-            <span style={{ color: th.t4, fontSize: 10, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif" }}>{tokenPage + 1}/{totalPages}</span>
-            <button
-              onClick={() => setTokenPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={tokenPage === totalPages - 1}
-              style={{ background: "none", border: `1px solid ${th.border}`, borderRadius: 4, color: tokenPage === totalPages - 1 ? th.t4 : "#22d3ee", cursor: tokenPage === totalPages - 1 ? "default" : "pointer", padding: "1px 7px", fontSize: 12, lineHeight: 1.4 }}>
-              ›
-            </button>
+
+        {/* Assets */}
+        <div style={{ padding: "12px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={labelStyle}>Assets Involved</div>
+            <span style={{ background: th.bgItem, color: th.t2, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 6, ...S }}>
+              Total: {tx.tokens.length}
+            </span>
           </div>
-        )}
-      </div>
-      {tx.tokens.length === 0 ? (
-        <div style={{ color: th.t5, fontSize: 11, padding: "6px 10px" }}>No tokens</div>
-      ) : pagedTokens.map((tok, i) => (
-        <div key={tokenPage * TOKEN_PAGE_SIZE + i} style={{ padding: "7px 11px", marginBottom: 4, background: th.bgItem, borderLeft: `2px solid ${tc(tok.symbol)}`, borderRadius: "0 6px 6px 0" }}>
-          <span style={{ color: tc(tok.symbol), fontSize: 11, fontWeight: 700 }}>{tok.symbol}</span>
-          <div style={{ color: th.t5, fontSize: 9, marginTop: 3, wordBreak: "break-all" }}>{tok.tokenId || "—"}</div>
+
+          {tx.tokens.length === 0 ? (
+            <div style={{ color: th.t5, fontSize: 11, padding: "6px 0" }}>No assets</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {pagedTokens.map((tok, i) => {
+                const ts = TOKEN_STYLES[tok.symbol] || TOKEN_STYLES.default;
+                return (
+                  <div key={tokenPage * TOKEN_PAGE_SIZE + i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: 8, background: ts.bg, borderLeft: `3px solid ${ts.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: 7, background: ts.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <span style={{ color: "#fff", fontSize: 9, fontWeight: 800, ...S }}>{tok.symbol}</span>
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ color: th.t1, fontSize: 11, fontWeight: 700, fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{tok.tokenId || "—"}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
+              <button onClick={() => setTokenPage(p => Math.max(0, p - 1))} disabled={tokenPage === 0}
+                style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${th.border}`, background: "none", color: tokenPage === 0 ? th.t5 : th.t1, cursor: tokenPage === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ChevronLeft style={{ width: 14, height: 14 }} />
+              </button>
+              <span style={{ color: th.t4, fontSize: 10, ...S }}>{tokenPage + 1} / {totalPages}</span>
+              <button onClick={() => setTokenPage(p => Math.min(totalPages - 1, p + 1))} disabled={tokenPage === totalPages - 1}
+                style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${th.border}`, background: "none", color: tokenPage === totalPages - 1 ? th.t5 : th.t1, cursor: tokenPage === totalPages - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ChevronRight style={{ width: 14, height: 14 }} />
+              </button>
+            </div>
+          )}
         </div>
-      ))}
-
-      <div style={{ marginTop: 10, padding: "8px 10px", background: th.bgItem, borderRadius: 6 }}>
-        <div style={{ color: th.t4, fontSize: 10, letterSpacing: 1, textTransform: "uppercase" }}>Token Count</div>
-        <div style={{ color: "#10b981", fontSize: 13, fontWeight: 700, marginTop: 3 }}>{tx.value}</div>
       </div>
 
-      <button onClick={onClose} style={{ width: "100%", marginTop: 14, padding: "9px", background: "rgba(34,211,238,0.06)", border: "1px solid rgba(34,211,238,0.2)", borderRadius: 7, color: "#22d3ee", fontSize: 11, cursor: "pointer", fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", letterSpacing: 1 }}>CLEAR SELECTION</button>
+      {/* Footer — Clear Selection only, no New Transaction */}
+      <div style={{ padding: "12px 18px", borderTop: `1px solid ${th.border}`, background: th.bgItem }}>
+        <button onClick={onClose} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "2px solid rgba(34,211,238,0.25)", background: "rgba(34,211,238,0.05)", color: "#22d3ee", fontSize: 11, fontWeight: 700, cursor: "pointer", ...S, letterSpacing: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <X style={{ width: 13, height: 13 }} />
+          CLEAR SELECTION
+        </button>
+      </div>
     </div>
   );
 }
@@ -617,7 +714,7 @@ export default function DAGVisualizer() {
 
   const ancestorIds = useMemo(() => {
     if (!selectedId) return null;
-    return getAllConnected(selectedId, edgesMap, {});
+    return getAncestorDepths(selectedId, edgesMap); // Map<id, depth>
   }, [selectedId, edgesMap]);
 
   const hoveredAncestors = useMemo(() => {
@@ -705,10 +802,12 @@ export default function DAGVisualizer() {
             const isAncestor = ancestorIds ? ancestorIds.has(tx.id) && tx.id !== selectedId : false;
             const isHoverAncestor = hoveredAncestors ? hoveredAncestors.has(tx.id) : false;
             const dimmed = ancestorIds ? !ancestorIds.has(tx.id) : false;
+            const ancestorDepth = ancestorIds ? ancestorIds.get(tx.id) : undefined;
             return (
               <TxNode key={tx.id} tx={tx} x={pos.x} y={pos.y}
                 selected={selectedId === tx.id} isAncestor={isAncestor}
                 isHoverAncestor={isHoverAncestor} dimmed={dimmed}
+                ancestorDepth={ancestorDepth}
                 onSelect={handleSelect} onHover={setHoveredId} onLeave={() => setHoveredId(null)}
                 th={th} isDark={isDark} />
             );
