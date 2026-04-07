@@ -494,7 +494,7 @@ const HoldersListView: React.FC<{
           currentPage={currentPage}
           totalPages={rbtTotalPages || 1}
           onPageChange={onPageChange}
-          totalItems={rbtData?.holders_response?.count || 0}
+          totalItems={rbtData?.total || 1}
           itemsPerPage={itemsPerPage}
           className="mt-6"
         />
@@ -504,7 +504,7 @@ const HoldersListView: React.FC<{
           currentPage={ftPage}
           totalPages={ftTotalPages}
           onPageChange={setFtPage}
-          totalItems={ftData?.count || 0}
+          totalItems={ftData?.count || 1}
           itemsPerPage={itemsPerPage}
           className="mt-6"
         />
