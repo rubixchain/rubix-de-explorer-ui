@@ -2,14 +2,14 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AppState, AppAction } from '@/types';
 import { STORAGE_KEYS } from '@/constants';
 
-// Load selected network from local storage or default to testnet
+// Load selected network from local storage or default to mainnet
 const loadSelectedNetwork = (): string => {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_NETWORK);
-    return saved || 'testnet';
+    return saved || 'mainnet';
   } catch (error) {
     console.error('Failed to load network from local storage:', error);
-    return 'testnet';
+    return 'mainnet';
   }
 };
 
