@@ -8,6 +8,7 @@ import { useFormatAddress, useIsMobile } from "@/hooks/useFormatAddress";
 import { ArrowLeft, Activity } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTokenDetails, useTokenChain } from "@/hooks/useTokens";
+import { TOKEN_STATUS } from "@/constants";
 
 function formatRelativeTime(epoch: number): string {
   const now = Date.now();
@@ -159,13 +160,22 @@ export const RBTExplorerPage: React.FC = () => {
           {/* Token Status */}
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Token Status:</p>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              d?.token_status === 1
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-            }`}>
-              {d?.token_status === 1 ? "Active" : d?.token_status}
-            </span>
+            {d?.token_status !== undefined && d?.token_status !== null ? (() => {
+              const status = d.token_status as number;
+              const label = TOKEN_STATUS[status] ?? `Unknown (${status})`;
+              const colorClass =
+                status === 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                status === 2 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                status === 9 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+              return (
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
+                  {label}
+                </span>
+              );
+            })() : (
+              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+            )}
           </div>
 
           {/* Latest Txn Time */}

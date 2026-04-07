@@ -16,7 +16,7 @@ const NetworkToggle: React.FC<{
         onClick={() => onChange('mainnet')}
         className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap ${
           isMainnet
-            ? 'bg-white text-gray-900 shadow-sm'
+            ? 'bg-white text-gray-900 shadow-sm border border-yellow-400'
             : 'text-gray-500 hover:text-gray-700'
         }`}
       >

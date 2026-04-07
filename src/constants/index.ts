@@ -54,6 +54,13 @@ export const CHAINS = {
   },
 } as const;
 
+// Token status codes returned by the API
+export const TOKEN_STATUS: Record<number, string> = {
+  0: 'Active',
+  2: 'Pledged',
+  9: 'Burnt',
+};
+
 export const TOKEN_TYPES = {
   RBT: 'RBT',
   FT: 'FT',
