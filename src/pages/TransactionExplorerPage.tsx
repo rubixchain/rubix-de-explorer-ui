@@ -15,7 +15,10 @@ import {
   Users,
   ChevronDown,
   ChevronRight,
+  Map,
 } from "lucide-react";
+import { useApp } from '@/contexts/AppContext';
+import { useSearch } from '@/hooks/useSearch';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTransaction } from "@/hooks/useTransactions";
 
@@ -26,6 +29,9 @@ export const TransactionExplorerPage: React.FC = () => {
 
   // Use React Query hook - same pattern as HomePage
   const { data: rawData, isLoading, error: queryError } = useTransaction(txId);
+
+  const { setSearchQuery } = useApp();
+  const { search } = useSearch();
 
   const [txData, setTxData] = useState<any>(null);
   const [tokenTransfers, setTokenTransfers] = useState<any[]>([]);
@@ -333,6 +339,18 @@ const formatAddress = (
               </span>
             </Tooltip>
             <CopyButton text={txData.id} size="sm" />
+            <button
+              onClick={() => {
+                // route to DAG and set the global search so DAG selects this txn
+                setSearchQuery(txData.id);
+                search(txData.id, 'transaction');
+                navigate('/dag');
+              }}
+              title="View on Chain Map"
+              className="px-4 py-1.5 rounded-full text-xs font-semibold bg-yellow-400 text-white border hover:bg-yellow-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
+            >
+             Chain-map 
+            </button>
           </div>
         </div>
         {/* Desktop Layout: Same row */}
@@ -345,6 +363,17 @@ const formatAddress = (
               </span>
             </Tooltip>
             <CopyButton text={txData.id} size="sm" />
+            <button
+              onClick={() => {
+                setSearchQuery(txData.id);
+                search(txData.id, 'transaction');
+                navigate('/dag');
+              }}
+              title="View on Chain Map"
+              className="px-4 py-1.5 rounded-full text-xs font-semibold bg-yellow-400 text-white border hover:bg-yellow-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
+            >
+              View on CHAIN-MAP
+            </button>
           </div>
         </div>
       </div>

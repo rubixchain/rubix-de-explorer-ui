@@ -633,7 +633,7 @@ function ZoomBadge({ scale, nodeCount, th }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export default function DAGVisualizer() {
+export default function DAGVisualizer({ externalSearchQuery = '', onExternalSearchHandled } = {}) {
   const containerRef = useRef(null);
   const isDark = false;
   const th = THEMES.light;
@@ -714,6 +714,34 @@ export default function DAGVisualizer() {
     () => computeLayout(visibleTxns, apiEdges, viewSize.w),
     [visibleTxns, apiEdges, viewSize.w]
   );
+
+  // If parent provided an external search query (from the main app), find and
+  // select the matching transaction once transactions/positions are ready.
+  useEffect(() => {
+    if (!externalSearchQuery) return;
+    if (!transactions || transactions.length === 0) return;
+    const q = externalSearchQuery.toLowerCase();
+    const match = transactions.find(t => (t.id || '').toLowerCase().includes(q) || (t.initiator || '').toLowerCase().includes(q));
+    if (match) {
+      // Select the transaction
+      setSelectedId(match.id);
+      // Try to center the view on the found node if we have a position
+      const pos = positions[match.id];
+      if (pos) {
+        setTransform(t => {
+          // center node roughly in viewport
+          const scale = t.scale;
+          const centerX = viewSize.w / 2;
+          const centerY = Math.max(96, viewSize.h / 4);
+          const x = centerX - (pos.x + NODE_W / 2) * scale;
+          const y = centerY - (pos.y + NODE_H / 2) * scale;
+          return { ...t, x, y, scale };
+        });
+      }
+      // Notify parent that we handled the external search (optional)
+      if (typeof onExternalSearchHandled === 'function') onExternalSearchHandled(match.id);
+    }
+  }, [externalSearchQuery, transactions, positions, viewSize.w, viewSize.h]);
 
   const ancestorIds = useMemo(() => {
     if (!selectedId) return null;

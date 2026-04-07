@@ -51,6 +51,14 @@ export const Header: React.FC = () => {
   const performSearch = () => {
     const query = searchQuery.trim();
     if (query) {
+      // If we're on the DAG page, don't navigate away — let the DAG app handle the search
+      if (isDAGPage) {
+        setSearchQuery(query);
+        search(query);
+        searchInputRef.current?.blur();
+        return;
+      }
+
       setSearchQuery(query);
       search(query);
 
