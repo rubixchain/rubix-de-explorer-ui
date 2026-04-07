@@ -667,7 +667,7 @@ export default function DAGVisualizer() {
   useEffect(() => {
     setLoading(true);
     setFetchError(null);
-    fetch(`${API_BASE}/api/dagtxns?limit=1000&depth=5`)
+    fetch(`${API_BASE}/api/dagtxns`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         // Support both { transactions, edges } (new API) and flat array (old API)
