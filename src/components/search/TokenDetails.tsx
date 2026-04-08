@@ -262,7 +262,7 @@ export const TokenDetails: React.FC<TokenDetailsProps> = ({
                 </button>
                 <Button variant="outline" size="sm">
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  View on Chain
+                  View on GRAPH
                 </Button>
               </div>
             </div>

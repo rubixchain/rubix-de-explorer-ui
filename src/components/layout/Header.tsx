@@ -217,7 +217,7 @@ export const Header: React.FC = () => {
               onClick={() => navigate(isDAGPage ? '/' : '/dag')}
               className="px-4 py-1.5 rounded-full text-xs font-semibold bg-yellow-400 text-white border hover:bg-yellow-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
             >
-              {isDAGPage ? 'Explorer' : 'CHAIN-MAP'}
+              {isDAGPage ? 'Explorer' : 'GRAPH'}
             </button>
             <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} />
           </div>

@@ -346,10 +346,10 @@ const formatAddress = (
                 search(txData.id, 'transaction');
                 navigate('/dag');
               }}
-              title="View on Chain Map"
+              title="View on GRAPH"
               className="px-4 py-1.5 rounded-full text-xs font-semibold bg-yellow-400 text-white border hover:bg-yellow-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
             >
-             Chain-map 
+             Graph
             </button>
           </div>
         </div>
@@ -369,10 +369,10 @@ const formatAddress = (
                 search(txData.id, 'transaction');
                 navigate('/dag');
               }}
-              title="View on Chain Map"
+              title="View on GRAPH"
               className="px-4 py-1.5 rounded-full text-xs font-semibold bg-yellow-400 text-white border hover:bg-yellow-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
             >
-              View on CHAIN-MAP
+              View the GRAPH
             </button>
           </div>
         </div>
