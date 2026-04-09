@@ -4,10 +4,44 @@ import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { ArrowLeft, Coins, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Coins, ArrowRightLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDIDInfo, useFTHoldings } from "@/hooks/useDIDs";
 import { useTransactionsByDID } from "@/hooks/useTransactions";
+
+/* -----------------------------------------
+   RBT Balance Card with dropdown
+------------------------------------------ */
+
+const RBTBalanceCard: React.FC<{ total: number; free: number; pledged: number }> = ({ total, free, pledged }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card className="p-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">RBT Balance</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xl font-bold text-heading dark:text-white">{total}</p>
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+        >
+          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 space-y-1">
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-500 dark:text-gray-400">Free</span>
+            <span className="font-medium text-green-600 dark:text-green-400">{free}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-500 dark:text-gray-400">Pledged</span>
+            <span className="font-medium text-amber-600 dark:text-amber-400">{pledged}</span>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
 
 /* -----------------------------------------
    Hook: Detect Mobile Screen
@@ -156,11 +190,15 @@ export const DIDExplorerPage: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <RBTBalanceCard
+          total={didData.did.total_rbts ?? 0}
+          free={didData.did.free_rbt ?? 0}
+          pledged={didData.did.pledged_rbt ?? 0}
+        />
         {[
-          ["RBT Balance", didData.did.total_rbts],
           ["FT Balance",  didData.did.total_fts],
           ["NFTs",        didData.did.total_nfts],
-          ["SC Deployed",   didData.did.total_scs],
+          ["SC Deployed", didData.did.total_scs],
         ].map(([label, value]) => (
           <Card key={label} className="p-4">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>

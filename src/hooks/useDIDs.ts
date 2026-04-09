@@ -43,16 +43,23 @@ export const useDIDInfo = (did: string, page: number, limit: number) => {
       const ft   = entries.filter((e: any) => e.asset_type === 'FT');
       const nft  = entries.filter((e: any) => e.asset_type === 'NFT');
       const sc   = entries.filter((e: any) => e.asset_type === 'SC');
+      const free_rbt    = rbt.reduce((s: number, e: any) => s + (e.balance || 0), 0);
+      const pledged_rbt = rbt.reduce((s: number, e: any) => s + (e.pledged_balance || 0), 0);
       return {
         did: {
           did,
-          total_rbts: Math.max(0, rbt.reduce((s: number, e: any) => s + (e.balance || 0), 0)),
+          free_rbt,
+          pledged_rbt,
+          total_rbts: free_rbt + pledged_rbt,
           total_fts:  ft.reduce((s: number, e: any) => s + (e.balance || 0), 0),
           total_nfts: nft.reduce((s: number, e: any) => s + (e.balance || 0), 0),
           total_scs:  sc.reduce((s: number, e: any) => s + (e.balance || 0), 0),
         },
-        entries,   // full flat list for the holdings tab
+        entries,
         rbt, ft, nft, sc,
+        hasFT:  ft.length > 0,
+        hasNFT: nft.length > 0,
+        hasSC:  sc.length > 0,
         count: entries.length,
       };
     },
