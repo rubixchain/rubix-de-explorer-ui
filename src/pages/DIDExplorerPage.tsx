@@ -43,7 +43,7 @@ export const DIDExplorerPage: React.FC = () => {
   const [txnPage, setTxnPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: didData, error: didError } =
+  const { data: didData, error: didError, isLoading: isLoadingDID } =
     useDIDInfo(did, 1, 100) as any;
 
   useFTHoldings(did, ftPage, itemsPerPage, activeTab === "ftholdings");
@@ -92,6 +92,19 @@ export const DIDExplorerPage: React.FC = () => {
   /* -----------------------------------------
      Error State
   ------------------------------------------ */
+  if (isLoadingDID) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="max-w-4xl mx-auto animate-pulse space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-1/3" />
+          <div className="h-32 bg-gray-200 rounded-xl" />
+          <div className="h-10 bg-gray-200 rounded w-1/4" />
+          <div className="h-64 bg-gray-200 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
   if (didError || !didData) {
     return (
       <div className="min-h-screen flex items-center justify-center">

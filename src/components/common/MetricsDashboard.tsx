@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
+import { BanterLoader } from "@/components/ui/BanterLoader";
 import { createPortal } from "react-dom";
 
 import {
@@ -342,6 +343,14 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         "Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className={`${className} px-4 sm:px-6 lg:px-8`}>
+        <BanterLoader label="Loading Metrics" />
+      </div>
+    );
+  }
 
   if (error) {
     return (

@@ -14,6 +14,7 @@ import { useDIDs } from "@/hooks/useDIDs";
 import { Search } from "lucide-react";
 import { useTokens, useFTList, useFTSuggestions, useFTTopHolders, useRBTSuggestions, useRBTInfo, useFTInfo } from "@/hooks/useTokens";
 import { useIsMobile, useFormatAddress } from "@/hooks/useFormatAddress";
+import { BanterLoader } from "@/components/ui/BanterLoader";
 
 
 
@@ -79,7 +80,7 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 };
 
   // Fetch transactions for current page
-  const { data } = useTransactions(paramsTxn) as any;
+  const { data, isLoading: txnLoading } = useTransactions(paramsTxn) as any;
 
   useEffect(() => {
     if (data?.data?.transactions) {
@@ -90,6 +91,8 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 
   // Use total_pages from API response directly
   const totalPages = data?.data?.totalPages ?? Math.ceil((data?.data?.count || 0) / itemsPerPage);
+
+  if (txnLoading) return <BanterLoader label="Loading Transactions" />;
 
   return (
     <div className="w-full">
@@ -573,7 +576,8 @@ const TokensListView: React.FC<{
     setShowFtSuggestions(false);
   };
 
-  if (tokenType === "rbt" && rbtLoading && !activeRbtToken) return <div className="text-sm text-gray-500 py-4">Loading tokens...</div>;
+  if (tokenType === "rbt" && rbtLoading && !activeRbtToken) return <BanterLoader label="Loading Tokens" />;
+  if (tokenType === "ft" && ftLoading && !activeFtName) return <BanterLoader label="Loading Tokens" />;
   if (tokenType === "rbt" && rbtError && !activeRbtToken) return <div className="text-sm text-red-500 py-4">Error loading tokens</div>;
 
   return (
@@ -974,11 +978,7 @@ const SCBlocksList: React.FC<{
     return `${address.slice(0, length)}...${address.slice(-length)}`;
   };
 
-  if (isLoading) return (
-    <div className="animate-pulse space-y-3">
-      {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-gray-200 dark:bg-gray-700 rounded" />)}
-    </div>
-  );
+  if (isLoading) return <BanterLoader label="Loading Smart Contracts" />;
 
   if (!scList.length) return (
     <p className="text-sm text-secondary-500 dark:text-secondary-400 py-4">No smart contracts found.</p>

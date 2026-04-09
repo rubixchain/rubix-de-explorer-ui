@@ -82,6 +82,23 @@ function mapTransaction(t) {
   };
 }
 
+// ─── Parse API response → { mappedTxns, edges } ──────────────────────────────
+function parseApiResponse(data) {
+  const txns = Array.isArray(data) ? data : (Array.isArray(data.transactions) ? data.transactions : []);
+  const mappedTxns = txns.map(mapTransaction);
+  const edgeSeen = new Set();
+  const edges = [];
+  txns.forEach(t => {
+    const prevIds = Array.isArray(t.previous_transaction_ids) ? t.previous_transaction_ids : [];
+    prevIds.forEach(prevId => {
+      if (!prevId) return;
+      const key = `${t.transaction_id}:${prevId}`;
+      if (!edgeSeen.has(key)) { edgeSeen.add(key); edges.push({ from: t.transaction_id, to: prevId }); }
+    });
+  });
+  return { mappedTxns, edges };
+}
+
 // ─── Themes ───────────────────────────────────────────────────────────────────
 const THEMES = {
   dark: {
@@ -378,7 +395,7 @@ function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform
               fill="none" stroke={edgeCol}
               strokeWidth={isGlowing ? 1.4 : 0.9}
               strokeDasharray={isGlowing ? "none" : "5 4"}
-              opacity={isGlowing ? 0.9 : (hasColor ? 0.6 : 0.28)}
+              opacity={isGlowing ? 0.9 : (hasColor ? 0.6 : 0.45)}
               markerEnd="url(#arr)"
               filter={isHoverEdge ? "url(#glow-strong)" : isSelectEdge ? "url(#glow)" : "none"}
             />
@@ -477,10 +494,11 @@ function TxNode({ tx, x, y, selected, isAncestor, dimmed, ancestorDepth, onSelec
         borderTop: accentCol ? `2.5px solid ${accentCol}` : `1.5px solid ${th.border}`,
         borderRadius: 8, cursor: "pointer", overflow: "hidden",
         boxShadow,
-        opacity: dimmed ? 0.18 : 1,
+        opacity: dimmed ? 0.45 : 1,
         transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s, transform 0.2s, opacity 0.2s",
         transform: isActive ? "scale(1.07)" : isAncestor ? "scale(1.03)" : "scale(1)",
         userSelect: "none", zIndex: isActive ? 20 : isAncestor ? 10 : 1,
+        pointerEvents: "auto",
       }}>
       {accentCol && (
         <div style={{
@@ -493,9 +511,9 @@ function TxNode({ tx, x, y, selected, isAncestor, dimmed, ancestorDepth, onSelec
         <div style={{ color: accentCol ? (isActive ? accentCol : th.t1) : th.t1, fontSize: 11, fontWeight: 700, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", textShadow: (isActive && accentCol) ? `0 0 14px ${hexAlpha(accentCol, 0.5)}` : "none", letterSpacing: "0.5px" }}>
           {tx.id ? `${tx.id.slice(0, 8)}......${tx.id.slice(-8)}` : "—"}
         </div>
-        <div style={{ color: accentCol ?? th.t4, fontSize: 10, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", opacity: 0.85 }}>
+        {/* <div style={{ color: accentCol ?? th.t4, fontSize: 10, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", opacity: 0.85 }}>
           {timeAgo(tx.timestamp)}
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -512,16 +530,40 @@ const TOKEN_STYLES = {
 };
 
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
-function DetailPanel({ tx, onClose, th }) {
+function DetailPanel({ tx, txDetail, txDetailLoading, onClose, th }) {
   const [tokenPage, setTokenPage] = useState(0);
   useEffect(() => { setTokenPage(0); }, [tx?.id]);
 
   if (!tx) return null;
-  const totalPages = Math.ceil(tx.tokens.length / TOKEN_PAGE_SIZE);
-  const pagedTokens = tx.tokens.slice(tokenPage * TOKEN_PAGE_SIZE, (tokenPage + 1) * TOKEN_PAGE_SIZE);
 
   const S = { fontFamily: "'Heebo', 'Inter', system-ui, sans-serif" };
   const labelStyle = { ...S, color: th.t4, fontSize: 9, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 };
+
+  // Prefer enriched API detail; fall back to basic DAG data
+  const initiator = txDetail?.initiator || txDetail?.sender_did || tx.initiator || "—";
+  const owner     = txDetail?.owner     || txDetail?.receiver_did || tx.owner     || "—";
+  const txnType   = txDetail?.txn_type  ? (txDetail.txn_type.charAt(0).toUpperCase() + txDetail.txn_type.slice(1)) : null;
+  const amount    = txDetail?.amount != null
+    ? `${Number(txDetail.amount).toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 6 })} RBT`
+    : null;
+  const epoch = txDetail?.epoch || tx.timestamp;
+  const timeStr = epoch ? new Date(epoch < 1e12 ? epoch * 1000 : epoch).toLocaleString() : null;
+  const comment = txDetail?.comment || txDetail?.memo || null;
+
+  // Build token list from detail when available
+  let displayTokens = tx.tokens;
+  if (txDetail?.tokens && typeof txDetail.tokens === "object" && !Array.isArray(txDetail.tokens)) {
+    const TYPE_MAP = { ft: "FT", nft: "NFT", rbt: "RBT", smartContract: "SC" };
+    displayTokens = [];
+    Object.entries(TYPE_MAP).forEach(([key, sym]) => {
+      (txDetail.tokens[key] || []).forEach(item => {
+        if (item) displayTokens.push({ tokenId: item.tokenId || "", symbol: sym });
+      });
+    });
+  }
+
+  const totalPages = Math.ceil(displayTokens.length / TOKEN_PAGE_SIZE);
+  const pagedTokens = displayTokens.slice(tokenPage * TOKEN_PAGE_SIZE, (tokenPage + 1) * TOKEN_PAGE_SIZE);
 
   return (
     <div style={{ position: "absolute", right: 20, top: 88, width: 300, maxHeight: "calc(100vh - 100px)", background: th.bgPanel, border: `1px solid ${th.border}`, borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", zIndex: 100, ...S, boxShadow: "0 12px 40px rgba(0,0,0,0.22)", backdropFilter: "blur(20px)" }}>
@@ -529,58 +571,100 @@ function DetailPanel({ tx, onClose, th }) {
       {/* Scrollable body */}
       <div style={{ overflowY: "auto", flex: 1 }}>
 
-        {/* Transaction Hash */}
-        <div style={{ padding: "16px 18px", borderBottom: `1px solid ${th.border}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={labelStyle}>Transaction Hash</div>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: th.t3, cursor: "pointer", padding: 4, display: "flex", borderRadius: 6 }}>
-              <X style={{ width: 15, height: 15 }} />
-            </button>
-          </div>
-          <div style={{ background: th.bgItem, borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
-            <code style={{ fontSize: 11, fontFamily: "monospace", color: th.t1, wordBreak: "break-all", flex: 1, lineHeight: 1.6 }}>{tx.id}</code>
+        {/* Header row: label + close */}
+        <div style={{ padding: "14px 18px 10px", borderBottom: `1px solid ${th.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={labelStyle}>Transaction Details</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: th.t3, cursor: "pointer", padding: 4, display: "flex", borderRadius: 6 }}>
+            <X style={{ width: 15, height: 15 }} />
+          </button>
+        </div>
+
+        {/* Hash */}
+        <div style={{ padding: "10px 18px", borderBottom: `1px solid ${th.border}` }}>
+          <div style={{ ...labelStyle, marginBottom: 5 }}>Hash</div>
+          <div style={{ background: th.bgItem, borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "flex-start", gap: 6 }}>
+            <code style={{ fontSize: 10, fontFamily: "monospace", color: th.t1, wordBreak: "break-all", flex: 1, lineHeight: 1.6 }}>{tx.id}</code>
             <CopyBtn value={tx.id} />
           </div>
         </div>
 
+        {/* Loading shimmer */}
+        {txDetailLoading && (
+          <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid #facc15", borderTopColor: "transparent", animation: "dagSpin 0.7s linear infinite", flexShrink: 0 }} />
+            <span style={{ color: th.t4, fontSize: 10 }}>Loading details…</span>
+          </div>
+        )}
+
+        {/* Type + Amount */}
+        {!txDetailLoading && (txnType || amount) && (
+          <div style={{ padding: "10px 18px", display: "flex", gap: 8 }}>
+            {txnType && (
+              <div style={{ flex: 1, padding: "7px 10px", background: th.bgItem, borderRadius: 6 }}>
+                <div style={{ ...labelStyle, marginBottom: 3 }}>Type</div>
+                <div style={{ color: th.t1, fontSize: 12, fontWeight: 600 }}>{txnType}</div>
+              </div>
+            )}
+            {/* {amount && (
+              <div style={{ flex: 1, padding: "7px 10px", background: th.bgItem, borderRadius: 6 }}>
+                <div style={{ ...labelStyle, marginBottom: 3 }}>Amount</div>
+                <div style={{ color: "#facc15", fontSize: 12, fontWeight: 700 }}>{amount}</div>
+              </div>
+            )} */}
+          </div>
+        )}
+
+        {/* Timestamp */}
+        {/* {!txDetailLoading && timeStr && (
+          <div style={{ padding: "8px 18px", borderBottom: `1px solid ${th.border}` }}>
+            <div style={{ ...labelStyle, marginBottom: 3 }}>Timestamp</div>
+            <div style={{ color: th.t2, fontSize: 10 }}>{timeStr}</div>
+          </div>
+        )} */}
+
         {/* Initiator + Owner */}
-        <div style={{ padding: "12px 18px", borderBottom: `1px solid ${th.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
-          {[{ label: "Initiator", value: tx.initiator }, { label: "Owner", value: tx.owner }].map(({ label, value }) => (
+        <div style={{ padding: "10px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
+          {[{ label: "Initiator", value: initiator }, { label: "Owner", value: owner }].map(({ label, value }) => (
             <div key={label}>
-              <div style={{ ...labelStyle, marginBottom: 5 }}>{label}</div>
-              <div style={{ background: th.bgItem, borderRadius: 8, padding: "7px 10px", display: "flex", alignItems: "center", gap: 6, border: `1px solid ${th.border}` }}>
-                <span style={{ fontFamily: "monospace", fontSize: 11, color: th.t1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value || "—"}</span>
-                {value && value !== "N/A" && <CopyBtn value={value} />}
+              <div style={{ ...labelStyle, marginBottom: 4 }}>{label}</div>
+              <div style={{ background: th.bgItem, borderRadius: 8, padding: "6px 10px", display: "flex", alignItems: "center", gap: 6, border: `1px solid ${th.border}` }}>
+                <span style={{ fontFamily: "monospace", fontSize: 10, color: th.t1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</span>
+                {value && value !== "—" && <CopyBtn value={value} />}
               </div>
             </div>
           ))}
         </div>
 
+        {/* Comment */}
+        {!txDetailLoading && comment && (
+          <div style={{ padding: "8px 18px", borderBottom: `1px solid ${th.border}` }}>
+            <div style={{ ...labelStyle, marginBottom: 3 }}>Comment</div>
+            <div style={{ color: th.t2, fontSize: 10, wordBreak: "break-word" }}>{comment}</div>
+          </div>
+        )}
+
         {/* Assets */}
         <div style={{ padding: "12px 18px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={labelStyle}>Assets Involved</div>
-            <span style={{ background: th.bgItem, color: th.t2, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 6, ...S }}>
-              Total: {tx.tokens.length}
+            <div style={labelStyle}>Assets</div>
+            <span style={{ background: th.bgItem, color: th.t2, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>
+              {displayTokens.length} total
             </span>
           </div>
 
-          {tx.tokens.length === 0 ? (
-            <div style={{ color: th.t5, fontSize: 11, padding: "6px 0" }}>No assets</div>
+          {displayTokens.length === 0 ? (
+            <div style={{ color: th.t5, fontSize: 11, padding: "6px 0" }}>{txDetailLoading ? "…" : "No assets"}</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {pagedTokens.map((tok, i) => {
                 const ts = TOKEN_STYLES[tok.symbol] || TOKEN_STYLES.default;
                 return (
-                  <div key={tokenPage * TOKEN_PAGE_SIZE + i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: 8, background: ts.bg, borderLeft: `3px solid ${ts.border}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 30, height: 30, borderRadius: 7, background: ts.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <span style={{ color: "#fff", fontSize: 9, fontWeight: 800, ...S }}>{tok.symbol}</span>
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ color: th.t1, fontSize: 11, fontWeight: 700, fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{tok.tokenId || "—"}</div>
-                      </div>
-                    </div>                  </div>
+                  <div key={tokenPage * TOKEN_PAGE_SIZE + i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, background: ts.bg, borderLeft: `3px solid ${ts.border}` }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: ts.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ color: "#fff", fontSize: 8, fontWeight: 800 }}>{tok.symbol}</span>
+                    </div>
+                    <span style={{ color: th.t1, fontSize: 10, fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tok.tokenId || "—"}</span>
+                  </div>
                 );
               })}
             </div>
@@ -592,7 +676,7 @@ function DetailPanel({ tx, onClose, th }) {
                 style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${th.border}`, background: "none", color: tokenPage === 0 ? th.t5 : th.t1, cursor: tokenPage === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <ChevronLeft style={{ width: 14, height: 14 }} />
               </button>
-              <span style={{ color: th.t4, fontSize: 10, ...S }}>{tokenPage + 1} / {totalPages}</span>
+              <span style={{ color: th.t4, fontSize: 10 }}>{tokenPage + 1} / {totalPages}</span>
               <button onClick={() => setTokenPage(p => Math.min(totalPages - 1, p + 1))} disabled={tokenPage === totalPages - 1}
                 style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${th.border}`, background: "none", color: tokenPage === totalPages - 1 ? th.t5 : th.t1, cursor: tokenPage === totalPages - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <ChevronRight style={{ width: 14, height: 14 }} />
@@ -602,10 +686,10 @@ function DetailPanel({ tx, onClose, th }) {
         </div>
       </div>
 
-      {/* Footer — Clear Selection only, no New Transaction */}
+      {/* Footer */}
       <div style={{ padding: "12px 18px", borderTop: `1px solid ${th.border}`, background: th.bgItem }}>
-        <button onClick={onClose} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "2px solid rgba(34,211,238,0.25)", background: "rgba(34,211,238,0.05)", color: "#22d3ee", fontSize: 11, fontWeight: 700, cursor: "pointer", ...S, letterSpacing: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <X style={{ width: 13, height: 13 }} />
+        <button onClick={onClose} style={{ width: "100%", padding: "9px", borderRadius: 10, border: "1.5px solid #facc1540", background: "#facc1508", color: "#92400e", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <X style={{ width: 12, height: 12 }} />
           CLEAR SELECTION
         </button>
       </div>
@@ -642,6 +726,8 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
   const [transform, setTransform] = useState({ x: window.innerWidth / 2, y: 96, scale: 0.9 });
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+  const [txDetail, setTxDetail] = useState(null);
+  const [txDetailLoading, setTxDetailLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
@@ -651,51 +737,53 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
   const [visibleCount, setVisibleCount] = useState(500);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   const visibleTxns = useMemo(() => transactions.slice(0, visibleCount), [transactions, visibleCount]);
 
   const txMap = useMemo(() => Object.fromEntries(transactions.map(t => [t.id, t])), [transactions]);
 
-  // Forward: from → [to] (ancestors), Reverse: to → [from] (descendants)
-  const edgesMap = useMemo(() => {
-    const map = {};
-    apiEdges.forEach(e => { (map[e.from] ??= []).push(e.to); });
-    return map;
-  }, [apiEdges]);
 
 
-  useEffect(() => {
+  const pendingSelectRef = useRef(null);
+
+  const loadFull = useCallback(() => {
     setLoading(true);
     setFetchError(null);
+    setIsSearchMode(false);
     fetch(`${API_BASE}/api/dagtxns`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
-        // Support both { transactions, edges } (new API) and flat array (old API)
-        const txns = Array.isArray(data) ? data : (Array.isArray(data.transactions) ? data.transactions : []);
-        if (txns.length === 0) throw new Error("No transactions found");
-
-        const mappedTxns = txns.map(mapTransaction);
+        const { mappedTxns, edges } = parseApiResponse(data);
+        if (mappedTxns.length === 0) throw new Error("No transactions found");
         setTransactions(mappedTxns);
-
-        // Deduplicate edges, supplementing API edges with token-derived ones
-        const edgeSeen = new Set();
-        const edges = [];
-        (Array.isArray(data.edges) ? data.edges : []).forEach(e => {
-          const key = `${e.from}:${e.to}`;
-          if (!edgeSeen.has(key)) { edgeSeen.add(key); edges.push(e); }
-        });
-        mappedTxns.forEach(tx => {
-          tx.tokens.forEach(tok => {
-            if (!tok.prevTxId) return;
-            const key = `${tx.id}:${tok.prevTxId}`;
-            if (!edgeSeen.has(key)) { edgeSeen.add(key); edges.push({ from: tx.id, to: tok.prevTxId }); }
-          });
-        });
         setApiEdges(edges);
       })
       .catch(e => setFetchError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const fetchSearch = useCallback((txnId) => {
+    if (!txnId?.trim()) return;
+    setSearchLoading(true);
+    setIsSearchMode(true);
+    fetch(`${API_BASE}/api/dagtxns/search?txnID=${encodeURIComponent(txnId.trim())}`)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        const { mappedTxns, edges } = parseApiResponse(data);
+        setTransactions(mappedTxns);
+        setApiEdges(edges);
+        if (mappedTxns.length > 0) {
+          setSelectedId(mappedTxns[0].id);
+          pendingSelectRef.current = mappedTxns[0].id;
+        }
+      })
+      .catch(e => console.error("DAG search failed:", e))
+      .finally(() => setSearchLoading(false));
+  }, []);
+
+  useEffect(() => { loadFull(); }, [loadFull]);
 
   useEffect(() => {
     const h = () => setViewSize({ w: window.innerWidth, h: window.innerHeight });
@@ -709,49 +797,76 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
     return () => window.removeEventListener("keydown", h);
   }, []);
 
+  // Fetch full transaction detail from API whenever a block is selected
+  useEffect(() => {
+    if (!selectedId) { setTxDetail(null); return; }
+    setTxDetail(null);
+    setTxDetailLoading(true);
+    fetch(`${API_BASE}/api/get-transaction-info?transactionID=${encodeURIComponent(selectedId)}`)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => setTxDetail(data))
+      .catch(() => setTxDetail(null))
+      .finally(() => setTxDetailLoading(false));
+  }, [selectedId]);
+
 
   const { positions, edges } = useMemo(
     () => computeLayout(visibleTxns, apiEdges, viewSize.w),
     [visibleTxns, apiEdges, viewSize.w]
   );
 
-  // If parent provided an external search query (from the main app), find and
-  // select the matching transaction once transactions/positions are ready.
+  // Built from VISIBLE edges only so ancestor highlighting never marks a node
+  // that has no drawn connection to the selected transaction.
+  // edges: { from: newer, to: older } — forward map: newer → [older parents]
+  const edgesMap = useMemo(() => {
+    const map = {};
+    edges.forEach(e => { (map[e.from] ??= []).push(e.to); });
+    return map;
+  }, [edges]);
+
+  // Reverse map: older → [newer children], used for hover "all connected" traversal
+  const reverseEdgesMap = useMemo(() => {
+    const map = {};
+    edges.forEach(e => { (map[e.to] ??= []).push(e.from); });
+    return map;
+  }, [edges]);
+
+  // When parent passes an external search query (e.g. "View on Graph" button),
+  // call the search API immediately.
+  const handledExternalRef = useRef('');
   useEffect(() => {
     if (!externalSearchQuery) return;
-    if (!transactions || transactions.length === 0) return;
-    const q = externalSearchQuery.toLowerCase();
-    const match = transactions.find(t => (t.id || '').toLowerCase().includes(q) || (t.initiator || '').toLowerCase().includes(q));
-    if (match) {
-      // Select the transaction
-      setSelectedId(match.id);
-      // Try to center the view on the found node if we have a position
-      const pos = positions[match.id];
-      if (pos) {
-        setTransform(t => {
-          // center node roughly in viewport
-          const scale = t.scale;
-          const centerX = viewSize.w / 2;
-          const centerY = Math.max(96, viewSize.h / 4);
-          const x = centerX - (pos.x + NODE_W / 2) * scale;
-          const y = centerY - (pos.y + NODE_H / 2) * scale;
-          return { ...t, x, y, scale };
-        });
-      }
-      // Notify parent that we handled the external search (optional)
-      if (typeof onExternalSearchHandled === 'function') onExternalSearchHandled(match.id);
-    }
-  }, [externalSearchQuery, transactions, positions, viewSize.w, viewSize.h]);
+    if (handledExternalRef.current === externalSearchQuery) return;
+    handledExternalRef.current = externalSearchQuery;
+    fetchSearch(externalSearchQuery);
+    if (typeof onExternalSearchHandled === 'function') onExternalSearchHandled();
+  }, [externalSearchQuery, fetchSearch]);
+
+  // Auto-center on the pending selected node once positions are computed.
+  useEffect(() => {
+    const id = pendingSelectRef.current;
+    if (!id || !positions[id]) return;
+    pendingSelectRef.current = null;
+    const pos = positions[id];
+    setTransform(t => {
+      const scale = Math.max(t.scale, 0.85);
+      const x = viewSize.w / 2 - (pos.x + NODE_W / 2) * scale;
+      const y = Math.max(96, viewSize.h / 3) - (pos.y + NODE_H / 2) * scale;
+      return { x, y, scale };
+    });
+  }, [positions, viewSize.w, viewSize.h]);
 
   const ancestorIds = useMemo(() => {
     if (!selectedId) return null;
-    return getAncestorDepths(selectedId, edgesMap); // Map<id, depth>
+    // edgesMap[newer] = [older parents] — traverses from selected → ancestors
+    return getAncestorDepths(selectedId, edgesMap);
   }, [selectedId, edgesMap]);
 
   const hoveredAncestors = useMemo(() => {
     if (!hoveredId) return null;
-    return getAllConnected(hoveredId, edgesMap, {});
-  }, [hoveredId, edgesMap]);
+    // forward=edgesMap (newer→older) + reverse=reverseEdgesMap (older→newer)
+    return getAllConnected(hoveredId, edgesMap, reverseEdgesMap);
+  }, [hoveredId, edgesMap, reverseEdgesMap]);
 
   const handleSelect = useCallback((id) => {
     setSelectedId(prev => prev === id ? null : id);
@@ -807,8 +922,28 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
 
       {/* Loading overlay */}
       {loading && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(3,10,26,0.7)", backdropFilter: "blur(4px)" }}>
-          <div style={{ color: "#22d3ee", fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", fontSize: 13, letterSpacing: 2 }}>LOADING NETWORK DATA...</div>
+        <div style={{ position: "absolute", inset: 0, zIndex: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
+          {/* Banter loader — 3×3 grid of yellow boxes */}
+          <div style={{ position: "relative", width: 72, height: 72, marginBottom: 32 }}>
+            {[1,2,3,4,5,6,7,8,9].map(n => (
+              <div key={n} style={{
+                float: "left", position: "relative", width: 20, height: 20,
+                marginRight: n % 3 === 0 ? 0 : 6,
+                marginBottom: n % 3 === 0 ? 6 : 0,
+                animation: `banterBox${n} 4s infinite`,
+              }}>
+                <div style={{
+                  position: "absolute", left: 0, top: 0, width: "100%", height: "100%",
+                  background: "#facc15",
+                  marginLeft: (n === 1 || n === 4) ? 26 : 0,
+                  marginTop: n === 3 ? 52 : 0,
+                }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ color: "#000000", fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", fontFamily: "'Heebo', 'Inter', system-ui, sans-serif" }}>
+            Building Graph
+          </div>
         </div>
       )}
 
@@ -884,26 +1019,32 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && searchResults.length > 0) { handleSelect(searchResults[0].id); setSearchQuery(""); } }}
-                placeholder="Search by transaction ID or DID..."
+                onKeyDown={e => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    fetchSearch(searchQuery.trim());
+                    setSearchQuery("");
+                  }
+                }}
+                placeholder="Search by transaction ID..."
                 style={{ width: "100%", padding: "13px 44px 13px 42px", background: th.bgInput, border: "1px solid #fef3c7", borderRight: "none", borderRadius: "999px 0 0 999px", color: th.t1, fontSize: 14, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", outline: "none", boxSizing: "border-box" }}
                 onFocus={e => e.target.style.borderColor = "#fef3c7"}
                 onBlur={e => e.target.style.borderColor = "#fef3c7"}
               />
-              {searchQuery && (
+              {searchLoading ? (
+                <div style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, border: "2px solid #facc15", borderTopColor: "transparent", borderRadius: "50%", animation: "dagSpin 0.7s linear infinite" }} />
+              ) : searchQuery ? (
                 <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center", color: th.t4 }}>
                   <X size={14} />
                 </button>
-              )}
+              ) : null}
             </div>
             {/* Search button */}
             <button
-              onClick={() => { if (searchResults.length > 0) { handleSelect(searchResults[0].id); setSearchQuery(""); } }}
-              style={{ padding: "13px 26px", background: "#fefce8", color: "#090909ff", border: "1px solid #fef3c7", borderLeft: "none", borderRadius: "0 999px 999px 0", fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", transition: "background 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#ffc907f8"}
-              onMouseLeave={e => e.currentTarget.style.background = "#ffc907f8"}
+              onClick={() => { if (searchQuery.trim()) { fetchSearch(searchQuery.trim()); setSearchQuery(""); } }}
+              disabled={searchLoading || !searchQuery.trim()}
+              style={{ padding: "13px 26px", background: "#facc15", color: "#000", border: "1px solid #fef3c7", borderLeft: "none", borderRadius: "0 999px 999px 0", fontSize: 14, fontWeight: 600, cursor: searchLoading ? "not-allowed" : "pointer", whiteSpace: "nowrap", fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", opacity: searchLoading ? 0.6 : 1 }}
             >
-              Search
+              {searchLoading ? "Searching…" : "Search"}
             </button>
           </div>
 
@@ -941,7 +1082,16 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
     
 
         {/* Controls */}
-        <div style={{ display: "flex", gap: 10, flexShrink: 0, marginLeft: "auto", alignItems: "center" }}></div>
+        <div style={{ display: "flex", gap: 10, flexShrink: 0, marginLeft: "auto", alignItems: "center" }}>
+          {isSearchMode && (
+            <button
+              onClick={() => { loadFull(); setSelectedId(null); }}
+              style={{ padding: "6px 14px", borderRadius: 999, background: "#facc15", color: "#000", border: "none", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif" }}
+            >
+              ← Full DAG
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Floating zoom controls — bottom left */}
@@ -963,7 +1113,7 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
         </div>
       </div>
 
-      {selectedId && <DetailPanel tx={txMap[selectedId]} onClose={() => setSelectedId(null)} th={th} />}
+      {selectedId && <DetailPanel tx={txMap[selectedId]} txDetail={txDetail} txDetailLoading={txDetailLoading} onClose={() => setSelectedId(null)} th={th} />}
 
 
       {/* <ZoomBadge scale={transform.scale} nodeCount={transactions.length} th={th} /> */}
@@ -972,6 +1122,62 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap');
         [data-node] { will-change: transform; }
         button { font-family: monospace; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes dagSpin { to { transform: rotate(360deg); } }
+        @keyframes banterBox1 {
+          9.09%{transform:translate(-26px,0)} 18.18%{transform:translate(0,0)} 27.27%{transform:translate(0,0)}
+          36.36%{transform:translate(26px,0)} 45.45%{transform:translate(26px,26px)} 54.55%{transform:translate(26px,26px)}
+          63.64%{transform:translate(26px,26px)} 72.73%{transform:translate(26px,0)} 81.82%{transform:translate(0,0)}
+          90.91%{transform:translate(-26px,0)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox2 {
+          9.09%{transform:translate(0,0)} 18.18%{transform:translate(26px,0)} 27.27%{transform:translate(0,0)}
+          36.36%{transform:translate(26px,0)} 45.45%{transform:translate(26px,26px)} 54.55%{transform:translate(26px,26px)}
+          63.64%{transform:translate(26px,26px)} 72.73%{transform:translate(26px,26px)} 81.82%{transform:translate(0,26px)}
+          90.91%{transform:translate(0,26px)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox3 {
+          9.09%{transform:translate(-26px,0)} 18.18%{transform:translate(-26px,0)} 27.27%{transform:translate(0,0)}
+          36.36%{transform:translate(-26px,0)} 45.45%{transform:translate(-26px,0)} 54.55%{transform:translate(-26px,0)}
+          63.64%{transform:translate(-26px,0)} 72.73%{transform:translate(-26px,0)} 81.82%{transform:translate(-26px,-26px)}
+          90.91%{transform:translate(0,-26px)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox4 {
+          9.09%{transform:translate(-26px,0)} 18.18%{transform:translate(-26px,0)} 27.27%{transform:translate(-26px,-26px)}
+          36.36%{transform:translate(0,-26px)} 45.45%{transform:translate(0,0)} 54.55%{transform:translate(0,-26px)}
+          63.64%{transform:translate(0,-26px)} 72.73%{transform:translate(0,-26px)} 81.82%{transform:translate(-26px,-26px)}
+          90.91%{transform:translate(-26px,0)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox5 {
+          9.09%{transform:translate(0,0)} 18.18%{transform:translate(0,0)} 27.27%{transform:translate(0,0)}
+          36.36%{transform:translate(26px,0)} 45.45%{transform:translate(26px,0)} 54.55%{transform:translate(26px,0)}
+          63.64%{transform:translate(26px,0)} 72.73%{transform:translate(26px,0)} 81.82%{transform:translate(26px,-26px)}
+          90.91%{transform:translate(0,-26px)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox6 {
+          9.09%{transform:translate(0,0)} 18.18%{transform:translate(-26px,0)} 27.27%{transform:translate(-26px,0)}
+          36.36%{transform:translate(0,0)} 45.45%{transform:translate(0,0)} 54.55%{transform:translate(0,0)}
+          63.64%{transform:translate(0,0)} 72.73%{transform:translate(0,26px)} 81.82%{transform:translate(-26px,26px)}
+          90.91%{transform:translate(-26px,0)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox7 {
+          9.09%{transform:translate(26px,0)} 18.18%{transform:translate(26px,0)} 27.27%{transform:translate(26px,0)}
+          36.36%{transform:translate(0,0)} 45.45%{transform:translate(0,-26px)} 54.55%{transform:translate(26px,-26px)}
+          63.64%{transform:translate(0,-26px)} 72.73%{transform:translate(0,-26px)} 81.82%{transform:translate(0,0)}
+          90.91%{transform:translate(26px,0)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox8 {
+          9.09%{transform:translate(0,0)} 18.18%{transform:translate(-26px,0)} 27.27%{transform:translate(-26px,-26px)}
+          36.36%{transform:translate(0,-26px)} 45.45%{transform:translate(0,-26px)} 54.55%{transform:translate(0,-26px)}
+          63.64%{transform:translate(0,-26px)} 72.73%{transform:translate(0,-26px)} 81.82%{transform:translate(26px,-26px)}
+          90.91%{transform:translate(26px,0)} 100%{transform:translate(0,0)}
+        }
+        @keyframes banterBox9 {
+          9.09%{transform:translate(-26px,0)} 18.18%{transform:translate(-26px,0)} 27.27%{transform:translate(0,0)}
+          36.36%{transform:translate(-26px,0)} 45.45%{transform:translate(0,0)} 54.55%{transform:translate(0,0)}
+          63.64%{transform:translate(-26px,0)} 72.73%{transform:translate(-26px,0)} 81.82%{transform:translate(-52px,0)}
+          90.91%{transform:translate(-26px,0)} 100%{transform:translate(0,0)}
+        }
       `}</style>
     </div>
   );
