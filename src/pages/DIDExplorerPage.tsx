@@ -158,7 +158,7 @@ export const DIDExplorerPage: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
           ["RBT Balance", didData.did.free_rbt ?? 0],
-          ["Pledged RBT", didData.did.pledged_rbt ?? 0],
+          ["Pledged Value", didData.did.pledged_rbt ?? 0],
           ["FT Balance",  didData.did.total_fts ?? 0],
           ["NFTs",        didData.did.total_nfts ?? 0],
           ["SC Deployed", didData.did.total_scs ?? 0],
