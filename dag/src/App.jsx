@@ -804,9 +804,15 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
         const { mappedTxns, edges } = parseApiResponse(data);
         setTransactions(mappedTxns);
         setApiEdges(edges);
-        if (mappedTxns.length > 0) {
-          setSelectedId(mappedTxns[0].id);
-          pendingSelectRef.current = mappedTxns[0].id;
+        // Response layout: [0–29] base txns, [30] searched txn, [31–32] spacers, [33+] ancestors
+        // Find the searched txn by ID first; fall back to index 30, then index 0.
+        const target =
+          mappedTxns.find(t => t.id === txnId.trim()) ??
+          mappedTxns[30] ??
+          mappedTxns[0];
+        if (target) {
+          setSelectedId(target.id);
+          pendingSelectRef.current = target.id;
         }
       })
       .catch(e => console.error("DAG search failed:", e))
