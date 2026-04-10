@@ -734,13 +734,16 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
 
   const [transactions, setTransactions] = useState([]);
   const [apiEdges, setApiEdges] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(500);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [dagOffset, setDagOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE_SIZE = 100;
 
-  const visibleTxns = useMemo(() => transactions.slice(0, visibleCount), [transactions, visibleCount]);
+  const visibleTxns = useMemo(() => transactions, [transactions]);
 
   const txMap = useMemo(() => Object.fromEntries(transactions.map(t => [t.id, t])), [transactions]);
 
@@ -752,17 +755,44 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
     setLoading(true);
     setFetchError(null);
     setIsSearchMode(false);
-    fetch(`${API_BASE}/api/dagtxns`)
+    setDagOffset(0);
+    fetch(`${API_BASE}/api/dagtxns?offset=0`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         const { mappedTxns, edges } = parseApiResponse(data);
         if (mappedTxns.length === 0) throw new Error("No transactions found");
         setTransactions(mappedTxns);
         setApiEdges(edges);
+        setHasMore(mappedTxns.length >= PAGE_SIZE);
+        setDagOffset(PAGE_SIZE);
       })
       .catch(e => setFetchError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || isSearchMode) return;
+    setLoadingMore(true);
+    fetch(`${API_BASE}/api/dagtxns?offset=${dagOffset}`)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        const { mappedTxns, edges: newEdges } = parseApiResponse(data);
+        setTransactions(prev => {
+          const existingIds = new Set(prev.map(t => t.id));
+          const fresh = mappedTxns.filter(t => !existingIds.has(t.id));
+          return [...prev, ...fresh];
+        });
+        setApiEdges(prev => {
+          const existingKeys = new Set(prev.map(e => `${e.from}:${e.to}`));
+          const fresh = newEdges.filter(e => !existingKeys.has(`${e.from}:${e.to}`));
+          return [...prev, ...fresh];
+        });
+        setHasMore(mappedTxns.length >= PAGE_SIZE);
+        setDagOffset(o => o + PAGE_SIZE);
+      })
+      .catch(e => console.error("Load more failed:", e))
+      .finally(() => setLoadingMore(false));
+  }, [dagOffset, loadingMore, isSearchMode]);
 
   const fetchSearch = useCallback((txnId) => {
     if (!txnId?.trim()) return;
@@ -982,13 +1012,14 @@ export default function DAGVisualizer({ externalSearchQuery = '', onExternalSear
       </div>
 
       {/* Show More */}
-      {visibleCount < transactions.length && (
+      {!isSearchMode && hasMore && (
         <div style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 90 }}>
           <button
-            onClick={() => setVisibleCount(c => Math.min(c + 500, transactions.length))}
-            style={{ padding: "10px 28px", background: "#1c1917", color: "#fbbf24", border: "1px solid #78716c", borderRadius: 999, fontSize: 13, fontWeight: 600, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", cursor: "pointer", letterSpacing: 0.5, boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}
+            onClick={loadMore}
+            disabled={loadingMore}
+            style={{ padding: "10px 28px", background: "#1c1917", color: "#fbbf24", border: "1px solid #78716c", borderRadius: 999, fontSize: 13, fontWeight: 600, fontFamily: "'Heebo', 'Inter', system-ui, sans-serif", cursor: loadingMore ? "not-allowed" : "pointer", letterSpacing: 0.5, boxShadow: "0 4px 20px rgba(0,0,0,0.25)", opacity: loadingMore ? 0.6 : 1 }}
           >
-            Show More ({transactions.length - visibleCount} remaining)
+            {loadingMore ? "Loading…" : "Show More"}
           </button>
         </div>
       )}
