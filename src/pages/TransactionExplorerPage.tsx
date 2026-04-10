@@ -117,10 +117,11 @@ const formatAddress = (
     }
 
 
-    const rawStatus = (data.status || "").toString().toLowerCase();
-    const status = rawStatus === "failed" || rawStatus === "false" || rawStatus === "0"
-      ? "failed"
-      : "success";
+    const s = data.status;
+    const status =
+      s === false || s === 0 || s === "false" || s === "failed" || s === "0"
+        ? "failed"
+        : "success";
       console.log("Raw data:", tokenEntries, data);
     const formattedTxData = {
       id: data.transaction_id || data.txn_id || "N/A",
