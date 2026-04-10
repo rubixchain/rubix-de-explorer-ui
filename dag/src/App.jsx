@@ -393,9 +393,9 @@ function EdgesLayer({ edges, positions, ancestorIds, hoveredAncestors, transform
             <path key={i}
               d={`M${fx},${fy} C${cx1},${cy1} ${cx2},${cy2} ${tx2},${ty2}`}
               fill="none" stroke={edgeCol}
-              strokeWidth={isGlowing ? 1.4 : 0.9}
-              strokeDasharray={isGlowing ? "none" : "5 4"}
-              opacity={isGlowing ? 0.9 : (hasColor ? 0.6 : 0.45)}
+              strokeWidth={isGlowing ? 1.4 : 0.5}
+              strokeDasharray={isGlowing ? "none" : "4 6"}
+              opacity={isGlowing ? 0.9 : (hasColor ? 0.5 : 0.18)}
               markerEnd="url(#arr)"
               filter={isHoverEdge ? "url(#glow-strong)" : isSelectEdge ? "url(#glow)" : "none"}
             />
@@ -474,7 +474,7 @@ function TxNode({ tx, x, y, selected, isAncestor, dimmed, ancestorDepth, onSelec
   // Color only when selected or is an ancestor of selected
   const accentCol = hasDepth ? LEVEL_COLORS[Math.min(ancestorDepth, LEVEL_COLORS.length - 1)] : null;
 
-  const borderCol = accentCol ? (isActive ? accentCol : hexAlpha(accentCol, 0.6)) : th.border;
+  const borderCol = accentCol ? (isActive ? accentCol : hexAlpha(accentCol, 0.6)) : "#facc15";
   const bgGradient = accentCol
     ? `linear-gradient(135deg, ${hexAlpha(accentCol, isActive ? 0.15 : 0.08)} 0%, ${th.bgCard} 100%)`
     : th.bgCard;
