@@ -109,7 +109,7 @@ export const SCTokenExplorerPage: React.FC = () => {
           <span className="mb-2 sm:mb-0">Details for Contract:</span>
           <div className="flex items-center gap-2">
             <Tooltip content={tokenId} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
+              <span className="font-mono text-primary-600 dark:text-primary-400 inline-block truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
                 {formatAddress(tokenId)}
               </span>
             </Tooltip>

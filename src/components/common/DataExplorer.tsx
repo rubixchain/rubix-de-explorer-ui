@@ -108,31 +108,31 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
               onClick={() => onTransactionClick(tx.id)}
               className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
             >
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Transaction</p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                   <Tooltip content={tx.id} position="top">
-                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{formatAddress(tx.id)}</span>
+                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono block truncate min-w-0">{formatAddress(tx.id)}</span>
                   </Tooltip>
-                  <CopyButton text={tx.id} size="sm" />
+                  <div className="flex-shrink-0"><CopyButton text={tx.id} size="sm" /></div>
                 </div>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">From</p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                   <Tooltip content={tx.from} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.from)}</span>
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 block truncate min-w-0">{formatAddress(tx.from)}</span>
                   </Tooltip>
-                  <CopyButton text={tx.from} size="sm" />
+                  <div className="flex-shrink-0"><CopyButton text={tx.from} size="sm" /></div>
                 </div>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">To</p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                   <Tooltip content={tx.to} position="top">
-                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.to)}</span>
+                    <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 block truncate min-w-0">{formatAddress(tx.to)}</span>
                   </Tooltip>
-                  <CopyButton text={tx.to} size="sm" />
+                  <div className="flex-shrink-0"><CopyButton text={tx.to} size="sm" /></div>
                 </div>
               </div>
               <div className="flex items-center justify-between pt-1">
@@ -160,17 +160,17 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
           {/* Desktop table */}
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full">
-              <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700 min-w-[1000px]">
+              <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700 min-w-[700px]">
                 <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
-                  <div className="flex-1 min-w-[200px]">Transaction</div>
-                  <div className="flex-1 min-w-[200px]">From</div>
-                  <div className="flex-1 min-w-[200px]">To</div>
+                  <div className="flex-1 min-w-0">Transaction</div>
+                  <div className="flex-1 min-w-0">From</div>
+                  <div className="flex-1 min-w-0">To</div>
                   <div className="w-32 md:w-40 flex-shrink-0">Time</div>
                   <div className="w-24 flex-shrink-0 text-center">Status</div>
                   <div className="w-28 md:w-32 flex-shrink-0 text-right">Amount (RBT)</div>
                 </div>
               </div>
-              <div className="divide-y divide-outline-200 dark:divide-outline-700 min-w-[1000px]">
+              <div className="divide-y divide-outline-200 dark:divide-outline-700 min-w-[700px]">
                 {transactions.map((tx, index) => (
                   <motion.div
                     key={tx.id}
@@ -180,26 +180,26 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
                     onClick={() => onTransactionClick(tx.id)}
                     className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4"
                   >
-                    <div className="flex-1 min-w-[200px] flex items-center">
-                      <div className="flex items-center gap-1.5 w-full min-w-0">
+                    <div className="flex-1 min-w-0 flex items-center overflow-hidden">
+                      <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
                         <Tooltip content={tx.id} position="top">
-                          <div className="text-sm font-medium text-secondary-900 dark:text-white truncate">{formatAddress(tx.id)}</div>
+                          <div className="text-sm font-medium text-secondary-900 dark:text-white truncate min-w-0">{formatAddress(tx.id)}</div>
                         </Tooltip>
                         <div className="flex-shrink-0"><CopyButton text={tx.id} size="sm" /></div>
                       </div>
                     </div>
-                    <div className="flex-1 min-w-[200px] flex items-center">
-                      <div className="flex items-center gap-1.5 w-full min-w-0">
+                    <div className="flex-1 min-w-0 flex items-center overflow-hidden">
+                      <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
                         <Tooltip content={tx.from} position="top">
-                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.from)}</span>
+                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 block truncate min-w-0">{formatAddress(tx.from)}</span>
                         </Tooltip>
                         <div className="flex-shrink-0"><CopyButton text={tx.from} size="sm" /></div>
                       </div>
                     </div>
-                    <div className="flex-1 min-w-[200px] flex items-center">
-                      <div className="flex items-center gap-1.5 w-full min-w-0">
+                    <div className="flex-1 min-w-0 flex items-center overflow-hidden">
+                      <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
                         <Tooltip content={tx.to} position="top">
-                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(tx.to)}</span>
+                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 block truncate min-w-0">{formatAddress(tx.to)}</span>
                         </Tooltip>
                         <div className="flex-shrink-0"><CopyButton text={tx.to} size="sm" /></div>
                       </div>

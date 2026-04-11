@@ -146,7 +146,7 @@ export const DIDExplorerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">DID Explorer</h1>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Tooltip content={didData.did.did}>
-            <span className="font-mono text-primary-600 truncate max-w-[70vw]">
+            <span className="font-mono text-primary-600 inline-block truncate max-w-[70vw]">
               {formatAddress(didData.did.did, 50, 8)}
             </span>
           </Tooltip>

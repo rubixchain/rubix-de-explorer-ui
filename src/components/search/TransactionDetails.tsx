@@ -315,7 +315,7 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                {/* <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Transaction Hash</span>
                   <div className="flex items-center space-x-2">
                     <span className="font-mono text-sm text-gray-900 dark:text-white">
@@ -332,64 +332,8 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
                       )}
                     </button>
                   </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Type</span>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(transaction.type)}`}>
-                    {transaction.type}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Status</span>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
-                    {transaction.status}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Block Height</span>
-                  <span className="font-mono text-sm text-gray-900 dark:text-white">
-                    #{transaction.blockHeight.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Timestamp</span>
-                  <span className="text-sm text-gray-900 dark:text-white">
-                    {new Date(transaction.timestamp).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Gas Price</span>
-                  <span className="font-mono text-sm text-gray-900 dark:text-white">
-                    {formatGasPrice(transaction.gasPrice || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Gas Limit</span>
-                  <span className="font-mono text-sm text-gray-900 dark:text-white">
-                    {(transaction.gasUsed || 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Gas Used</span>
-                  <span className="font-mono text-sm text-gray-900 dark:text-white">
-                    {formatGasUsed(transaction.gasUsed || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Gas Efficiency</span>
-                  <span className="text-sm text-gray-900 dark:text-white">
-                    {(((transaction.gasUsed || 0) / 21000) * 100).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Sender and Receiver */}
-        <motion.div
+                </div> */}
+                 <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.3 }}
@@ -445,6 +389,38 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
             </div>
           </Card>
         </motion.div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Type</span>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(transaction.type)}`}>
+                    {transaction.type}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Status</span>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
+                    {transaction.status}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Block Height</span>
+                  <span className="font-mono text-sm text-gray-900 dark:text-white">
+                    #{transaction.blockHeight.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Timestamp</span>
+                  <span className="text-sm text-gray-900 dark:text-white">
+                    {new Date(transaction.timestamp).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+           
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Sender and Receiver */}
+       
 
         {/* Validators */}
         {transaction.validators && transaction.validators.length > 0 && (

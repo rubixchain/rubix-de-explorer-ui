@@ -457,19 +457,6 @@ const formatAddress = (
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Transaction Hash:
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <Tooltip content={txData.id} position="top">
-                      <p className="font-mono text-gray-900 dark:text-white cursor-pointer">
-                        {formatAddress(txData.id)}
-                      </p>
-                    </Tooltip>
-                    <CopyButton text={txData.id} size="sm" />
-                  </div>
-                </div>
-                <div>
                   <p className="text-gray-500 dark:text-gray-400">Status:</p>
                   <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     txData.status === "success"
@@ -497,24 +484,24 @@ const formatAddress = (
  
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">From:</p>
-                  <div className="flex items-center space-x-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                     <Tooltip content={txData.from} position="top">
                       <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate hover:text-primary-700 dark:hover:text-primary-300"
+                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate min-w-0 hover:text-primary-700 dark:hover:text-primary-300"
                         onClick={() => navigate(`/did-explorer?did=${txData.from}`)}
                       >
                         {formatAddress(txData.from, 16, 8)}
                       </p>
                     </Tooltip>
-                    <CopyButton text={txData.from} size="sm" />
+                    <div className="flex-shrink-0"><CopyButton text={txData.from} size="sm" /></div>
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">To:</p>
-                  <div className="flex items-center space-x-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                     <Tooltip content={txData.to} position="top">
                       <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate hover:text-primary-700 dark:hover:text-primary-300"
+                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate min-w-0 hover:text-primary-700 dark:hover:text-primary-300"
                         onClick={() => txData.toIsDID
                           ? navigate(`/did-explorer?did=${txData.to}`)
                           : navigate(`/token-explorer?token=${encodeURIComponent(txData.to)}`)
@@ -523,7 +510,7 @@ const formatAddress = (
                         {txData.toIsDID ? formatAddress(txData.to, 16, 8) : txData.to}
                       </p>
                     </Tooltip>
-                    <CopyButton text={txData.to} size="sm" />
+                    <div className="flex-shrink-0"><CopyButton text={txData.to} size="sm" /></div>
                   </div>
                 </div>
               </div>

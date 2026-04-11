@@ -165,7 +165,7 @@ export const SCTransactionExplorerPage: React.FC = () => {
           <span className="mb-2 sm:mb-0">Details for Smart contract:</span>
           <div className="flex items-center gap-2">
             <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
+              <span className="font-mono text-primary-600 dark:text-primary-400 inline-block truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
                 {formatAddress(txData.id, 12)}
               </span>
             </Tooltip>
