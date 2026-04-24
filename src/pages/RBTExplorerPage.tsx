@@ -164,9 +164,23 @@ export const RBTExplorerPage: React.FC = () => {
               const status = d.token_status as number;
               const label = TOKEN_STATUS[status] ?? `Unknown (${status})`;
               const colorClass =
-                status === 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                status === 2 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                status === 9 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                status === 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :          // Active
+                status === 1 ? "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300" :                 // Locked
+                status === 2 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :              // Generated
+                status === 3 ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400" :              // Fetched
+                status === 4 ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" :      // Transferred
+                status === 5 ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" :      // Committed
+                status === 6 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :      // Pledged
+                status === 7 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :      // Quorum Pledged
+                status === 8 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :                  // Burnt
+                status === 9 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :                  // Burnt For FT
+                status === 10 ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400" :             // Deployed
+                status === 11 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : // Executed
+                status === 12 ? "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400" :                 // Pinned As Service
+                status === 13 ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :             // Orphaned
+                status === 14 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :         // Chain Sync Issue
+                status === 15 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :                 // Being Double Spent
+                status === 99 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :     // Seed
                 "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
               return (
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>

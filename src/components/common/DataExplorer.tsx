@@ -15,6 +15,7 @@ import { Search } from "lucide-react";
 import { useTokens, useFTList, useFTSuggestions, useFTTopHolders, useRBTSuggestions, useRBTInfo, useFTInfo } from "@/hooks/useTokens";
 import { useIsMobile, useFormatAddress } from "@/hooks/useFormatAddress";
 import { BanterLoader } from "@/components/ui/BanterLoader";
+import { TOKEN_STATUS } from "@/constants";
 
 
 
@@ -999,8 +1000,8 @@ const SCBlocksList: React.FC<{
             >
               <div className="flex items-center justify-between">
                 <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Token ID</p>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${sc.token_status === 1 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"}`}>
-                  {sc.token_status === 1 ? "Active" : "Inactive"}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${sc.token_status === 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : sc.token_status === 8 || sc.token_status === 9 || sc.token_status === 15 ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"}`}>
+                  {TOKEN_STATUS[sc.token_status as number] ?? `Unknown (${sc.token_status})`}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">

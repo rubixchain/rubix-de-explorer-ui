@@ -57,8 +57,22 @@ export const CHAINS = {
 // Token status codes returned by the API
 export const TOKEN_STATUS: Record<number, string> = {
   0: 'Active',
-  2: 'Pledged',
-  9: 'Burnt',
+  1: 'Locked',
+  2: 'Generated',
+  3: 'Fetched',
+  4: 'Transferred',
+  5: 'Committed',
+  6: 'Pledged',
+  7: 'Quorum Pledged',
+  8: 'Burnt',
+  9: 'Burnt For FT',
+  10: 'Deployed',
+  11: 'Executed',
+  12: 'Pinned As Service',
+  13: 'Orphaned',
+  14: 'Chain Sync Issue',
+  15: 'Being Double Spent',
+  99: 'Seed',
 };
 
 export const TOKEN_TYPES = {
