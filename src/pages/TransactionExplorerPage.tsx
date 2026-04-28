@@ -11,7 +11,6 @@ import {
   XCircle,
   Hash,
   DollarSign,
-  Lock,
   Users,
   ChevronDown,
   ChevronRight,
@@ -407,7 +406,7 @@ const formatAddress = (
               />
             )}
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab("committed")}
             className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
               activeTab === "committed"
@@ -428,7 +427,7 @@ const formatAddress = (
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
             )}
-          </button>
+          </button> */}
           <button
             onClick={() => setActiveTab("quorums")}
             className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
