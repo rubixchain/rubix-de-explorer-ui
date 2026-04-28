@@ -11,6 +11,7 @@ import {
   XCircle,
   Hash,
   DollarSign,
+  Lock,
   Users,
   ChevronDown,
   ChevronRight,
@@ -406,7 +407,7 @@ const formatAddress = (
               />
             )}
           </button>
-          {/* <button
+          <button
             onClick={() => setActiveTab("committed")}
             className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
               activeTab === "committed"
@@ -427,7 +428,7 @@ const formatAddress = (
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
             )}
-          </button> */}
+          </button>
           <button
             onClick={() => setActiveTab("quorums")}
             className={`relative flex items-center space-x-1.5 sm:space-x-2 px-1 py-3 sm:py-4 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
@@ -528,7 +529,7 @@ const formatAddress = (
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+            {/* <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th> */}
             <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
             <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
           </tr>
@@ -542,11 +543,11 @@ const formatAddress = (
               transition={{ delay: index * 0.04 }}
               className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             >
-              <td className="py-3 pr-4">
+              {/* <td className="py-3 pr-4">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">
                   {ct.role}
                 </span>
-              </td>
+              </td> */}
               <td className="py-3 pr-4">
                 <div className="flex items-center gap-1.5">
                   <Tooltip content={ct.tokenId} position="top">
