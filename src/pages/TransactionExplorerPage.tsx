@@ -184,6 +184,7 @@ const formatAddress = (
               from: data.initiator || data.sender_did || "N/A",
               to: data.owner || data.receiver_did || "N/A",
               amount: data.amount ? data.amount.toString() : "N/A",
+              tokenValue: tokenData?.tokenValue ?? tokenData?.token_value ?? null,
               status: "confirmed",
               blockNumber: tokenData?.TTBlockNumberKey ?? tokenData?.previousTransactionID ?? "N/A",
               previousTransactionID: tokenData?.previousTransactionID || null,
@@ -201,6 +202,7 @@ const formatAddress = (
       ? rawCommitted.map((ct: any, index: number) => ({
           id: `committed-${index}`,
           tokenId: ct.token_id || ct.tokenId || ct.TokenID || "N/A",
+          tokenValue: ct.tokenValue ?? ct.token_value ?? null,
           role: ct.role || ct.Role || ct.token_role || "N/A",
           ownerDid: ct.owner_did || ct.ownerDid || ct.OwnerDID || "N/A",
         }))
@@ -208,6 +210,7 @@ const formatAddress = (
       ? Object.entries(rawCommitted).map(([tokenId, info]: [string, any], index) => ({
           id: `committed-${index}`,
           tokenId,
+          tokenValue: (info as any)?.tokenValue ?? (info as any)?.token_value ?? null,
           role: info?.role || info?.Role || info?.token_role || "N/A",
           ownerDid: info?.owner_did || info?.ownerDid || info?.OwnerDID || "N/A",
         }))
@@ -528,7 +531,7 @@ const formatAddress = (
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
             <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token ID</th>
-            {/* <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Owner DID</th> */}
+            <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -558,19 +561,11 @@ const formatAddress = (
                   <CopyButton text={ct.tokenId} size="sm" />
                 </div>
               </td>
-              {/* <td className="py-3">
-                <div className="flex items-center gap-1.5">
-                  <Tooltip content={ct.ownerDid} position="top">
-                    <span
-                      className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer"
-                      onClick={() => navigate(`/did-explorer?did=${encodeURIComponent(ct.ownerDid)}`)}
-                    >
-                      {formatAddress(ct.ownerDid)}
-                    </span>
-                  </Tooltip>
-                  <CopyButton text={ct.ownerDid} size="sm" />
-                </div>
-              </td> */}
+              <td className="py-3">
+                <span className="font-medium text-gray-900 dark:text-white text-xs">
+                  {ct.tokenValue != null ? `${ct.tokenValue} RBT` : "—"}
+                </span>
+              </td>
             </motion.tr>
           ))}
         </tbody>
@@ -803,7 +798,9 @@ const formatAddress = (
                               </div>
                             </td>
                             <td className="py-3 pr-4">
-                              <span className="font-medium text-gray-900 dark:text-white text-xs">1 RBT</span>
+                              <span className="font-medium text-gray-900 dark:text-white text-xs">
+                                {transfer.tokenValue != null ? `${transfer.tokenValue} RBT` : "—"}
+                              </span>
                             </td>
                             <td className="py-3">
                               {transfer.previousTransactionID ? (
