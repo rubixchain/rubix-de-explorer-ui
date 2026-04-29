@@ -188,14 +188,10 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   const currentMetrics = getMetricsData(metrics) || mockMetrics;
 
   const formatNumber = (num: number): string => {
-    return num.toLocaleString("en-US");
-  };
-
-  const formatSupply = (num: number): string => {
-    if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
-    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-    return num.toFixed(1);
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    });
   };
 
   const formatLargeCurrency = (num: number): string => {
@@ -219,19 +215,19 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     },
     {
       title: "Total Supply",
-      value: formatSupply(currentMetrics.total_supply ?? 0),
+      value: formatNumber(currentMetrics.total_supply ?? 0),
       tooltip:
         "Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.",
     },
     {
       title: "Max Supply",
-      value: formatSupply(51_400_000),
+      value: formatNumber(51_400_000),
       tooltip:
         "Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.",
     },
     {
       title: "Circulating Supply",
-      value: formatSupply(currentMetrics.circulating_supply ?? 0),
+      value: formatNumber(currentMetrics.circulating_supply ?? 0),
       tooltip:
         "Circulating supply refers to the total amount of Rubix tokens currently available and circulating in the market.",
     },
