@@ -8,11 +8,7 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
-  Users,
-  Shield,
-  Coins,
   DollarSign,
-  Clock,
   Circle,
   Square,
   Hexagon,
@@ -192,21 +188,13 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
 }) => {
   const { data: metrics, isLoading, error } = useMetrics();
   const mockMetrics: NetworkMetrics = {
-    totalTransactions: 1234567,
-    // totalValueSettled: 45200000,
-    totalDIDs: 89432,
-    // activeValidators: 1247,
-    // totalPledge: 45200000,
-    // averageBlockTime: 2.3,
-    // networkHealth: 99.8,
-    totalRBT: 1250000,
-    totalFT: 45600,
-    totalNFT: 23400,
-    totalSmartContracts: 890,
-    // totalAssets: 1250000 + 45600 + 23400 + 890,
-    marketCap: 2850000000, // $2.85B market cap
-    rbtPrice: 2.28, // $2.28 per RBT
-    // rbtPriceChange2h: 3.45, // +3.45% change in 2h
+    circulating_supply: 0,
+    total_supply: 0,
+    ft_count: 0,
+    nft_count: 0,
+    sc_count: 0,
+    rbt_price: 0,
+    tvl: 0,
   };
 
   const getMetricsData = (data: any): NetworkMetrics => {
@@ -222,15 +210,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     return num.toLocaleString("en-US");
   };
 
-  const formatCurrency = (num: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 1,
-    }).format(num);
-  };
-
   const formatLargeCurrency = (num: number): string => {
     if (num >= 1000000000) {
       return `$${(num / 1000000000).toFixed(1)}B`;
@@ -244,103 +223,61 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     return `$${num.toFixed(0)}`;
   };
 
-  const formatPercentage = (num: number): string => {
-    return `${num.toFixed(1)}%`;
-  };
-
-  const formatPriceChange = (
-    change: number
-  ): { text: string; isPositive: boolean } => {
-    const isPositive = change >= 0;
-    const sign = isPositive ? "+" : "";
-    return {
-      text: `${sign}${change.toFixed(2)}%`,
-      isPositive,
-    };
-  };
-
   const metricsData = [
-    // {
-    //   title: 'Market Cap',
-    //   value: formatLargeCurrency(currentMetrics.marketCap || 2850000000),
-    //   icon: DollarSign,
-    //   color: 'text-green-600',
-    //   tooltip: 'Market capitalization represents the total value of all Rubix tokens in circulation, calculated by multiplying the current price by the total supply.',
-    // },
-
-    // {
-    //   title: 'Total RBT',
-    //   value: formatNumber(currentMetrics.totalRBT || 1250000),
-    //   icon: Circle,
-    //   color: 'text-primary-600',
-    //   tooltip: 'Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.',
-    // },
-
     {
       title: "RBT Price",
-      value: formatNumber(currentMetrics.rbtPrice || 23400),
-      icon: Image,
-      color: "text-pink-600",
-      tooltip: "Price of Single RBT token in USD.",
-    },
-
-    {
-      title: "Max Supply",
-      value: formatNumber(currentMetrics.maxSupply || 23400),
-      icon: Image,
-      color: "text-pink-600",
-      tooltip:
-        "Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.",
+      value: `$${currentMetrics.rbt_price?.toFixed(2) ?? "0.00"}`,
+      icon: DollarSign,
+      color: "text-green-600",
+      tooltip: "Price of a single RBT token in USD.",
     },
     {
       title: "Total Supply",
-      value: formatNumber(currentMetrics.totalSupply || 23400),
-      icon: Image,
-      color: "text-pink-600",
+      value: formatNumber(currentMetrics.total_supply ?? 0),
+      icon: Circle,
+      color: "text-primary-600",
       tooltip:
         "Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.",
     },
-
+    {
+      title: "Circulating Supply",
+      value: formatNumber(currentMetrics.circulating_supply ?? 0),
+      icon: Activity,
+      color: "text-pink-600",
+      tooltip:
+        "Circulating supply refers to the total amount of Rubix tokens currently available and circulating in the market.",
+    },
     {
       title: "Total FT",
-      value: formatNumber(currentMetrics.totalFT || 45600),
+      value: formatNumber(currentMetrics.ft_count ?? 0),
       icon: Square,
       color: "text-tertiary-600",
       tooltip:
         "Fungible Tokens (FT) are digital assets that are interchangeable and identical, representing standardized units of value.",
     },
     {
-      title: "Circulating Supply",
-      value: formatNumber(currentMetrics.circulatingSupply || 23400),
+      title: "Total NFT",
+      value: formatNumber(currentMetrics.nft_count ?? 0),
       icon: Image,
       color: "text-pink-600",
       tooltip:
-        "Circulating supply refers to the total amount of Rubix tokens that are currently available and circulating in the market.",
+        "Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.",
     },
     {
       title: "Smart Contracts",
-      value: formatNumber(currentMetrics.totalSmartContracts || 890),
+      value: formatNumber(currentMetrics.sc_count ?? 0),
       icon: Hexagon,
       color: "text-primary-600",
       tooltip:
         "Smart contracts are self-executing programs deployed on the blockchain that automatically execute when predefined conditions are met.",
     },
     {
-      title: "Total NFT",
-      value: formatNumber(currentMetrics.totalNFT || 23400),
-      icon: Image,
-      color: "text-pink-600",
+      title: "TVL",
+      value: formatLargeCurrency(currentMetrics.tvl ?? 0),
+      icon: BarChart3,
+      color: "text-indigo-600",
       tooltip:
-        "Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.",
-    },
-
-    {
-      title: "TVL (in $Mn)",
-      value: formatNumber(currentMetrics.tvL_RBT || 1250000),
-      icon: Circle,
-      color: "text-primary-600",
-      tooltip:
-        "Rubix Base Token (RBT) is the native cryptocurrency of the Rubix network, used for transaction fees, staking, and governance.",
+        "Total Value Locked (TVL) represents the total USD value of assets locked in the Rubix network.",
     },
   ];
 

@@ -21,8 +21,13 @@ export const getBaseUrlForNetwork = (network: string): string => {
 };
 
 const generateMockMetrics = (): NetworkMetrics => ({
-  totalTransactions: 1234567,
-  totalDIDs: 89432,
+  circulating_supply: 0,
+  total_supply: 0,
+  ft_count: 0,
+  nft_count: 0,
+  sc_count: 0,
+  rbt_price: 0,
+  tvl: 0,
 });
 
 const generateMockTransactions = (count: number = 20): Transaction[] => {
@@ -539,38 +544,10 @@ class ApiClient {
     const baseUrl = network ? getBaseUrlForNetwork(network) : this.baseUrl;
 
     try {
-      const metricsCalls = Promise.all([
-        fetch(`${baseUrl}/api/get-rbt-count`).then((res) => res.json()),
-        fetch(`${baseUrl}/api/get-ft-count`).then((res) => res.json()),
-        fetch(`${baseUrl}/api/get-did-count`).then((res) => res.json()),
-        fetch(`${baseUrl}/api/get-txn-count`).then((res) => res.json()),
-        fetch(`${baseUrl}/api/get-sc-count`).then((res) => res.json()),
-        fetch(`${baseUrl}/api/get-nft-count`).then((res) => res.json()),
-      ]);
-
-      const kpiCall = fetch(
-        "https://rexplorerapi.azurewebsites.net/api/Analytics/GetKPIDetails"
-      ).then((res) => res.json());
-
-      const [rbtRes, ftRes, didRes, txnsRes, scRes, nftRes] = await metricsCalls;
-      const kpiRes = await kpiCall;
-
-      const data: NetworkMetrics = {
-        totalRBT: rbtRes.all_rbt_count || 0,
-        totalFT: ftRes.all_ft_count || 0,
-        totalDIDs: didRes.all_did_count || 0,
-        totalTransactions: txnsRes.all_transaction_count || 0,  // fixed: was all_txn_count
-        totalSmartContracts: scRes.all_sc_count || 0,
-        totalNFT: nftRes.all_nft_count || 0,
-        totalSupply: kpiRes?.data?.totalSupply || "0",
-        maxSupply: kpiRes?.data?.maxSupply || "0",
-        circulatingSupply: kpiRes?.data?.circulatingSupply || "0",
-        rbtPrice: kpiRes?.data?.rbtPrice || "0",
-        mainNetTVL: kpiRes?.data?.mainNetTVL || "0",
-        subNetTVL: kpiRes?.data?.subNetTVL || "0",
-        tvL_RBT: kpiRes?.data?.tvL_RBT?.replace(' $Mn', '') || "0",
-      };
-
+      const response = await fetch(`${baseUrl}/api/kpi`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const kpiRes = await response.json();
+      const data: NetworkMetrics = kpiRes.data;
       return { data, success: true, message: "Metrics loaded successfully" };
     } catch (error) {
       console.error("Error fetching metrics:", error);

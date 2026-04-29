@@ -80,27 +80,13 @@ export interface TokenMetadata {
 }
 
 export interface NetworkMetrics {
-  totalTransactions: number;
-  totalSupply?: number;
-  maxSupply?: number;
-  totalDIDs: number;
-  circulatingSupply?: number;
-  mainNetTVL?: number;
-  subNetTVL?: number;
-  tvL_RBT?: number;
-  // activeValidators: number;
-  // totalPledge: number;
-  // averageBlockTime: number;
-  // networkHealth: number;
-  totalRBT?: number;
-  totalFT?: number;
-  totalNFT?: number;
-  totalSmartContracts?: number;
-  // totalAssets?: number;
-  marketCap?: number;
-  rbtPrice?: number;
-  // rbtPriceChange2h?: number;
-  // averageTransactionSize?: number;
+  circulating_supply: number;
+  total_supply: number;
+  ft_count: number;
+  nft_count: number;
+  sc_count: number;
+  rbt_price: number;
+  tvl: number;
 }
 
 export interface SearchQuery {
