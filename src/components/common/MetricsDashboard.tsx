@@ -34,7 +34,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   const iconRef = useRef<HTMLDivElement>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const isSmallTitle =
-    title === "Circulating Supply" || title === "Smart Contracts" || title === "Max Supply" || title === "Total Supply" || title === "RBT Price";
+    title === "Circu. Supply" || title === "Total SC" || title === "Max Supply" || title === "Total Supply" || title === "RBT Price";
 
   return (
     <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-[70px] !p-2 overflow-visible">
@@ -226,7 +226,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         "Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.",
     },
     {
-      title: "Circulating Supply",
+      title: "Circu. Supply",
       value: formatNumber(currentMetrics.circulating_supply ?? 0),
       tooltip:
         "Circulating supply refers to the total amount of Rubix tokens currently available and circulating in the market.",
@@ -244,10 +244,10 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         "Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.",
     },
     {
-      title: "Smart Contracts",
+      title: "Total SC",
       value: formatNumber(currentMetrics.sc_count ?? 0),
       tooltip:
-        "Smart contracts are self-executing programs deployed on the blockchain that automatically execute when predefined conditions are met.",
+        "it refers to the total number of smart contracts deployed on the chain . Smart contracts are self-executing programs deployed on the blockchain that automatically execute when predefined conditions are met.",
     },
     {
       title: "TVL",
