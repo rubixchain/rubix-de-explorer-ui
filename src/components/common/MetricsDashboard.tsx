@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { BanterLoader } from "@/components/ui/BanterLoader";
@@ -8,13 +8,7 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
-  DollarSign,
-  Circle,
-  Square,
-  Hexagon,
-  Image,
   Info,
-  BarChart3,
 } from "lucide-react";
 import { NetworkMetrics } from "@/types";
 import { useMetrics } from "@/hooks/useMetrics";
@@ -24,8 +18,6 @@ interface MetricCardProps {
   value: string;
   change?: string;
   changeType?: "positive" | "negative" | "neutral";
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
   loading?: boolean;
   tooltip?: string;
 }
@@ -35,23 +27,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
   value,
   change,
   changeType = "neutral",
-  icon: Icon,
-  color,
   loading = false,
   tooltip,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">(
-    "top"
-  );
-  const [tooltipCoords, setTooltipCoords] = useState({ x: 0, y: 0 });
   const iconRef = useRef<HTMLDivElement>(null);
-  const [tooltipAlign, setTooltipAlign] = useState<"left" | "center" | "right">(
-    "center"
-  );
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const isSmallTitle =
-    title === "Circulating Supply" || title === "Smart Contracts";
+    title === "Circulating Supply" || title === "Smart Contracts" || title === "Max Supply" || title === "Total Supply" || title === "RBT Price";
 
   return (
     <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-[70px] !p-2 overflow-visible">
@@ -144,9 +127,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
             {/* Large value - Responsive sizing */}
             <div
-              className={`font-bold text-gray-900 dark:text-white truncate ${
-                isSmallTitle ? "text-lg" : "text-xl"
-              }`}
+              className="font-bold text-gray-900 dark:text-white overflow-hidden text-lg"
               title={value}
             >
               {value}
@@ -210,6 +191,13 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     return num.toLocaleString("en-US");
   };
 
+  const formatSupply = (num: number): string => {
+    if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+    return num.toFixed(1);
+  };
+
   const formatLargeCurrency = (num: number): string => {
     if (num >= 1000000000) {
       return `$${(num / 1000000000).toFixed(1)}B`;
@@ -227,55 +215,47 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     {
       title: "RBT Price",
       value: `$${currentMetrics.rbt_price?.toFixed(2) ?? "0.00"}`,
-      icon: DollarSign,
-      color: "text-green-600",
       tooltip: "Price of a single RBT token in USD.",
     },
     {
       title: "Total Supply",
-      value: formatNumber(currentMetrics.total_supply ?? 0),
-      icon: Circle,
-      color: "text-primary-600",
+      value: formatSupply(currentMetrics.total_supply ?? 0),
       tooltip:
         "Total supply refers to the total amount of Rubix tokens that currently exist, including those in circulation and those held in reserve.",
     },
     {
+      title: "Max Supply",
+      value: formatSupply(51_400_000),
+      tooltip:
+        "Max supply refers to the maximum amount of Rubix tokens that will ever be created, as defined by the protocol.",
+    },
+    {
       title: "Circulating Supply",
-      value: formatNumber(currentMetrics.circulating_supply ?? 0),
-      icon: Activity,
-      color: "text-pink-600",
+      value: formatSupply(currentMetrics.circulating_supply ?? 0),
       tooltip:
         "Circulating supply refers to the total amount of Rubix tokens currently available and circulating in the market.",
     },
     {
       title: "Total FT",
       value: formatNumber(currentMetrics.ft_count ?? 0),
-      icon: Square,
-      color: "text-tertiary-600",
       tooltip:
         "Fungible Tokens (FT) are digital assets that are interchangeable and identical, representing standardized units of value.",
     },
     {
       title: "Total NFT",
       value: formatNumber(currentMetrics.nft_count ?? 0),
-      icon: Image,
-      color: "text-pink-600",
       tooltip:
         "Non-Fungible Tokens (NFT) are unique digital assets that represent ownership of specific items, art, or collectibles.",
     },
     {
       title: "Smart Contracts",
       value: formatNumber(currentMetrics.sc_count ?? 0),
-      icon: Hexagon,
-      color: "text-primary-600",
       tooltip:
         "Smart contracts are self-executing programs deployed on the blockchain that automatically execute when predefined conditions are met.",
     },
     {
       title: "TVL",
       value: formatLargeCurrency(currentMetrics.tvl ?? 0),
-      icon: BarChart3,
-      color: "text-indigo-600",
       tooltip:
         "Total Value Locked (TVL) represents the total USD value of assets locked in the Rubix network.",
     },
@@ -327,10 +307,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             <MetricCard
               title={metric.title}
               value={metric.value}
-              // change={metric.change?.text}
-              // changeType={metric.change?.isPositive ? 'positive' : 'negative'}
-              icon={metric.icon}
-              color={metric.color}
               loading={isLoading}
               tooltip={metric.tooltip}
             />

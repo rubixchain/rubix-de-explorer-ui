@@ -82,6 +82,7 @@ export interface TokenMetadata {
 export interface NetworkMetrics {
   circulating_supply: number;
   total_supply: number;
+  max_supply?: number;
   ft_count: number;
   nft_count: number;
   sc_count: number;
