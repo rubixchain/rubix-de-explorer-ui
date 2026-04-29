@@ -73,6 +73,7 @@ export const TOKEN_STATUS: Record<number, string> = {
   14: 'Chain Sync Issue',
   15: 'Being Double Spent',
   99: 'Seed',
+  
 };
 
 export const TOKEN_TYPES = {
