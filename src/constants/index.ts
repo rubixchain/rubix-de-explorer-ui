@@ -11,20 +11,26 @@ export const API_ENDPOINTS = {
 
 export const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || true;
 
+export const CURRENT_NETWORK = (import.meta.env.VITE_NETWORK || 'testnet') as 'mainnet' | 'testnet';
+
+export const EXPLORER_URLS = {
+  mainnet: 'https://explorer.rubix.net/',
+  testnet: 'https://testnetexplorer.rubix.net/',
+} as const;
+
 export const NETWORK_CONFIG = {
-  // Mainnet configuration - commented out (not in use)
-  // mainnet: {
-  //   id: 'mainnet',
-  //   name: 'Mainnet',
-  //   description: 'Production network',
-  //   baseUrl: import.meta.env.VITE_API_BASE_URL_MAINNET,
-  //   color: 'bg-green-500',
-  // },
+  mainnet: {
+    id: 'mainnet',
+    name: 'Mainnet',
+    description: 'Production network',
+    baseUrl: import.meta.env.VITE_API_BASE_URL_MAINNET,
+    color: 'bg-green-500',
+  },
   testnet: {
     id: 'testnet',
     name: 'Testnet',
     description: 'Testing network',
-    baseUrl: import.meta.env.VITE_API_BASE_URL_TESTNET, // Using env variable - always testnet
+    baseUrl: import.meta.env.VITE_API_BASE_URL_TESTNET,
     color: 'bg-blue-500',
   },
 } as const;

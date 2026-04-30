@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_ANALYTICS_ID: string
   readonly VITE_ENABLE_ANALYTICS: string
   readonly VITE_ENABLE_DEBUG_MODE: string
+  readonly VITE_NETWORK: 'mainnet' | 'testnet'
 }
 
 interface ImportMeta {

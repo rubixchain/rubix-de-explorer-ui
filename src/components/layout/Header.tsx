@@ -3,17 +3,21 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useSearch } from '@/hooks/useSearch';
+import { CURRENT_NETWORK, EXPLORER_URLS } from '@/constants';
 
-const NetworkToggle: React.FC<{
-  selected: string;
-  onChange: (chain: string) => void;
-  className?: string;
-}> = ({ selected, onChange, className = '' }) => {
-  const isMainnet = selected === 'mainnet';
+const NetworkToggle: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const isMainnet = CURRENT_NETWORK === 'mainnet';
+
+  const handleSwitch = (target: 'mainnet' | 'testnet') => {
+    if (target !== CURRENT_NETWORK) {
+      window.location.href = EXPLORER_URLS[target];
+    }
+  };
+
   return (
     <div className={`flex items-center bg-gray-100 rounded-full p-0.5 gap-0.5 ${className}`}>
       <button
-        onClick={() => onChange('mainnet')}
+        onClick={() => handleSwitch('mainnet')}
         className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap ${
           isMainnet
             ? 'bg-white text-gray-900 shadow-sm border border-yellow-400'
@@ -24,10 +28,14 @@ const NetworkToggle: React.FC<{
         Mainnet
       </button>
       <button
-        disabled
-        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-gray-400 cursor-not-allowed opacity-50"
+        onClick={() => handleSwitch('testnet')}
+        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+          !isMainnet
+            ? 'bg-white text-gray-900 shadow-sm border border-blue-400'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+        <span className={`w-1.5 h-1.5 rounded-full ${!isMainnet ? 'bg-blue-500' : 'bg-gray-400'}`} />
         Testnet
       </button>
     </div>
@@ -35,7 +43,7 @@ const NetworkToggle: React.FC<{
 };
 
 export const Header: React.FC = () => {
-  const { state, setSearchQuery, setSelectedChain } = useApp();
+  const { setSearchQuery } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const isDAGPage = location.pathname === '/dag';
@@ -117,7 +125,7 @@ export const Header: React.FC = () => {
               >
                 {isDAGPage ? 'Explorer' : 'DAG'}
               </button>
-              <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} />
+              <NetworkToggle />
             </div>
           </div>
 
@@ -219,7 +227,7 @@ export const Header: React.FC = () => {
             >
               {isDAGPage ? 'Explorer' : 'GRAPH'}
             </button>
-            <NetworkToggle selected={state.selectedChain} onChange={setSelectedChain} />
+            <NetworkToggle />
           </div>
         </div>
       </div>
