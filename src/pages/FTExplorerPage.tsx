@@ -46,6 +46,21 @@ export const FTExplorerPage: React.FC = () => {
   const tokenData: any = rawTokenData;
   const d = tokenData?.data ?? tokenData;
 
+  // token_id from API is "{name}_{creatorDID}", deployer is the token number
+  // Correct display: FT ID = "{name}_{number}", Creator = creatorDID
+  const parseFTFields = (rawId: string) => {
+    // Full token format: {name}_{creatorDID}_{number}
+    const parts = rawId?.split('_') ?? [];
+    const didIdx = parts.findIndex(p => p.startsWith('bafy'));
+    if (didIdx === -1) return { ftId: rawId, ftCreator: '' };
+    const name = parts.slice(0, didIdx).join('_');
+    const creator = parts[didIdx]; // only the DID segment, not trailing parts
+    const numberPart = parts.slice(didIdx + 1).join('_');
+    const ftId = numberPart ? `${name}_${numberPart}` : name;
+    return { ftId, ftCreator: creator };
+  };
+  const { ftId, ftCreator } = parseFTFields(tokenId);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -139,13 +154,13 @@ export const FTExplorerPage: React.FC = () => {
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Token ID:</p>
             <div className="flex items-center gap-2">
-              <Tooltip content={d?.token_id || tokenId} position="top">
+              <Tooltip content={ftId} position="top">
                 <p className="font-mono text-gray-900 dark:text-white truncate">
-                  {formatAddress(d?.token_id || tokenId)}
+                  {ftId}
                 </p>
               </Tooltip>
               <div className="flex-shrink-0">
-                <CopyButton text={d?.token_id || tokenId} size="sm" />
+                <CopyButton text={ftId} size="sm" />
               </div>
             </div>
           </div>
@@ -198,16 +213,16 @@ export const FTExplorerPage: React.FC = () => {
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Creator:</p>
             <div className="flex items-center gap-2">
-              <Tooltip content={d?.deployer} position="top">
+              <Tooltip content={ftCreator} position="top">
                 <p
                   className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                  onClick={() => navigate(`/did-explorer?did=${d?.deployer}`)}
+                  onClick={() => navigate(`/did-explorer?did=${ftCreator}`)}
                 >
-                  {formatAddress(d?.deployer)}
+                  {formatAddress(ftCreator)}
                 </p>
               </Tooltip>
               <div className="flex-shrink-0">
-                <CopyButton text={d?.deployer} size="sm" />
+                <CopyButton text={ftCreator} size="sm" />
               </div>
             </div>
           </div>

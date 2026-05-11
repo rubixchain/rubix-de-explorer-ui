@@ -170,10 +170,14 @@ const formatAddress = (
             const tokenId = String(rawTokenId || "");
             // Use pre-resolved category from the object key, fall back to pattern matching
             const category = rawCategory || getTokenCategory(tokenId, tokenData?.TTTokenTypeKey);
-            // For FTs: parse name and creator from tokenId (format: creatorDID_ftName)
-            const underscoreIdx = tokenId.lastIndexOf("_");
-            const ftCreatorDid = underscoreIdx !== -1 ? tokenId.slice(underscoreIdx + 1) : tokenId;
-            const ftName = underscoreIdx !== -1 ? tokenId.slice(0, underscoreIdx) : (data.initiator || data.sender_did || "N/A");
+            // FT token format: {name}_{creatorDID}_{number}
+            // ftName = {name}_{number}, ftCreatorDid = creatorDID (bafy... segment)
+            const ftParts = tokenId.split('_');
+            const didIdx = ftParts.findIndex((p: string) => p.startsWith('bafy'));
+            const ftCreatorDid = didIdx !== -1 ? ftParts[didIdx] : '';
+            const namePart = didIdx !== -1 ? ftParts.slice(0, didIdx).join('_') : tokenId;
+            const numberPart = didIdx !== -1 ? ftParts.slice(didIdx + 1).join('_') : '';
+            const ftName = numberPart ? `${namePart}_${numberPart}` : namePart;
             console.log("return token transfer entry:", { tokenId, category, ftName, ftCreatorDid, tokenData });
             const scFunction = tokenData?.function || tokenData?.method || tokenData?.contract_function || tokenData?.functionName || null;
             const scParams = tokenData?.params || tokenData?.parameters || tokenData?.contract_params || tokenData?.args || null;
