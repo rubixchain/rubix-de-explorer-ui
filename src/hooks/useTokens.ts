@@ -64,24 +64,26 @@ export const useTokenDetails = (tokenId: string) => {
 };
 
 // Token chain history via transaction info list
-export const useTokenChain = (tokenId: string) => {
+export const useTokenChain = (tokenId: string, page: number = 1, limit: number = 10) => {
   const { state } = useApp();
   return useQuery({
-    queryKey: ['tokenChain', state.selectedChain, tokenId],
+    queryKey: ['tokenChain', state.selectedChain, tokenId, page, limit],
     queryFn: async () => {
       const baseUrl = getBaseUrlForNetwork(state.selectedChain);
-      const url = `${baseUrl}/api/get-transaction-info-list?tokenID=${encodeURIComponent(tokenId)}`;
-      const response = await fetch(url);
+      const params = new URLSearchParams({ tokenID: encodeURIComponent(tokenId) });
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      const response = await fetch(`${baseUrl}/api/get-transaction-info-list?${params.toString()}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch token chain: ${response.status}`);
       }
       const data = await response.json();
-      // Handle both array response and wrapped response
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data?.TokenChainData)) return data.TokenChainData;
-      if (Array.isArray(data?.transactions)) return data.transactions;
-      if (Array.isArray(data?.data)) return data.data;
-      return [];
+      // Normalise to { transactions, total }
+      if (Array.isArray(data)) return { transactions: data, total: data.length };
+      if (Array.isArray(data?.TokenChainData)) return { transactions: data.TokenChainData, total: data.total ?? data.count ?? data.TokenChainData.length };
+      if (Array.isArray(data?.transactions)) return { transactions: data.transactions, total: data.total ?? data.count ?? data.transactions.length };
+      if (Array.isArray(data?.data)) return { transactions: data.data, total: data.total ?? data.count ?? data.data.length };
+      return { transactions: [], total: 0 };
     },
     enabled: !!tokenId,
     retry: false,

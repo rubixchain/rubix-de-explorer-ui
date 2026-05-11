@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Search, X, Copy, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { CURRENT_NETWORK, NETWORK_CONFIG } from "@/constants";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const NODE_W = 172;
@@ -18,7 +19,7 @@ const ZOOM_L1 = 0.55;
 const ZOOM_L2 = 0.85;
 
 // ─── API ──────────────────────────────────────────────────────────────────────
-const API_BASE = "https://testnetexplorer.rubix.net/api";
+const API_BASE = NETWORK_CONFIG[CURRENT_NETWORK].baseUrl;
 
 // tokens field is {ft:[...], nft:[...], rbt:[...], smartContract:[...]}
 // committedTokens field is a flat array of token objects

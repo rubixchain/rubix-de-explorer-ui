@@ -35,10 +35,13 @@ export const RBTExplorerPage: React.FC = () => {
   const formatAddress = useFormatAddress(16, 8);
 
   const { data: rawTokenData, isLoading: isLoadingToken, error: tokenError } = useTokenDetails(tokenId);
-  const { data: tokenChainData, isLoading: isLoadingChain, error: chainError } = useTokenChain(tokenId);
-
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
+  React.useEffect(() => { setCurrentPage(1); }, [tokenId]);
+
+  const { data: tokenChainResult, isLoading: isLoadingChain } = useTokenChain(tokenId, currentPage, itemsPerPage);
+  const tokenChainData = tokenChainResult?.transactions ?? [];
+  const tokenChainTotal = tokenChainResult?.total ?? 0;
   const isMobile = useIsMobile();
 
   const tokenData: any = rawTokenData;
@@ -227,7 +230,6 @@ export const RBTExplorerPage: React.FC = () => {
           {isMobile ? (
             <div className="space-y-3">
               {tokenChainData
-                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                 .map((block: any, index: number) => (
                   <motion.div
                     key={block.transaction_id || index}
@@ -292,8 +294,7 @@ export const RBTExplorerPage: React.FC = () => {
               {/* Rows */}
               <div className="divide-y divide-outline-200 dark:divide-outline-700">
                 {tokenChainData
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((block: any, index: number) => (
+                    .map((block: any, index: number) => (
                     <motion.div
                       key={block.transaction_id || index}
                       initial={{ opacity: 0, y: 20 }}
@@ -343,12 +344,12 @@ export const RBTExplorerPage: React.FC = () => {
             </div>
           )}
 
-          {tokenChainData.length > itemsPerPage && (
+          {tokenChainTotal > itemsPerPage && (
             <Pagination
               currentPage={currentPage}
-              totalPages={Math.ceil(tokenChainData.length / itemsPerPage)}
+              totalPages={Math.ceil(tokenChainTotal / itemsPerPage)}
               onPageChange={setCurrentPage}
-              totalItems={tokenChainData.length}
+              totalItems={tokenChainTotal}
               itemsPerPage={itemsPerPage}
               className="mt-6"
             />

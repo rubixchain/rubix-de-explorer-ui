@@ -121,11 +121,14 @@ export const TokenExplorerPage: React.FC = () => {
 
   // Use React Query hooks - same pattern as HomePage and other pages
   const { data: rawTokenData, isLoading: isLoadingToken, error: tokenError } = useTokenDetails(tokenId);
-  const { data: tokenChainData, isLoading: isLoadingChain, error: chainError } = useTokenChain(tokenId);
-
   const [activeTab, setActiveTab] = useState<"transactions">("transactions");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
+  React.useEffect(() => { setCurrentPage(1); }, [tokenId]);
+
+  const { data: tokenChainResult, isLoading: isLoadingChain, error: chainError } = useTokenChain(tokenId, currentPage, itemsPerPage);
+  const tokenChainData = tokenChainResult?.transactions ?? [];
+  const tokenChainTotal = tokenChainResult?.total ?? 0;
 
   const loading = isLoadingToken;
   const error = tokenError;
@@ -532,10 +535,6 @@ export const TokenExplorerPage: React.FC = () => {
                 className="space-y-4"
               >
                 {tokenChainData
-                  .slice(
-                    (currentPage - 1) * itemsPerPage,
-                    currentPage * itemsPerPage
-                  )
                   .map((block: any, index: number) => {
                     // Determine if this is a genesis block or transaction block
                     const isGenesisBlock =
@@ -690,12 +689,12 @@ export const TokenExplorerPage: React.FC = () => {
                   })}
               </motion.div>
 
-              {tokenChainData.length > itemsPerPage && (
+              {tokenChainTotal > itemsPerPage && (
                 <Pagination
                   currentPage={currentPage}
-                  totalPages={Math.ceil(tokenChainData.length / itemsPerPage)}
+                  totalPages={Math.ceil(tokenChainTotal / itemsPerPage)}
                   onPageChange={setCurrentPage}
-                  totalItems={tokenChainData.length}
+                  totalItems={tokenChainTotal}
                   itemsPerPage={itemsPerPage}
                   className="mt-6"
                 />
