@@ -84,6 +84,20 @@ export const useFTHolders = (params: { ft_name?: string; page: number; limit: nu
   });
 };
 
+// All FT holders — list of DIDs with total_ft_count and holdings breakdown
+export const useFTHoldersList = (params: { page: number; limit: number }, enabled: boolean = true) => {
+  const { state } = useApp();
+
+  return useQuery({
+    queryKey: ['ftHoldersList', state.selectedChain, params.page, params.limit],
+    queryFn: () => api.getFTHoldersList({ ...params, network: state.selectedChain }),
+    enabled,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+};
+
 // Hook for fetching SC tokens deployed/owned by a DID
 export const useSCTokensByDID = (did: string, page: number, limit: number, enabled: boolean) => {
   const { state } = useApp();

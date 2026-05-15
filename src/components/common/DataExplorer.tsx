@@ -10,8 +10,8 @@ import {
   useSCTxns,
   useTransactions,
 } from "@/hooks/useTransactions";
-import { useDIDs } from "@/hooks/useDIDs";
-import { Search } from "lucide-react";
+import { useDIDs, useFTHoldersList } from "@/hooks/useDIDs";
+import { Search, ChevronDown } from "lucide-react";
 import { useTokens, useFTList, useFTSuggestions, useFTTopHolders, useRBTSuggestions, useRBTInfo, useFTInfo } from "@/hooks/useTokens";
 import { useIsMobile, useFormatAddress } from "@/hooks/useFormatAddress";
 import { BanterLoader } from "@/components/ui/BanterLoader";
@@ -277,6 +277,23 @@ const HoldersListView: React.FC<{
   const ftHolders: any[] = ftData?.holders || [];
   const ftTotalPages = Math.ceil((ftData?.total_count || 0) / itemsPerPage);
 
+  // FT holders list (all DIDs with their holdings) — used when no FT is searched
+  const { data: ftHoldersListData, isLoading: ftHoldersListLoading } = useFTHoldersList(
+    { page: ftPage, limit: itemsPerPage },
+    holderType === "ft" && !activeFtName
+  ) as any;
+  const ftHoldersList: any[] = ftHoldersListData?.data || [];
+  const ftHoldersListTotalPages = ftHoldersListData?.total_pages || 1;
+  const [expandedDids, setExpandedDids] = useState<Set<string>>(new Set());
+  const toggleExpanded = (did: string) => {
+    setExpandedDids(prev => {
+      const next = new Set(prev);
+      if (next.has(did)) next.delete(did);
+      else next.add(did);
+      return next;
+    });
+  };
+
   const handleFtSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
@@ -487,9 +504,98 @@ const HoldersListView: React.FC<{
       )}
 
       {holderType === "ft" && !activeFtName && (
-        <div className="text-sm text-gray-500 dark:text-gray-400 py-4">
-          Enter an FT name above and press Search to see holders.
-        </div>
+        ftHoldersListLoading ? (
+          <div className="text-sm text-gray-500 dark:text-gray-400 py-4">Loading FT holders...</div>
+        ) : ftHoldersList.length === 0 ? (
+          <div className="text-sm text-gray-500 dark:text-gray-400 py-4">No FT holders found.</div>
+        ) : (
+          <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+            <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
+              <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4">
+                <div className="flex-1 min-w-0">DID</div>
+                <div className="w-32 flex-shrink-0 text-right">Total FT Count</div>
+                <div className="w-10 flex-shrink-0"></div>
+              </div>
+            </div>
+            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+              {ftHoldersList.map((entry: any, index: number) => {
+                const isOpen = expandedDids.has(entry.did);
+                return (
+                  <div key={entry.did || index}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      onClick={() => toggleExpanded(entry.did)}
+                      className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors cursor-pointer gap-3 md:gap-4 items-center"
+                    >
+                      <div className="flex-1 min-w-0 flex items-center">
+                        <div className="flex items-center gap-1.5 min-w-0 w-full">
+                          <span
+                            className="text-sm font-mono text-secondary-900 dark:text-white truncate hover:text-primary-600"
+                            onClick={(e) => { e.stopPropagation(); onHolderClick(entry.did); }}
+                          >
+                            {formatAddress(entry.did)}
+                          </span>
+                          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}><CopyButton text={entry.did} size="sm" /></div>
+                        </div>
+                      </div>
+                      <div className="w-32 flex-shrink-0 flex items-center justify-end">
+                        <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                          {typeof entry.total_ft_count === "number" ? entry.total_ft_count.toLocaleString() : entry.total_ft_count ?? "—"}
+                        </span>
+                      </div>
+                      <div className="w-10 flex-shrink-0 flex items-center justify-center">
+                        <ChevronDown className={`w-4 h-4 text-secondary-500 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                      </div>
+                    </motion.div>
+                    {isOpen && (
+                      <div className="px-4 md:px-6 py-3 bg-secondary-50/60 dark:bg-secondary-800/40">
+                        {Array.isArray(entry.holdings) && entry.holdings.length > 0 ? (
+                          <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
+                            <div className="bg-secondary-50 dark:bg-secondary-800 border-b border-outline-200 dark:border-outline-700">
+                              <div className="flex px-4 py-2 text-[10px] font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3">
+                                <div className="w-32 flex-shrink-0">FT Name</div>
+                                <div className="flex-1 min-w-0">Creator DID</div>
+                                <div className="w-24 flex-shrink-0 text-right">Amount</div>
+                              </div>
+                            </div>
+                            <div className="divide-y divide-outline-200 dark:divide-outline-700">
+                              {entry.holdings.map((h: any, hi: number) => (
+                                <div key={`${entry.did}-${h.ft_name}-${hi}`} className="flex px-4 py-2.5 gap-3 items-center">
+                                  <div className="w-32 flex-shrink-0">
+                                    <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{h.ft_name || "—"}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0 flex items-center">
+                                    {h.creator_did ? (
+                                      <div className="flex items-center gap-2 min-w-0 w-full">
+                                        <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{h.creator_did}</span>
+                                        <div className="flex-shrink-0"><CopyButton text={h.creator_did} size="sm" /></div>
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-secondary-400">—</span>
+                                    )}
+                                  </div>
+                                  <div className="w-24 flex-shrink-0 flex items-center justify-end">
+                                    <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
+                                      {typeof h.count === "number" ? h.count.toLocaleString() : h.count ?? "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-secondary-500 dark:text-secondary-400">No holdings.</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
       )}
 
       {/* Pagination */}
@@ -509,6 +615,16 @@ const HoldersListView: React.FC<{
           totalPages={ftTotalPages}
           onPageChange={setFtPage}
           totalItems={ftData?.count || 1}
+          itemsPerPage={itemsPerPage}
+          className="mt-6"
+        />
+      )}
+      {holderType === "ft" && !activeFtName && ftHoldersListTotalPages > 1 && (
+        <Pagination
+          currentPage={ftPage}
+          totalPages={ftHoldersListTotalPages}
+          onPageChange={setFtPage}
+          totalItems={ftHoldersListData?.total || 0}
           itemsPerPage={itemsPerPage}
           className="mt-6"
         />
@@ -887,7 +1003,10 @@ const TokensListView: React.FC<{
             <div className="text-sm text-gray-500 dark:text-gray-400 py-4">No FTs available.</div>
           ) : isMobile ? (
             <div className="space-y-3">
-              {ftTokens.map((ft: any, index: number) => (
+              {ftTokens.map((ft: any, index: number) => {
+                const creator = ft.creatorDID || ft.creator_did || "";
+                const ftValue = ft.ftValue ?? ft.ft_value;
+                return (
                 <motion.div
                   key={ft.ftName || ft.ft_name || `ft-${index}`}
                   initial={{ opacity: 0, y: 20 }}
@@ -899,6 +1018,25 @@ const TokensListView: React.FC<{
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">FT Name</p>
                     <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{ft.ftName || ft.ft_name || "—"}</span>
                   </div>
+                  <div>
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Creator DID</p>
+                    {creator ? (
+                      <div className="flex items-center gap-1.5">
+                        <Tooltip content={creator} position="top">
+                          <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{formatAddress(creator)}</span>
+                        </Tooltip>
+                        <CopyButton text={creator} size="sm" />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-secondary-400">—</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">FT Value</p>
+                    <span className="text-sm font-semibold text-secondary-900 dark:text-white">
+                      {typeof ftValue === "number" ? ftValue : ftValue ?? "—"}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Minted</p>
                     <span className="text-sm font-semibold text-secondary-900 dark:text-white">
@@ -906,37 +1044,59 @@ const TokensListView: React.FC<{
                     </span>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <div className="inline-block min-w-full">
                   <div className="border-b border-outline-200 dark:border-outline-700">
-                    <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-3 md:gap-4 bg-secondary-50 dark:bg-secondary-800">
-                      <div className="flex-1 min-w-[200px]">FT Name</div>
-                      <div className="w-28 md:w-36 flex-shrink-0 text-right">Minted</div>
+                    <div className="flex px-4 md:px-6 py-3 text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider gap-4 bg-secondary-50 dark:bg-secondary-800">
+                      <div className="w-32 flex-shrink-0">FT Name</div>
+                      <div className="flex-1 min-w-0">Creator DID</div>
+                      <div className="w-24 flex-shrink-0">FT Value</div>
+                      <div className="w-24 flex-shrink-0">Minted</div>
                     </div>
                   </div>
                   <div className="divide-y divide-outline-200 dark:divide-outline-700">
-                    {ftTokens.map((ft: any, index: number) => (
+                    {ftTokens.map((ft: any, index: number) => {
+                      const creator = ft.creatorDID || ft.creator_did || "";
+                      const ftValue = ft.ftValue ?? ft.ft_value;
+                      return (
                       <motion.div
                         key={ft.ftName || ft.ft_name || `ft-${index}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors gap-3 md:gap-4"
+                        className="flex px-4 md:px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors gap-4"
                       >
-                        <div className="flex-1 min-w-[200px] flex items-center">
-                          <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono">{ft.ftName || ft.ft_name || "—"}</span>
+                        <div className="w-32 flex-shrink-0 flex items-center">
+                          <span className="text-sm font-medium text-secondary-900 dark:text-white font-mono truncate">{ft.ftName || ft.ft_name || "—"}</span>
                         </div>
-                        <div className="w-28 md:w-36 flex-shrink-0 flex items-center justify-end">
+                        <div className="flex-1 min-w-0 flex items-center">
+                          {creator ? (
+                            <div className="flex items-center gap-2 min-w-0 w-full">
+                              <span className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate">{creator}</span>
+                              <div className="flex-shrink-0"><CopyButton text={creator} size="sm" /></div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-secondary-400">—</span>
+                          )}
+                        </div>
+                        <div className="w-24 flex-shrink-0 flex items-center">
+                          <span className="text-sm text-secondary-900 dark:text-white whitespace-nowrap">
+                            {typeof ftValue === "number" ? ftValue : ftValue ?? "—"}
+                          </span>
+                        </div>
+                        <div className="w-24 flex-shrink-0 flex items-center">
                           <span className="text-sm font-semibold text-secondary-900 dark:text-white whitespace-nowrap">
                             {typeof ft.count === "number" ? ft.count.toLocaleString() : ft.count ?? "—"}
                           </span>
                         </div>
                       </motion.div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

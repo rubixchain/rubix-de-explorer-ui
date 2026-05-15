@@ -392,6 +392,24 @@ class ApiClient {
     }
   }
 
+  // FT holders list — DIDs with their total FT count and holdings breakdown
+  async getFTHoldersList(params?: { page?: number; limit?: number; network?: string }) {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+
+    try {
+      const response = await fetch(`${baseUrl}/api/get-ft-holders-list?${searchParams.toString()}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.json();
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    }
+  }
+
   // Top holders for a specific FT (identified by name + creator DID)
   async getFTTopHolders(params: { ftName: string; creatorDID: string; page?: number; limit?: number; network?: string }) {
     const searchParams = new URLSearchParams({ ftName: params.ftName, creatorDID: params.creatorDID });
@@ -617,6 +635,7 @@ export const api = {
   getToken: (id: string) => apiClient.getToken(id),
   getDIDs: (params?: any) => apiClient.getDIDs(params),
   getFTHolders: (params?: any) => apiClient.getFTHolders(params),
+  getFTHoldersList: (params?: any) => apiClient.getFTHoldersList(params),
   getDID: (id: string) => apiClient.getDID(id),
   getValidators: (params?: any) => apiClient.getValidators(params),
   getValidator: (id: string) => apiClient.getValidator(id),
