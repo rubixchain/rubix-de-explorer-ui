@@ -194,7 +194,6 @@ class ApiClient {
     limit?: number;
     network?: string;
     did?: string;
-    hideMint?: boolean;
   }) {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
@@ -202,11 +201,10 @@ class ApiClient {
     if (params?.did) searchParams.append("did", params.did);
 
     const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
-    const endpoint = params?.hideMint ? "hide-mint-txns" : "get-latest-transactions";
 
     try {
       const response = await fetch(
-        `${baseUrl}/api/${endpoint}?${searchParams.toString()}`
+        `${baseUrl}/api/get-latest-transactions?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
