@@ -194,6 +194,7 @@ class ApiClient {
     limit?: number;
     network?: string;
     did?: string;
+    hideMint?: boolean;
   }) {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
@@ -201,10 +202,11 @@ class ApiClient {
     if (params?.did) searchParams.append("did", params.did);
 
     const baseUrl = params?.network ? getBaseUrlForNetwork(params.network) : this.baseUrl;
+    const endpoint = params?.hideMint ? "hide-mint-txns" : "get-latest-transactions";
 
     try {
       const response = await fetch(
-        `${baseUrl}/api/get-latest-transactions?${searchParams.toString()}`
+        `${baseUrl}/api/${endpoint}?${searchParams.toString()}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -562,10 +564,19 @@ class ApiClient {
     const baseUrl = network ? getBaseUrlForNetwork(network) : this.baseUrl;
 
     try {
-      const response = await fetch(`${baseUrl}/api/kpi`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const kpiRes = await response.json();
-      const data: NetworkMetrics = kpiRes.data;
+      const [kpiRes, priceUsd] = await Promise.all([
+        fetch(`${baseUrl}/api/kpi`).then(r => {
+          if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+          return r.json();
+        }),
+        fetch(`https://api.coingecko.com/api/v3/simple/price?ids=rubix&vs_currencies=usd`)
+          .then(r => r.ok ? r.json() : null)
+          .then(j => (j && typeof j?.rubix?.usd === "number") ? j.rubix.usd : null)
+          .catch(() => null),
+      ]);
+      // KPI response may be flat or wrapped in { data: ... }
+      const kpiData: any = kpiRes?.data ?? kpiRes ?? {};
+      const data: NetworkMetrics = { ...kpiData, rbt_price: priceUsd ?? kpiData.rbt_price ?? 0 };
       return { data, success: true, message: "Metrics loaded successfully" };
     } catch (error) {
       console.error("Error fetching metrics:", error);

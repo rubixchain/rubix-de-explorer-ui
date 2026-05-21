@@ -210,8 +210,13 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   const metricsData = [
     {
       title: "RBT Price",
-      value: `$${currentMetrics.rbt_price?.toFixed(2) ?? "0.00"}`,
-      tooltip: "Price of a single RBT token in USD.",
+      value: (() => {
+        const p = currentMetrics.rbt_price ?? 0;
+        if (p === 0) return "$0.00";
+        if (p >= 1) return `$${p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+        return `$${p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+      })(),
+      tooltip: "Price of a single RBT token in USD (source: CoinGecko).",
     },
     {
       title: "Total Supply",

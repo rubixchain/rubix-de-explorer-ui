@@ -73,7 +73,8 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [transactions, setTransactions] = useState<any[]>([]);
-  const paramsTxn = { page: currentPage, limit: itemsPerPage };
+  const [hideMint, setHideMint] = useState(false);
+  const paramsTxn = { page: currentPage, limit: itemsPerPage, hideMint };
   const formatAddress = (address: string, length: number = 8): string => {
   if (!address || address === "N/A") return address;
   if (address.length <= length * 2) return address;
@@ -97,6 +98,18 @@ const TransactionsListView: React.FC<TransactionsListViewProps> = ({
 
   return (
     <div className="w-full">
+      <div className="flex items-center justify-end mb-3">
+        <button
+          onClick={() => { setHideMint(v => !v); onPageChange(1); }}
+          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+            hideMint
+              ? "bg-primary-600 text-white border-primary-600 hover:bg-primary-700"
+              : "bg-white dark:bg-secondary-900 text-secondary-700 dark:text-secondary-300 border-outline-200 dark:border-outline-700 hover:bg-secondary-50 dark:hover:bg-secondary-800"
+          }`}
+        >
+          {hideMint ? "Show Mint Txns" : "Hide Mint Txns"}
+        </button>
+      </div>
       {/* Mobile: vertical card list */}
       {isMobile ? (
         <div className="space-y-3">

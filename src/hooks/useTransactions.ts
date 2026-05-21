@@ -7,6 +7,7 @@ import { getBaseUrlForNetwork } from '@/services/api';
 interface UseTransactionsParams {
   page?: number;
   limit?: number;
+  hideMint?: boolean;
   // type?: string;
   // status?: string;
 }
