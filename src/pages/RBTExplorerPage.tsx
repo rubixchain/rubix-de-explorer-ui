@@ -73,12 +73,10 @@ export const RBTExplorerPage: React.FC = () => {
         </h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           <span className="mb-2 sm:mb-0">Details for Token:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={tokenId} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 inline-block truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(tokenId)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`font-mono text-primary-600 dark:text-primary-400 ${isMobile ? "" : "break-all"}`}>
+              {isMobile ? formatAddress(tokenId) : tokenId}
+            </span>
             <div className="flex-shrink-0">
               <CopyButton text={tokenId} size="sm" />
             </div>
@@ -108,56 +106,12 @@ export const RBTExplorerPage: React.FC = () => {
 
         {!isLoadingToken && tokenData && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          {/* Asset Type */}
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 mb-2">Asset Type:</p>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-              RBT
-            </span>
-          </div>
-
-          {/* Owner DID */}
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
-            <div className="flex items-center gap-2">
-              <Tooltip content={d?.did} position="top">
-                <p
-                  className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                  onClick={() => navigate(`/did-explorer?did=${d?.did}`)}
-                >
-                  {formatAddress(d?.did)}
-                </p>
-              </Tooltip>
-              <div className="flex-shrink-0">
-                <CopyButton text={d?.did} size="sm" />
-              </div>
-            </div>
-          </div>
-
           {/* Token Value */}
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Token Value:</p>
             <p className="font-mono text-gray-900 dark:text-white">
               {d?.token_value} RBT
             </p>
-          </div>
-
-          {/* Latest Transaction ID */}
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 mb-2">Latest Txn ID:</p>
-            <div className="flex items-center gap-2">
-              <Tooltip content={d?.transaction_id} position="top">
-                <p
-                  className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                  onClick={() => navigate(`/transaction-explorer?tx=${d?.transaction_id}`)}
-                >
-                  {formatAddress(d?.transaction_id)}
-                </p>
-              </Tooltip>
-              <div className="flex-shrink-0">
-                <CopyButton text={d?.transaction_id} size="sm" />
-              </div>
-            </div>
           </div>
 
           {/* Token Status */}
@@ -193,6 +147,38 @@ export const RBTExplorerPage: React.FC = () => {
             })() : (
               <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
             )}
+          </div>
+
+          {/* Owner DID */}
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
+            <div className="flex items-center gap-2">
+              <p
+                className={`font-mono text-yellow-500 hover:text-yellow-600 cursor-pointer ${isMobile ? "" : "break-all"}`}
+                onClick={() => navigate(`/did-explorer?did=${d?.did}`)}
+              >
+                {isMobile ? formatAddress(d?.did) : d?.did}
+              </p>
+              <div className="flex-shrink-0">
+                <CopyButton text={d?.did} size="sm" />
+              </div>
+            </div>
+          </div>
+
+          {/* Latest Transaction ID */}
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Latest Txn ID:</p>
+            <div className="flex items-center gap-2">
+              <p
+                className={`font-mono text-yellow-500 hover:text-yellow-600 cursor-pointer ${isMobile ? "" : "break-all"}`}
+                onClick={() => navigate(`/transaction-explorer?tx=${d?.transaction_id}`)}
+              >
+                {isMobile ? formatAddress(d?.transaction_id) : d?.transaction_id}
+              </p>
+              <div className="flex-shrink-0">
+                <CopyButton text={d?.transaction_id} size="sm" />
+              </div>
+            </div>
           </div>
 
           {/* Latest Txn Time */}

@@ -144,12 +144,10 @@ export const DIDExplorerPage: React.FC = () => {
       {/* DID Info */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">DID Explorer</h1>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Tooltip content={didData.did.did}>
-            <span className="font-mono text-primary-600 inline-block truncate max-w-[70vw]">
-              {formatAddress(didData.did.did, 50, 8)}
-            </span>
-          </Tooltip>
+        <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0">
+          <span className={`font-mono text-primary-600 ${isMobile ? "" : "break-all"}`}>
+            {isMobile ? formatAddress(didData.did.did) : didData.did.did}
+          </span>
           <CopyButton text={didData.did.did} size="sm" />
         </div>
       </div>

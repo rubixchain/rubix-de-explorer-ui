@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTransaction } from "@/hooks/useTransactions";
+import { useIsMobile } from "@/hooks/useFormatAddress";
 
 export const BurntTransactionExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const txId = searchParams.get("tx") || "";
+  const isMobile = useIsMobile();
 
   const { data: rawData, isLoading, error: queryError } = useTransaction(txId);
 
@@ -145,12 +147,10 @@ export const BurntTransactionExplorerPage: React.FC = () => {
         </h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           <span className="mb-2 sm:mb-0">Details for Burnt Block:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={txData.block_hash} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 inline-block truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(txData.block_hash, 12)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`font-mono text-primary-600 dark:text-primary-400 ${isMobile ? "" : "break-all"}`}>
+              {isMobile ? formatAddress(txData.block_hash) : txData.block_hash}
+            </span>
             <div className="flex-shrink-0">
               <CopyButton text={txData.block_hash} size="sm" />
             </div>
@@ -196,11 +196,9 @@ export const BurntTransactionExplorerPage: React.FC = () => {
                     Transaction Hash:
                   </p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.block_hash} position="top">
-                      <p className="font-mono text-gray-900 dark:text-white truncate">
-                        {formatAddress(txData.block_hash, 8)}
-                      </p>
-                    </Tooltip>
+                    <p className={`font-mono text-gray-900 dark:text-white ${isMobile ? "" : "break-all"}`}>
+                      {isMobile ? formatAddress(txData.block_hash) : txData.block_hash}
+                    </p>
                     <div className="flex-shrink-0">
                       <CopyButton text={txData.block_hash} size="sm" />
                     </div>
@@ -221,12 +219,10 @@ export const BurntTransactionExplorerPage: React.FC = () => {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-2">Owner:</p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.owner_did} position="top">
-                      <p className="font-mono text-primary-600 dark:text-primary-400 truncate cursor-pointer hover:text-primary-700"
-                         onClick={() => navigate(`/did-explorer?did=${txData.owner_did}`)}>
-                        {formatAddress(txData.owner_did, 8)}
-                      </p>
-                    </Tooltip>
+                    <p className={`font-mono text-primary-600 dark:text-primary-400 cursor-pointer hover:text-primary-700 ${isMobile ? "" : "break-all"}`}
+                       onClick={() => navigate(`/did-explorer?did=${txData.owner_did}`)}>
+                      {isMobile ? formatAddress(txData.owner_did) : txData.owner_did}
+                    </p>
                     <div className="flex-shrink-0">
                       <CopyButton text={txData.owner_did} size="sm" />
                     </div>
@@ -236,14 +232,13 @@ export const BurntTransactionExplorerPage: React.FC = () => {
                       Burnt Token
                     </p>
                     <div className="flex items-center gap-2">
-                      <Tooltip content={txData.tokens ? Object.keys(txData.tokens).toLocaleString() : "N/A"} position="top">
-                        <p className="font-medium text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                           onClick={() => navigate(`/token-explorer?token=${Object.keys(txData.tokens).toLocaleString()}`)}>
-                          {txData.tokens
-                            ? formatAddress(Object.keys(txData.tokens).toLocaleString(), 8)
-                            : "N/A"}
-                        </p>
-                      </Tooltip>
+                      <p className={`font-medium text-gray-900 dark:text-white cursor-pointer hover:text-primary-600 ${isMobile ? "" : "break-all"}`}
+                         onClick={() => navigate(`/token-explorer?token=${Object.keys(txData.tokens).toLocaleString()}`)}>
+                        {(() => {
+                          const t = txData.tokens ? Object.keys(txData.tokens).toLocaleString() : "N/A";
+                          return isMobile ? formatAddress(t) : t;
+                        })()}
+                      </p>
                       {txData.tokens && (
                         <div className="flex-shrink-0">
                           <CopyButton text={Object.keys(txData.tokens).toLocaleString()} size="sm" />

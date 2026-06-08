@@ -119,12 +119,6 @@ export const Header: React.FC = () => {
               </span>
             </Link>
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(isDAGPage ? '/' : '/dag')}
-                className="px-4 py-1.5 rounded-full text-xs bg-yellow-400 text-white border border-yellow-500 hover:bg-black-500 hover:border-yellow-600 transition-colors whitespace-nowrap"
-              >
-                {isDAGPage ? 'Explorer' : 'DAG'}
-              </button>
               <NetworkToggle />
             </div>
           </div>

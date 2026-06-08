@@ -340,12 +340,10 @@ const formatAddress = (
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Details for Transaction:
           </div>
-          <div className="flex items-center space-x-2">
-            <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer">
-                {formatAddress(txData.id)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center space-x-2 min-w-0">
+            <span className="font-mono text-primary-600 dark:text-primary-400">
+              {formatAddress(txData.id)}
+            </span>
             <CopyButton text={txData.id} size="sm" />
             <button
               onClick={() => {
@@ -364,12 +362,10 @@ const formatAddress = (
         {/* Desktop Layout: Same row */}
         <div className="hidden sm:flex items-center space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           <span>Details for Transaction:</span>
-          <div className="flex items-center space-x-2">
-            <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer">
-                {formatAddress(txData.id)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center space-x-2 min-w-0">
+            <span className="font-mono text-primary-600 dark:text-primary-400 break-all">
+              {txData.id}
+            </span>
             <CopyButton text={txData.id} size="sm" />
             <button
               onClick={() => {
@@ -483,42 +479,37 @@ const formatAddress = (
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Timestamp:</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {txData.timestamp}
-                  </p>
-                </div>
- 
-                <div>
                   <p className="text-gray-500 dark:text-gray-400">From:</p>
-                  <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-                    <Tooltip content={txData.from} position="top">
-                      <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate min-w-0 hover:text-primary-700 dark:hover:text-primary-300"
-                        onClick={() => navigate(`/did-explorer?did=${txData.from}`)}
-                      >
-                        {formatAddress(txData.from, 16, 8)}
-                      </p>
-                    </Tooltip>
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={`font-mono text-primary-600 dark:text-primary-400 cursor-pointer hover:text-primary-700 dark:hover:text-primary-300 ${isMobile ? "" : "break-all"}`}
+                      onClick={() => navigate(`/did-explorer?did=${txData.from}`)}
+                    >
+                      {isMobile ? formatAddress(txData.from) : txData.from}
+                    </p>
                     <div className="flex-shrink-0"><CopyButton text={txData.from} size="sm" /></div>
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">To:</p>
-                  <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-                    <Tooltip content={txData.to} position="top">
-                      <p
-                        className="font-mono text-primary-600 dark:text-primary-400 cursor-pointer truncate min-w-0 hover:text-primary-700 dark:hover:text-primary-300"
-                        onClick={() => txData.toIsDID
-                          ? navigate(`/did-explorer?did=${txData.to}`)
-                          : navigate(`/token-explorer?token=${encodeURIComponent(txData.to)}`)
-                        }
-                      >
-                        {txData.toIsDID ? formatAddress(txData.to, 16, 8) : txData.to}
-                      </p>
-                    </Tooltip>
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={`font-mono text-primary-600 dark:text-primary-400 cursor-pointer hover:text-primary-700 dark:hover:text-primary-300 ${isMobile ? "" : "break-all"}`}
+                      onClick={() => txData.toIsDID
+                        ? navigate(`/did-explorer?did=${txData.to}`)
+                        : navigate(`/token-explorer?token=${encodeURIComponent(txData.to)}`)
+                      }
+                    >
+                      {isMobile ? (txData.toIsDID ? formatAddress(txData.to) : txData.to) : txData.to}
+                    </p>
                     <div className="flex-shrink-0"><CopyButton text={txData.to} size="sm" /></div>
                   </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-gray-500 dark:text-gray-400">Timestamp:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {txData.timestamp}
+                  </p>
                 </div>
               </div>
             </div>
@@ -768,15 +759,68 @@ const formatAddress = (
 
             // RBT tab
             if (activeAssetTab === "rbt") {
+              if (isMobile) {
+                return (
+                  <>
+                    <div className="space-y-3">
+                      {paginated.map((transfer: any, index: number) => (
+                        <motion.div
+                          key={transfer.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.04 }}
+                          onClick={() => navigate(`/rbt-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                          className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
+                        >
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">RBT ID</p>
+                            <div className="flex items-center gap-1.5">
+                              <Tooltip content={transfer.tokenId} position="top">
+                                <span className="text-sm font-mono text-secondary-900 dark:text-white truncate">{formatAddress(transfer.tokenId)}</span>
+                              </Tooltip>
+                              <CopyButton text={transfer.tokenId} size="sm" />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Value</p>
+                            <span className="text-sm font-semibold text-secondary-900 dark:text-white">
+                              {transfer.tokenValue != null ? `${transfer.tokenValue} RBT` : "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Prev Txn</p>
+                            {transfer.previousTransactionID ? (
+                              <div className="flex items-center gap-1.5">
+                                <Tooltip content={transfer.previousTransactionID} position="top">
+                                  <span
+                                    className="text-sm font-mono text-primary-600 dark:text-primary-400 truncate cursor-pointer hover:underline"
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`); }}
+                                  >
+                                    {formatAddress(transfer.previousTransactionID)}
+                                  </span>
+                                </Tooltip>
+                                <CopyButton text={transfer.previousTransactionID} size="sm" />
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    {paginationBar}
+                  </>
+                );
+              }
               return (
                 <>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-200 dark:border-gray-700">
-                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">RBT ID</th>
-                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
-                          <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prev Txn</th>
+                          <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-full">RBT ID</th>
+                          <th className="text-right py-2 pr-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Value</th>
+                          <th className="text-left py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Prev Txn</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -801,14 +845,14 @@ const formatAddress = (
                                 <CopyButton text={transfer.tokenId} size="sm" />
                               </div>
                             </td>
-                            <td className="py-3 pr-4">
+                            <td className="py-3 pr-4 text-right whitespace-nowrap">
                               <span className="font-medium text-gray-900 dark:text-white text-xs">
                                 {transfer.tokenValue != null ? `${transfer.tokenValue} RBT` : "—"}
                               </span>
                             </td>
-                            <td className="py-3">
+                            <td className="py-3 text-right whitespace-nowrap">
                               {transfer.previousTransactionID ? (
-                                <div className="flex items-center gap-1.5">
+                                <div className="inline-flex items-center gap-1.5">
                                   <Tooltip content={transfer.previousTransactionID} position="top">
                                     <span
                                       className="font-mono text-xs text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
@@ -835,6 +879,62 @@ const formatAddress = (
 
             // FT tab
             if (activeAssetTab === "ft") {
+              if (isMobile) {
+                return (
+                  <>
+                    <div className="space-y-3">
+                      {paginated.map((transfer: any, index: number) => (
+                        <motion.div
+                          key={transfer.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.04 }}
+                          onClick={() => navigate(`/ft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                          className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
+                        >
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">FT ID</p>
+                            <span className="text-sm font-medium text-secondary-900 dark:text-white">{transfer.ftName}</span>
+                          </div>
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Creator</p>
+                            <div className="flex items-center gap-1.5">
+                              <Tooltip content={transfer.ftCreatorDid} position="top">
+                                <span
+                                  className="text-sm font-mono text-secondary-600 dark:text-secondary-400 truncate cursor-pointer hover:text-primary-600"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/did-explorer?did=${encodeURIComponent(transfer.ftCreatorDid)}`); }}
+                                >
+                                  {formatAddress(transfer.ftCreatorDid)}
+                                </span>
+                              </Tooltip>
+                              <CopyButton text={transfer.ftCreatorDid} size="sm" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Prev Txn</p>
+                            {transfer.previousTransactionID ? (
+                              <div className="flex items-center gap-1.5">
+                                <Tooltip content={transfer.previousTransactionID} position="top">
+                                  <span
+                                    className="text-sm font-mono text-primary-600 dark:text-primary-400 truncate cursor-pointer hover:underline"
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/transaction-explorer?tx=${encodeURIComponent(transfer.previousTransactionID)}`); }}
+                                  >
+                                    {formatAddress(transfer.previousTransactionID)}
+                                  </span>
+                                </Tooltip>
+                                <CopyButton text={transfer.previousTransactionID} size="sm" />
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    {paginationBar}
+                  </>
+                );
+              }
               return (
                 <>
                   <div className="overflow-x-auto">
@@ -905,6 +1005,54 @@ const formatAddress = (
 
             // SC tab
             if (activeAssetTab === "sc") {
+              if (isMobile) {
+                return (
+                  <>
+                    <div className="space-y-3">
+                      {paginated.map((transfer: any, index: number) => (
+                        <motion.div
+                          key={transfer.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.04 }}
+                          onClick={() => navigate(`/sc-token-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                          className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors space-y-2"
+                        >
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Token ID</p>
+                            <div className="flex items-center gap-1.5">
+                              <Tooltip content={transfer.tokenId} position="top">
+                                <span className="text-sm font-mono text-secondary-900 dark:text-white truncate">{formatAddress(transfer.tokenId)}</span>
+                              </Tooltip>
+                              <CopyButton text={transfer.tokenId} size="sm" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Change</p>
+                            {transfer.scFunction ? (
+                              <div className="space-y-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white">
+                                  {transfer.scFunction}()
+                                </span>
+                                {transfer.scParams && (
+                                  <Tooltip content={typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)} position="top">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono break-all cursor-default">
+                                      {typeof transfer.scParams === "object" ? JSON.stringify(transfer.scParams) : String(transfer.scParams)}
+                                    </p>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-600">—</span>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    {paginationBar}
+                  </>
+                );
+              }
               return (
                 <>
                   <div className="overflow-x-auto">
@@ -966,6 +1114,35 @@ const formatAddress = (
             }
 
             // NFT tab (fallback)
+            if (isMobile) {
+              return (
+                <>
+                  <div className="space-y-3">
+                    {paginated.map((transfer: any, index: number) => (
+                      <motion.div
+                        key={transfer.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.04 }}
+                        onClick={() => navigate(`/nft-explorer?token=${encodeURIComponent(transfer.tokenId)}`)}
+                        className="bg-white dark:bg-secondary-900 rounded-lg border border-outline-200 dark:border-outline-700 p-4 cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors"
+                      >
+                        <div>
+                          <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-0.5">Token ID</p>
+                          <div className="flex items-center gap-1.5">
+                            <Tooltip content={transfer.tokenId} position="top">
+                              <span className="text-sm font-mono text-secondary-900 dark:text-white truncate">{formatAddress(transfer.tokenId)}</span>
+                            </Tooltip>
+                            <CopyButton text={transfer.tokenId} size="sm" />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  {paginationBar}
+                </>
+              );
+            }
             return (
               <>
                 <div className="overflow-x-auto">

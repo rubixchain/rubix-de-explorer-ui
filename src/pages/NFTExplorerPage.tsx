@@ -108,12 +108,10 @@ export const NFTExplorerPage: React.FC = () => {
         </h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           <span className="mb-2 sm:mb-0">Details for Token:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={tokenId} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 inline-block truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(tokenId)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`font-mono text-primary-600 dark:text-primary-400 ${isMobile ? "" : "break-all"}`}>
+              {isMobile ? formatAddress(tokenId) : tokenId}
+            </span>
             <div className="flex-shrink-0">
               <CopyButton text={tokenId} size="sm" />
             </div>
@@ -139,11 +137,9 @@ export const NFTExplorerPage: React.FC = () => {
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Token ID:</p>
             <div className="flex items-center gap-2">
-              <Tooltip content={d?.token_id || tokenId} position="top">
-                <p className="font-mono text-gray-900 dark:text-white truncate">
-                  {formatAddress(d?.token_id || tokenId)}
-                </p>
-              </Tooltip>
+              <p className={`font-mono text-gray-900 dark:text-white ${isMobile ? "" : "break-all"}`}>
+                {isMobile ? formatAddress(d?.token_id || tokenId) : (d?.token_id || tokenId)}
+              </p>
               <div className="flex-shrink-0">
                 <CopyButton text={d?.token_id || tokenId} size="sm" />
               </div>
@@ -154,14 +150,12 @@ export const NFTExplorerPage: React.FC = () => {
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Owner DID:</p>
             <div className="flex items-center gap-2">
-              <Tooltip content={d?.did} position="top">
-                <p
-                  className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                  onClick={() => navigate(`/did-explorer?did=${d?.did}`)}
-                >
-                  {formatAddress(d?.did)}
-                </p>
-              </Tooltip>
+              <p
+                className={`font-mono text-gray-900 dark:text-white cursor-pointer hover:text-primary-600 ${isMobile ? "" : "break-all"}`}
+                onClick={() => navigate(`/did-explorer?did=${d?.did}`)}
+              >
+                {isMobile ? formatAddress(d?.did) : d?.did}
+              </p>
               <div className="flex-shrink-0">
                 <CopyButton text={d?.did} size="sm" />
               </div>
@@ -180,14 +174,12 @@ export const NFTExplorerPage: React.FC = () => {
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Transaction ID:</p>
             <div className="flex items-center gap-2">
-              <Tooltip content={d?.transaction_id} position="top">
-                <p
-                  className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                  onClick={() => navigate(`/transaction-explorer?tx=${d?.transaction_id}`)}
-                >
-                  {formatAddress(d?.transaction_id)}
-                </p>
-              </Tooltip>
+              <p
+                className={`font-mono text-gray-900 dark:text-white cursor-pointer hover:text-primary-600 ${isMobile ? "" : "break-all"}`}
+                onClick={() => navigate(`/transaction-explorer?tx=${d?.transaction_id}`)}
+              >
+                {isMobile ? formatAddress(d?.transaction_id) : d?.transaction_id}
+              </p>
               <div className="flex-shrink-0">
                 <CopyButton text={d?.transaction_id} size="sm" />
               </div>
@@ -198,14 +190,12 @@ export const NFTExplorerPage: React.FC = () => {
           <div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">Deployer DID:</p>
             <div className="flex items-center gap-2">
-              <Tooltip content={d?.deployer} position="top">
-                <p
-                  className="font-mono text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600"
-                  onClick={() => navigate(`/did-explorer?did=${d?.deployer}`)}
-                >
-                  {formatAddress(d?.deployer)}
-                </p>
-              </Tooltip>
+              <p
+                className={`font-mono text-gray-900 dark:text-white cursor-pointer hover:text-primary-600 ${isMobile ? "" : "break-all"}`}
+                onClick={() => navigate(`/did-explorer?did=${d?.deployer}`)}
+              >
+                {isMobile ? formatAddress(d?.deployer) : d?.deployer}
+              </p>
               <div className="flex-shrink-0">
                 <CopyButton text={d?.deployer} size="sm" />
               </div>

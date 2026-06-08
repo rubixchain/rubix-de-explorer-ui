@@ -14,11 +14,13 @@ import {
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSCTransaction } from "@/hooks/useTransactions";
+import { useIsMobile } from "@/hooks/useFormatAddress";
 
 export const SCTransactionExplorerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const txId = searchParams.get("tx") || "";
+  const isMobile = useIsMobile();
 
   // Use React Query hook - same pattern as HomePage and other pages
   const { data: rawData, isLoading, error: queryError } = useSCTransaction(txId);
@@ -163,12 +165,10 @@ export const SCTransactionExplorerPage: React.FC = () => {
         </h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           <span className="mb-2 sm:mb-0">Details for Smart contract:</span>
-          <div className="flex items-center gap-2">
-            <Tooltip content={txData.id} position="top">
-              <span className="font-mono text-primary-600 dark:text-primary-400 inline-block truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-none">
-                {formatAddress(txData.id, 12)}
-              </span>
-            </Tooltip>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`font-mono text-primary-600 dark:text-primary-400 ${isMobile ? "" : "break-all"}`}>
+              {isMobile ? formatAddress(txData.id) : txData.id}
+            </span>
             <div className="flex-shrink-0">
               <CopyButton text={txData.id} size="sm" />
             </div>
@@ -214,11 +214,9 @@ export const SCTransactionExplorerPage: React.FC = () => {
                     Transaction Hash:
                   </p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.id} position="top">
-                      <p className="font-mono text-gray-900 dark:text-white truncate">
-                        {formatAddress(txData.id, 8)}
-                      </p>
-                    </Tooltip>
+                    <p className={`font-mono text-gray-900 dark:text-white ${isMobile ? "" : "break-all"}`}>
+                      {isMobile ? formatAddress(txData.id) : txData.id}
+                    </p>
                     {txData.id !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.id} size="sm" />
@@ -231,11 +229,9 @@ export const SCTransactionExplorerPage: React.FC = () => {
                     Contract ID
                   </p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.contract_id} position="top">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {formatAddress(txData.contract_id, 8)}
-                      </p>
-                    </Tooltip>
+                    <p className={`font-medium text-gray-900 dark:text-white ${isMobile ? "" : "break-all"}`}>
+                      {isMobile ? formatAddress(txData.contract_id) : txData.contract_id}
+                    </p>
                     {txData.contract_id !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.contract_id} size="sm" />
@@ -252,12 +248,10 @@ export const SCTransactionExplorerPage: React.FC = () => {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-2">Executor :</p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.executor_did} position="top">
-                      <p className={`font-mono text-primary-600 dark:text-primary-400 truncate ${txData.executor_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
-                         onClick={() => txData.executor_did !== 'N/A' && navigate(`/did-explorer?did=${txData.executor_did}`)}>
-                        {formatAddress(txData.executor_did, 8)}
-                      </p>
-                    </Tooltip>
+                    <p className={`font-mono text-primary-600 dark:text-primary-400 ${isMobile ? "" : "break-all"} ${txData.executor_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
+                       onClick={() => txData.executor_did !== 'N/A' && navigate(`/did-explorer?did=${txData.executor_did}`)}>
+                      {isMobile ? formatAddress(txData.executor_did) : txData.executor_did}
+                    </p>
                     {txData.executor_did !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.executor_did} size="sm" />
@@ -268,12 +262,10 @@ export const SCTransactionExplorerPage: React.FC = () => {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-2">Deployer :</p>
                   <div className="flex items-center gap-2">
-                    <Tooltip content={txData.owner_did} position="top">
-                      <p className={`font-mono text-primary-600 dark:text-primary-400 truncate ${txData.owner_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
-                         onClick={() => txData.owner_did !== 'N/A' && navigate(`/did-explorer?did=${txData.owner_did}`)}>
-                        {formatAddress(txData.owner_did, 8)}
-                      </p>
-                    </Tooltip>
+                    <p className={`font-mono text-primary-600 dark:text-primary-400 ${isMobile ? "" : "break-all"} ${txData.owner_did !== 'N/A' ? 'cursor-pointer hover:text-primary-700' : ''}`}
+                       onClick={() => txData.owner_did !== 'N/A' && navigate(`/did-explorer?did=${txData.owner_did}`)}>
+                      {isMobile ? formatAddress(txData.owner_did) : txData.owner_did}
+                    </p>
                     {txData.owner_did !== 'N/A' && (
                       <div className="flex-shrink-0">
                         <CopyButton text={txData.owner_did} size="sm" />
