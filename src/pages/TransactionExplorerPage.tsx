@@ -45,6 +45,7 @@ export const TransactionExplorerPage: React.FC = () => {
   const [quorums, setQuorums] = useState<any[]>([]);
   const [expandedQuorums, setExpandedQuorums] = useState<Set<number>>(new Set());
   const [quorumTokenPages, setQuorumTokenPages] = useState<Record<number, number>>({});
+  const [memoModal, setMemoModal] = useState<string | null>(null);
   const QUORUM_TOKEN_PAGE_SIZE = 10;
   const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -134,6 +135,7 @@ const formatAddress = (
       from: data.initiator || data.sender_did || "N/A",
       to: data.owner || data.receiver_did || tokenEntries[0]?.tokenId || "N/A",
       toIsDID: !!(data.owner || data.receiver_did),
+      memo: data.memo || "",
       tokens: tokenEntries.map(({ tokenId, tokenData }) => ({
         tokenId,
         type: tokenData?.TTTokenTypeKey,
@@ -505,12 +507,37 @@ const formatAddress = (
                     <div className="flex-shrink-0"><CopyButton text={txData.to} size="sm" /></div>
                   </div>
                 </div>
-                <div className="sm:col-span-2">
+                <div>
                   <p className="text-gray-500 dark:text-gray-400">Timestamp:</p>
                   <p className="font-medium text-gray-900 dark:text-white">
                     {txData.timestamp}
                   </p>
                 </div>
+                {txData.memo && (() => {
+                  const m = String(txData.memo);
+                  const words = m.split(/\s+/).filter(Boolean);
+                  const isTruncated = words.length > 5;
+                  return (
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 mb-1">Memo:</p>
+                      {isTruncated ? (
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {words.slice(0, 5).join(" ")}...
+                          </span>
+                          <button
+                            onClick={() => setMemoModal(m)}
+                            className="text-xs font-semibold text-gray-500 dark:text-gray-400 underline hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+                          >
+                            Show more
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="font-medium text-gray-900 dark:text-white">{m}</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1185,6 +1212,31 @@ const formatAddress = (
           })()}
         </motion.div>
       </Card>
+
+      {/* Memo Modal */}
+      {memoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setMemoModal(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-secondary-900 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Memo</h3>
+              <button onClick={() => setMemoModal(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-auto p-5">
+              <pre className="text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-all">
+                {(() => { try { return JSON.stringify(JSON.parse(memoModal), null, 2); } catch { return memoModal; } })()}
+              </pre>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };
