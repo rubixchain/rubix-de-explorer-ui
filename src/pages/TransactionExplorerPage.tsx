@@ -515,15 +515,15 @@ const formatAddress = (
                 </div>
                 {txData.memo && (() => {
                   const m = String(txData.memo);
-                  const words = m.split(/\s+/).filter(Boolean);
-                  const isTruncated = words.length > 5;
+                  const limit = isMobile ? 25 : 40;
+                  const isTruncated = m.length > limit;
                   return (
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 mb-1">Memo:</p>
                       {isTruncated ? (
                         <div className="flex items-baseline gap-2 flex-wrap">
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {words.slice(0, 5).join(" ")}...
+                            {m.slice(0, limit)}...
                           </span>
                           <button
                             onClick={() => setMemoModal(m)}
